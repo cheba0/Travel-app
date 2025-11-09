@@ -55,10 +55,12 @@ body {
 }
 
 .year {
-    color: #8e8e93;
+    color: #000000;
     font-size: 17px;
-    margin-top: 16px;
+    font-weight: 500;
     display: block;
+    padding: 8px;
+    border-bottom: 1px solid #4e4e4e;
 }
 
 .main {
@@ -165,15 +167,16 @@ body {
 
 .expenses_header{
     margin-top: 45px;
-    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
 }
 
 .expenses_title{
     text-align: left;
     font-size: 1.25rem;
-    font-weight: 600;
+    font-weight: 500;
     color: #000000;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 .expenses_filters{
@@ -181,6 +184,8 @@ body {
     gap: 15px;
     overflow-x: auto;
     padding-bottom: 8px;
+    border-bottom: 1px solid #000000;
+    margin-bottom: 15px;
 }
 
 .filter_item{
@@ -201,6 +206,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    
 }
 
 .expense_item_main {
@@ -214,6 +220,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+
 }
 
 .expenses_item_number {
@@ -241,13 +248,15 @@ body {
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    
+    padding: 10px 0;
+    border-bottom: 1px solid #000000;
 }
 
 .expense_item_amount {
     font-size: 1rem;
     font-weight: 600;
     color: #000000;
+    
 }
 
 .expense_item_receipt {
@@ -276,11 +285,10 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #FFD700; 
+    background: #f5de4c; 
     padding: 8px 20px;
     color: #000000;
     font-weight: 600;
     font-size: 1rem;
-    border-radius: 25px; 
-
+    border-radius: 25px;
 }
