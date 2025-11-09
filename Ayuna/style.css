@@ -1,0 +1,286 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: rgb(255, 255, 255);
+    max-width: 390px;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    padding-bottom: 80px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 16px;
+    background-color: white;
+    border-bottom: 1px solid #ddd;
+}
+
+.icon {
+    font-size: 24px;
+    font-weight: bold;
+    padding: 5px 10px;
+    background-color: #f5de4c;
+    border-radius: 5px;
+}
+
+.search input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    width: 200px;
+    background-color: #f9f9f9;
+}
+
+.main h1 {
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.ad {
+    background-color: #f5de4c;
+    color: rgb(0, 0, 0);
+    padding: 40px;
+    text-align: center;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+.year {
+    color: #8e8e93;
+    font-size: 17px;
+    margin-top: 16px;
+    display: block;
+}
+
+.main {
+    padding: 16px;
+}
+
+.card {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    background: #ffffff;
+}
+
+.card-left {
+    flex: 1;
+    margin-right: 12px;
+}
+
+.title {
+    font-weight: 600;
+    margin-bottom: 3px;
+    font-size: 17px;
+    line-height: 1.2;
+}
+
+.subtitle {
+    color: #555558;
+    font-size: 15px;
+}
+
+.dates {
+    color: #6c6c6e;
+    font-size: 15px;
+    white-space: nowrap;
+}
+
+.bottom_navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border-bottom: none;
+    border-top: 1px solid #e5e5ea;
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0;
+    max-width: 390px;
+    margin: 0 auto;
+}
+
+.nav svg,
+.nav-active svg {
+    fill: #000000;
+}
+
+.nav-active {
+    color: #007aff;
+}
+
+.nav-active svg {
+    fill: #007aff;
+}
+
+.hero {
+    position: relative;
+    height: 20vh;
+}
+
+.hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.overlay-block {
+    position: absolute;
+    bottom: -40px;
+    left: 50px;
+    right: 50px;
+    background-color: #d5d5d5;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+}
+
+.overlay-title{
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: left;
+    margin: 0;
+}
+
+.overlay-date {
+    font-size: 1rem;
+    color: #666;
+    text-align: left;
+    margin: 0;
+}
+
+.expenses_header{
+    margin-top: 45px;
+    margin-bottom: 15px;
+}
+
+.expenses_title{
+    text-align: left;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #000000;
+    margin-bottom: 10px;
+}
+
+.expenses_filters{
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.filter_item{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+.expense_list{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+}
+
+.expense_item{
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.expense_item_main {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.expense_item_header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.expenses_item_number {
+    font-size: 1rem;
+    color: #000000;
+    font-weight: 500;
+    min-width: 20px;
+}
+.expense_item_name {
+    font-size: 1rem;
+    color: #000000;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.expense_item_date {
+    font-size: 0.85rem;
+    color: #525252;
+    font-weight: 400;
+    margin-left: 16px; 
+}
+
+.expense_item_cost {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    
+}
+
+.expense_item_amount {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #000000;
+}
+
+.expense_item_receipt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 16px; 
+}
+
+.bot_nav{
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border-top: 1px solid #e5e5ea;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    max-width: 390px;
+    margin: 0 auto;
+}
+
+.my_expenses{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #FFD700; 
+    padding: 8px 20px;
+    color: #000000;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 25px; 
+
+}
