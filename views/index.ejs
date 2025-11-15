@@ -22,6 +22,39 @@
         <div>
             <h1>Мои путешествия</h1>
         </div>
+
+<!-- Блок с пользователями из БД -->
+        <div class="users-list">
+            <h3>Пользователи из базы данных:</h3>
+            <% if (users && users.length > 0) { %>
+                <% users.forEach(function(user) { %>
+                    <div class="user-item">
+                        <strong>ID:</strong> <%= user.id %> | 
+                        <strong>Имя:</strong> <%= user.name || 'Не указано' %> | 
+                        <strong>Email:</strong> <%= user.email || 'Не указан' %>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <p>Нет данных о пользователях</p>
+            <% } %>
+        </div>
+
+        <!-- Блок с путешествиями из БД -->
+        <div class="users-list">
+            <h3>Путешествия из базы данных:</h3>
+            <% if (trips && trips.length > 0) { %>
+                <% trips.forEach(function(trip) { %>
+                    <div class="user-item">
+                        <strong>ID:</strong> <%= trip.id %> | 
+                        <strong>Название:</strong> <%= trip.title || 'Без названия' %> | 
+                        <strong>Даты:</strong> <%= trip.start_date %> - <%= trip.end_date %>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <p>Нет данных о путешествиях</p>
+            <% } %>
+        </div>
+
         <span class="year">2025</span>
         <div class="card">
             <div class="card-left">
