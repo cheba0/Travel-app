@@ -165,6 +165,10 @@ body {
     margin: 0;
 }
 
+.expenses{
+    padding: 0 16px;
+}
+
 .expenses_header{
     margin-top: 45px;
     display: flex;
