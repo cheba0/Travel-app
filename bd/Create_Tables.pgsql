@@ -7,11 +7,11 @@ DROP TABLE IF EXISTS users CASCADE;
 
 -- Create users table
 CREATE TABLE users (
-    id SERIAL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    username VARCHAR(100) NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    CONSTRAINT users_id_pk PRIMARY KEY(id)
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(255) NOT NULL UNIQUE,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  CONSTRAINT users_id_pk PRIMARY KEY(id)
 );
 
 -- Create trips table
