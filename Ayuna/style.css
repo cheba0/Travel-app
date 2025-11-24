@@ -422,3 +422,23 @@ body {
     color: #007aff;
     font-weight: 500;
 }
+
+.add_exp_container{
+    padding: 10% 0;
+}
+
+.file_upload {
+    padding: 6px 16px;
+    font-size: 14px;
+}
+
+.file_upload_label {
+    font-size: 14px;
+    padding: 10px 0;
+    display: inline-block;
+    font-weight: 500;
+}
+
+.file_upload_input {
+    display: none;
+}
