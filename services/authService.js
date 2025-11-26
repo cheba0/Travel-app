@@ -1,5 +1,5 @@
 const User = require("../Models/User");
-console.log("✅ AuthService загружен");
+console.log(" AuthService загружен");
 class AuthService {
   // Регистрация пользователя
   static async register(userData) {
@@ -85,6 +85,10 @@ class AuthService {
     if (!this.isValidEmail(email)) {
       throw new Error("Некорректный формат email");
     }
+  }
+  static isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   }
 }
 

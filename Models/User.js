@@ -1,13 +1,13 @@
 const pool = require("../db");
 const bcrypt = require("bcrypt");
-console.log("✅ User model загружен");
+console.log("User model загружен");
 class User {
   // Создание пользователя
   static async create(userData) {
     const { username, email, password } = userData;
 
     try {
-      console.log("🔍 Проверяем подключение к БД...");
+      console.log("Проверяем подключение к БД...");
       const test = await pool.query("SELECT NOW()");
       console.log("Подключение к БД работает:", test.rows[0]);
       // Проверяем существование пользователя
