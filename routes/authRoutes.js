@@ -19,17 +19,9 @@ router.get("/login", (req, res) => {
     title: "Вход в систему",
   });
 });
-router.post("/api/register", (req, res) => {
-  console.log("🔍 ТЕСТ: Запрос дошел до /api/register!");
-  console.log("📦 Тело:", req.body);
 
-  res.json({
-    success: true,
-    message: "Маршрут работает!",
-    test: "Данные получены",
-  });
-});
-// router.post("/api/register", AuthController.register);
+router.post("/api/register", AuthController.register);
+
 // router.post("/api/login", AuthController.login);
 
 module.exports = router;

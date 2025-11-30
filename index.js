@@ -13,9 +13,9 @@ app.set("view engine", "ejs");
 try {
   const authRoutes = require("./routes/authRoutes");
   app.use("/", authRoutes);
-  console.log("✅ AuthRoutes подключен");
+  console.log("AuthRoutes подключен");
 } catch (error) {
-  console.error("❌ Ошибка подключения authRoutes:", error.message);
+  console.error(" Ошибка подключения authRoutes:", error.message);
 }
 
 app.get("/", async (req, res) => {
@@ -75,5 +75,3 @@ const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server started: http://127.0.0.1:${PORT}`);
 });
-
-//проверка comit

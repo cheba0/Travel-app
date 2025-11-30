@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log(" Данные для отправки:", userData);
 
       try {
-        console.log(" Отправляю POST запрос...");
+        console.log("Отправляю POST запрос...");
         const response = await fetch("/api/register", {
           method: "POST",
           headers: {
@@ -41,20 +41,23 @@ document.addEventListener("DOMContentLoaded", function () {
         if (messageDiv) {
           if (result.success) {
             messageDiv.style.color = "green";
-            messageDiv.textContent =
-              result.message + " (ID: " + result.user.id + ")";
+
+            if (result.user && result.user.id) {
+              messageDiv.textContent =
+                result.message + " (ID: " + result.user.id + ")";
+            } else {
+              messageDiv.textContent =
+                result.message + " (Регистрация успешна!)";
+            }
             registerForm.reset();
           } else {
             messageDiv.style.color = "red";
-            messageDiv.textContent = "Ошибка: " + result.error;
-
-            if (result.received) {
-              console.log(" Что получил сервер:", result.received);
-            }
+            messageDiv.textContent =
+              "Ошибка: " + (result.error || "Неизвестная ошибка");
           }
         }
       } catch (error) {
-        console.error("Ошибка сети:", error);
+        console.error("Ошибка:", error);
         if (messageDiv) {
           messageDiv.style.color = "red";
           messageDiv.textContent = "Сетевая ошибка: " + error.message;
