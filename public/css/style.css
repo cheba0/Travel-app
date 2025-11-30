@@ -44,16 +44,6 @@ body {
     font-weight: 600;
 }
 
-.ad {
-    background-color: #f5de4c;
-    color: rgb(0, 0, 0);
-    padding: 40px;
-    text-align: center;
-    border-radius: 10px;
-    margin-bottom: 15px;
-    font-weight: bold;
-}
-
 .year {
     color: #000000;
     font-size: 17px;
@@ -151,7 +141,7 @@ body {
     text-align: center;
 }
 
-.overlay-title{
+.overlay-title {
     font-size: 1.5rem;
     font-weight: bold;
     text-align: left;
@@ -165,17 +155,17 @@ body {
     margin: 0;
 }
 
-.expenses{
+.expenses {
     padding: 0 16px;
 }
 
-.expenses_header{
+.expenses_header {
     margin-top: 45px;
     display: flex;
     justify-content: space-between;
 }
 
-.expenses_title{
+.expenses_title {
     text-align: left;
     font-size: 1.25rem;
     font-weight: 500;
@@ -183,7 +173,7 @@ body {
     margin-bottom: 15px;
 }
 
-.expenses_filters{
+.expenses_filters {
     display: flex;
     gap: 15px;
     overflow-x: auto;
@@ -192,25 +182,25 @@ body {
     margin-bottom: 15px;
 }
 
-.filter_item{
+.filter_item {
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 12px;
 }
 
-.expense_list{
+.expense_list {
     display: flex;
     flex-direction: column;
     gap: 8px;
     padding: 16px;
 }
 
-.expense_item{
+.expense_item {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    
+
 }
 
 .expense_item_main {
@@ -233,6 +223,7 @@ body {
     font-weight: 500;
     min-width: 20px;
 }
+
 .expense_item_name {
     font-size: 1rem;
     color: #000000;
@@ -244,7 +235,7 @@ body {
     font-size: 0.85rem;
     color: #525252;
     font-weight: 400;
-    margin-left: 16px; 
+    margin-left: 16px;
 }
 
 .expense_item_cost {
@@ -260,17 +251,17 @@ body {
     font-size: 1rem;
     font-weight: 600;
     color: #000000;
-    
+
 }
 
 .expense_item_receipt {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: 16px; 
+    margin-left: 16px;
 }
 
-.bot_nav{
+.bot_nav {
     position: fixed;
     bottom: 0;
     left: 0;
@@ -285,11 +276,11 @@ body {
     margin: 0 auto;
 }
 
-.my_expenses{
+.my_expenses {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #f5de4c; 
+    background: #f5de4c;
     padding: 8px 20px;
     color: #000000;
     font-weight: 600;
@@ -300,26 +291,26 @@ body {
 .profile_header {
     display: flex;
     align-items: center;
-    padding: 20px 16px;
+    padding: 30px 16px;
     background-color: white;
     border-bottom: 2px solid #ddd;
     position: relative;
 }
 
-.profile_title{
+.profile_title {
     position: absolute;
     left: 40%;
     font-size: 18px;
     font-weight: 600;
 }
 
-.profile_block{
+.profile_block {
     text-align: center;
     padding-top: 20px;
     padding-bottom: 15px;
 }
 
-.profile_avatar{
+.profile_avatar {
     width: 120px;
     height: 120px;
     border-radius: 50%;
@@ -331,13 +322,13 @@ body {
     border: 3px solid #000000;
 }
 
-.profile_name{
+.profile_name {
     margin-top: 10px;
     font-size: 20px;
     font-weight: bold;
 }
 
-.profile_item{
+.profile_item {
     padding: 12px;
     display: flex;
     align-items: center;
@@ -345,7 +336,7 @@ body {
     font-size: 15px;
 }
 
-.status{
+.status {
     margin-left: auto;
     padding: 5px 12px;
     border-radius: 8px;
@@ -353,8 +344,99 @@ body {
     background-color: #f5de4c;
 }
 
-.profile_content{
+.profile_content {
     margin: 8px;
     background-color: #dcdcdc;
     border-radius: 10px;
+}
+
+.logreg_title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+    margin-top: 20%;
+    margin-bottom: 20px;
+}
+
+
+.input_field {
+    padding: 0 16px;
+    width: 100%;
+    margin-bottom: 16px;
+    
+}
+
+.input_field input {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-bottom: 2px solid #878787;
+    font-size: 14px;
+    outline: none;
+}
+
+.add_exp_title{
+    position: absolute;
+    left: 30%;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.reg_continue {
+    margin-left: 16px;
+    margin-right: 16px;
+    background-color: #f5de4c;
+    padding: 16px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 17px;
+    font-weight: 500;
+    margin-top: 15px;
+}
+
+.login_link {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.login_link a {
+    color: #007aff;
+    font-weight: 500;
+}
+
+.header_logreg {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 16px;
+}
+
+.forgot_pass {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.forgot_pass a {
+    color: #007aff;
+    font-weight: 500;
+}
+
+.add_exp_container{
+    padding: 10% 0;
+}
+
+.file_upload {
+    padding: 6px 16px;
+    font-size: 14px;
+}
+
+.file_upload_label {
+    font-size: 14px;
+    padding: 10px 0;
+    display: inline-block;
+    font-weight: 500;
+}
+
+.file_upload_input {
+    display: none;
 }
