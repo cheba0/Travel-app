@@ -9,7 +9,7 @@ COPY package.json ./
 COPY package-lock.json ./
 
 # Устанавливаем все зависимости
-RUN npm ci --only=production
+RUN npm install
 
 # Копируем ВЕСЬ исходный код проекта
 COPY . .
@@ -21,4 +21,4 @@ RUN mkdir -p logs
 EXPOSE 3000
 
 # Команда для запуска приложения
-CMD ["npm", "start"]
+CMD ["node", "index.js"]   
