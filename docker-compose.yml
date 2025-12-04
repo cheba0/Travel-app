@@ -9,7 +9,7 @@ services:
       - DB_HOST=db
       - DB_PORT=5432
       - DB_USER=postgres
-      - DB_PASSWORD=password
+      - DB_PASSWORD=postgres
       - DB_NAME=travel_app
     depends_on:
       - db
@@ -18,7 +18,7 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=travel_app
     ports:
       - "5432:5432"
