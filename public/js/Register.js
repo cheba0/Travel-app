@@ -1,5 +1,5 @@
 // public/js/Register.js
-console.log(" Register.js загружен");
+console.log(" registration.js загружен");
 
 document.addEventListener("DOMContentLoaded", function () {
   const registerForm = document.getElementById("registerForm");

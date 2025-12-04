@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="header_logreg" type="button" value="back" onclick="history.back()"><svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="30px" fill="#000000"><path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/></svg></div>
+    <div class="reg_container">
+        <div class="logreg_title">Регистрация</div>
+
+        <form id="registerForm">
+            <div class="input_field">
+                <input type="text" placeholder="Фамилия, Имя, Отчество" name="username" required>
+            </div>
+
+            <div class="input_field">
+                <input type="email" placeholder="E-mail" name="email" required>
+            </div>
+
+            <div class="input_field">
+                <input type="password" placeholder="Пароль" name="password" required minlength="6">
+            </div>
+
+            <div class="input_field">
+                <input type="password" placeholder="Подтверждение пароля" name="confirmPassword" required>
+            </div>
+
+            <button class="reg_continue" type="submit">Продолжить</button>
+        </form>
+        <div id="message"></div>
+        <div class="login_link">У вас уже есть аккаунт? <a href="login">Войти</a></div>
+    </div>
+
+    <script src="/js/Register.js"></script>
+</body>
+</html>
