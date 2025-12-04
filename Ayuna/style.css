@@ -105,16 +105,23 @@ body {
     margin: 0 auto;
 }
 
+.bottom_navigation button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
 .nav svg,
-.nav-active svg {
+.nav_active svg {
     fill: #000000;
 }
 
-.nav-active {
+.nav_active {
     color: #007aff;
 }
 
-.nav-active svg {
+.nav_active svg {
     fill: #007aff;
 }
 
@@ -439,4 +446,62 @@ body {
 
 .file_upload_input {
     display: none;
+}
+
+.create_travel_container{
+    padding: 20px 16px;
+    min-height: 100vh;
+}
+
+.create_travel_title{
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    padding: 20px 0;
+}
+
+.image_upload_block{
+    margin: 15px;
+    width: 360px;
+    height: 160px;
+    background: #c7c7c7;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.image_preview{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.create_button {
+    color:#000000;
+    margin: 15px;
+    width: 360px;
+    background-color: #f5de4c;
+    padding: 14px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 12px;
+    border: none;
+}
+
+.description_block textarea{
+    width: 360px;
+    height: 100px;
+    margin-left: 15px;
+    margin-right: 15px;
+}
+
+.create_travel_header{
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: 2px solid #ddd;
+    position: relative;
 }
