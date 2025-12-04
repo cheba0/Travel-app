@@ -1,35 +1,30 @@
 version: '3.8'
 
 services:
-  # Ваше Node.js приложение
-  travel-app:
+  app:
     build: .
     ports:
       - "3000:3000"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=travel_app
     depends_on:
-      - db  # Говорим, что приложение зависит от БД
-    environment:
-      - NODE_ENV=production
-      - DB_HOST=db           # Имя сервиса БД
-      - DB_PORT=5432         # Порт PostgreSQL
-      - DB_USER=postgres     # Стандартный пользователь
-      - DB_PASSWORD=postgres # Пароль (измените на свой!)
-      - DB_NAME=travel_app   # Название базы данных
+      - db
     restart: unless-stopped
 
-  # База данных PostgreSQL
   db:
-    image: postgres:15-alpine  # Используем легкую версию PostgreSQL
+    image: postgres:15-alpine
     environment:
-      - POSTGRES_USER=postgres      # Пользователь
-      - POSTGRES_PASSWORD=postgres  # Пароль (должен совпадать с паролем выше)
-      - POSTGRES_DB=travel_app      # Название базы (создастся автоматически)
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=travel_app
     ports:
-      - "5432:5432"  # Пробрасываем порт наружу (для администрирования)
+      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data  # Сохраняем данные
+      - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
-# Volume для хранения данных БД
 volumes:
   postgres_data:
