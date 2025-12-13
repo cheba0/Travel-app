@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мои путешествия</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
@@ -14,24 +14,25 @@
         <div class="search"><input type="text" placeholder="Поиск..."></div>
     </div>
 
-    <div class="main">
-        <div>
-            <h1>Мои путешествия</h1>
-        </div>
+    <div class="main_container">
+        <h1>Мои путешествия</h1>
+
         <span class="year">2025</span>
-        <div class="card">
-            <div class="card-left">
-                <div class="title"><a href="last_travel.html">Шашлычки</a></div>
+        
+        <div class="card" onclick="window.location.href='last_travel.html';">
+            <div class="card_left">
+                <div class="card_title">Шашлычки</div>
             </div>
-            <div class="dates">1.02 - 2.02</div>
+            <div class="card_dates">1.02 - 2.02</div>
         </div>
 
         <span class="year">2024</span>
+
         <div class="card">
-            <div class="card-left">
-                <div class="title">Какое-то очень длинное наз...</div>
+            <div class="card_left">
+                <div class="card_title">Какое-то очень длинное наз...</div>
             </div>
-            <div class="dates">1.02 - 2.02</div>
+            <div class="card_dates">1.02 - 2.02</div>
         </div>
     </div>
 
