@@ -7,7 +7,7 @@ DROP TABLE IF EXISTS users CASCADE;
 
 -- Create users table
 CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
+  id SERIAL,
   username VARCHAR(255) NOT NULL UNIQUE,
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
@@ -83,3 +83,17 @@ CREATE TABLE debts (
     CONSTRAINT chk_positive_debt CHECK (total_amount > 0),
     CONSTRAINT chk_different_users CHECK (creditor_id != debtor_id)
 );
+
+-- Создание таблицы для хранения сессий (если connect-pg-simple не создаст автоматически)
+CREATE TABLE IF NOT EXISTS user_sessions (
+  sid VARCHAR NOT NULL COLLATE "default",
+  sess JSON NOT NULL,
+  expire TIMESTAMP(6) NOT NULL,
+  CONSTRAINT user_sessions_pkey PRIMARY KEY (sid)
+);
+
+-- Индекс для быстрого удаления устаревших сессий
+CREATE INDEX IF NOT EXISTS idx_user_sessions_expire ON user_sessions(expire);
+
+-- Очистка старых сессий (можно добавить в cron)
+DELETE FROM user_sessions WHERE expire < NOW();

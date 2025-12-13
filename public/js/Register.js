@@ -45,10 +45,22 @@ document.addEventListener("DOMContentLoaded", function () {
             if (result.user && result.user.id) {
               messageDiv.textContent =
                 result.message + " (ID: " + result.user.id + ")";
+
+              if (result.user) {
+                localStorage.setItem("userId", result.user.id);
+                localStorage.setItem("userEmail", result.user.email);
+                localStorage.setItem("username", result.user.username);
+                console.log("Данные сохранены в localStorage");
+              }
+
+              setTimeout(() => {
+                window.location.href = "/";
+              }, 2000);
             } else {
               messageDiv.textContent =
                 result.message + " (Регистрация успешна!)";
             }
+
             registerForm.reset();
           } else {
             messageDiv.style.color = "red";
