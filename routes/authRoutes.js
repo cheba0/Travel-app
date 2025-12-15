@@ -1,41 +1,10 @@
 const express = require("express");
-const router = express.Router();
 const AuthController = require("../controllers/authController");
-const session = require("express-session");
-const User = require("../Models/User");
-const bcrypt = require("bcrypt");
+const router = express.Router();
 
-console.log("AuthRoutes загружен");
+console.log("✅ AuthRoutes загружен");
 
-const checkSession = (req, res, next) => {
-  // В authRoutes у нас нет доступа к req.session из основного файла
-  // Нужно проверять по-другому
-  console.log("📋 Проверка сессии в authRoutes");
-
-  // Просто передаем управление дальше
-  // Проверку сессии будет делать основной middleware в app.js
-  next();
-};
-
-router.get("/api/session/check", checkSession, (req, res) => {
-  console.log("🔍 GET запрос проверки сессии");
-
-  res.json({
-    success: true,
-    isAuthenticated: req.isAuthenticated,
-    user: req.isAuthenticated
-      ? {
-          id: req.user.id,
-          email: req.user.email,
-          name: req.user.name,
-        }
-      : null,
-    sessionId: req.sessionID,
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// Главная страница
+// ========== ПРЯМОЙ API (без контроллера для теста) ==========
 router.get("/", (req, res) => {
   console.log(" GET / - главная страница");
   res.render("index", {
@@ -90,96 +59,90 @@ router.get("/login", (req, res) => {
     title: "Вход в систему",
   });
 });
+// Проверка авторизации - GET /api/auth/check
+router.get("/api/auth/check", (req, res) => {
+  console.log("🔍 GET /check вызван");
+  console.log("Session:", req.session);
+  console.log("Session ID:", req.sessionID);
 
-router.get("/api/profile/check", async (req, res) => {
-  try {
-    console.log("🔍 GET /api/profile/check - проверка профиля");
-
-    // Простая проверка - всегда говорим что профиля нет
-    // (В реальном приложении здесь проверка БД по сессии/кукам)
-    res.json({
+  // Проверяем сессию
+  if (req.session && req.session.userId) {
+    console.log("✅ Авторизован, userId:", req.session.userId);
+    return res.json({
       success: true,
-      hasProfile: false,
-      message: "Используйте /register для создания профиля",
-    });
-  } catch (error) {
-    console.error("❌ Ошибка проверки профиля:", error);
-    res.status(500).json({
-      success: false,
-      error: "Ошибка проверки профиля",
-      hasProfile: false,
+      isAuthenticated: true,
+      user: {
+        id: req.session.userId,
+        username: req.session.user?.username || "Пользователь",
+        email: req.session.user?.email || "",
+      },
     });
   }
+
+  console.log("❌ Не авторизован");
+  return res.json({
+    success: true,
+    isAuthenticated: false,
+    user: null,
+  });
 });
 
 router.post("/api/register", AuthController.register);
-
 router.post("/api/login", AuthController.login);
 
-router.post("/api/profile/check", checkSession, async (req, res) => {
-  try {
-    console.log("🔍 POST запрос проверки профиля:", req.body);
+// // Вход - POST /api/auth/login
+// router.post("/api/login", async (req, res) => {
+//   console.log("🔐 POST /login вызван");
+//   console.log("Тело запроса:", req.body);
 
-    const { email, userId } = req.body;
-    let hasProfile = false;
-    let userData = null;
+//   try {
+//     // Здесь должна быть проверка логина/пароля
+//     // Пока просто создаем сессию для теста
+//     req.session.userId = Date.now().toString();
+//     req.session.user = {
+//       id: req.session.userId,
+//       username: "Тестовый пользователь",
+//       email: req.body.email || "test@example.com",
+//     };
 
-    // Проверяем по сессии
-    if (req.isAuthenticated) {
-      hasProfile = true;
-      userData = req.user;
-    }
-    // Если нет сессии, но есть данные в запросе
-    else if (email || userId) {
-      // Ищем пользователя в базе данных
-      const query = {};
-      if (email) query.email = email;
-      if (userId) query._id = userId;
+//     console.log("✅ Создана сессия для входа:", req.session.userId);
 
-      const user = await User.findOne(query).select("-passwordhash");
-      if (user) {
-        hasProfile = true;
-        userData = {
-          id: user._id,
-          email: user.email,
-          name: user.name,
-        };
+//     return res.json({
+//       success: true,
+//       message: "Вход выполнен успешно (тест)",
+//       user: req.session.user,
+//     });
+//   } catch (error) {
+//     console.error("Ошибка входа:", error);
+//     return res.status(500).json({
+//       success: false,
+//       error: "Ошибка сервера",
+//     });
+//   }
+// });
 
-        // Создаем сессию для найденного пользователя
-        req.session.user = userData;
-        await req.session.save();
-        console.log("✅ Сессия создана для пользователя:", user.email);
-      }
-    }
+// Выход - POST /api/auth/logout
+router.post("/logout", (req, res) => {
+  console.log("🚪 POST /logout вызван");
 
-    res.json({
-      success: true,
-      hasProfile,
-      user: userData,
-      sessionId: req.sessionID,
-      message: hasProfile ? "Профиль найден" : "Профиль не найден",
-    });
-  } catch (error) {
-    console.error("❌ Ошибка проверки профиля:", error);
-    res.status(500).json({
-      success: false,
-      hasProfile: false,
-      error: "Ошибка сервера при проверке профиля",
-    });
-  }
-});
-
-router.post("/api/session/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) {
-      console.error("❌ Ошибка при выходе:", err);
-      return res.status(500).json({ success: false, error: "Ошибка выхода" });
+      console.error("Ошибка выхода:", err);
+      return res.status(500).json({
+        success: false,
+        error: "Ошибка выхода",
+      });
     }
 
-    // Очищаем куки на клиенте
-    res.clearCookie("connect.sid");
-    res.json({ success: true, message: "Сессия завершена" });
+    res.clearCookie("travel.sid");
+    return res.json({
+      success: true,
+      message: "Выход выполнен",
+    });
   });
 });
+
+// ========== PAGE ROUTES (страницы EJS) ==========
+// ВАЖНО: Страницы должны быть в ДРУГОМ файле или в server.js!
 
 module.exports = router;

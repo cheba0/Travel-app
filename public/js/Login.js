@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       try {
         console.log("Отправляю POST запрос для входа...");
+        // ИЗМЕНИТЕ ЭТУ СТРОКУ:
         const response = await fetch("/api/login", {
           method: "POST",
           headers: {

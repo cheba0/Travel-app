@@ -1,16 +1,16 @@
 // public/js/Register.js
-console.log(" registration.js загружен");
+console.log("registration.js загружен");
 
 document.addEventListener("DOMContentLoaded", function () {
   const registerForm = document.getElementById("registerForm");
   const messageDiv = document.getElementById("message");
 
-  console.log(" Форма найдена:", !!registerForm);
+  console.log("Форма найдена:", !!registerForm);
 
   if (registerForm) {
     registerForm.addEventListener("submit", async function (e) {
       e.preventDefault();
-      console.log(" ФОРМА ОТПРАВЛЯЕТСЯ ЧЕРЕЗ JS!");
+      console.log("ФОРМА ОТПРАВЛЯЕТСЯ ЧЕРЕЗ JS!");
 
       if (messageDiv) {
         messageDiv.style.color = "blue";
@@ -20,10 +20,11 @@ document.addEventListener("DOMContentLoaded", function () {
       const formData = new FormData(registerForm);
       const userData = Object.fromEntries(formData);
 
-      console.log(" Данные для отправки:", userData);
+      console.log("Данные для отправки:", userData);
 
       try {
         console.log("Отправляю POST запрос...");
+        // ИЗМЕНИТЕ ЭТУ СТРОКУ:
         const response = await fetch("/api/register", {
           method: "POST",
           headers: {
@@ -32,11 +33,11 @@ document.addEventListener("DOMContentLoaded", function () {
           body: JSON.stringify(userData),
         });
 
-        console.log(" Статус ответа:", response.status);
-        console.log(" URL ответа:", response.url);
+        console.log("Статус ответа:", response.status);
+        console.log("URL ответа:", response.url);
 
         const result = await response.json();
-        console.log(" Полный ответ сервера:", result);
+        console.log("Полный ответ сервера:", result);
 
         if (messageDiv) {
           if (result.success) {
