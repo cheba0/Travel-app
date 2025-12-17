@@ -24,7 +24,7 @@ body {
 }
 
 .icon {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: bold;
     padding: 5px 10px;
     background-color: #f5de4c;
@@ -39,22 +39,23 @@ body {
     background-color: #f9f9f9;
 }
 
-.main h1 {
+.main_container {
+    padding: 16px;
+}
+
+.main_container h1 {
     font-size: 22px;
     font-weight: 600;
 }
 
 .year {
     color: #000000;
+    margin-top: 10px;
     font-size: 17px;
     font-weight: 500;
     display: block;
     padding: 8px;
     border-bottom: 1px solid #4e4e4e;
-}
-
-.main {
-    padding: 16px;
 }
 
 .card {
@@ -67,12 +68,12 @@ body {
     background: #ffffff;
 }
 
-.card-left {
+.card_left {
     flex: 1;
     margin-right: 12px;
 }
 
-.title {
+.card_title {
     font-weight: 600;
     margin-bottom: 3px;
     font-size: 17px;
@@ -84,7 +85,7 @@ body {
     font-size: 15px;
 }
 
-.dates {
+.card_dates {
     color: #6c6c6e;
     font-size: 15px;
     white-space: nowrap;
@@ -105,16 +106,23 @@ body {
     margin: 0 auto;
 }
 
+.bottom_navigation button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
 .nav svg,
-.nav-active svg {
+.nav_active svg {
     fill: #000000;
 }
 
-.nav-active {
+.nav_active {
     color: #007aff;
 }
 
-.nav-active svg {
+.nav_active svg {
     fill: #007aff;
 }
 
@@ -123,32 +131,32 @@ body {
     height: 20vh;
 }
 
-.hero-image {
+.hero_image {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
 }
 
-.overlay-block {
+.overlay_block {
     position: absolute;
     bottom: -40px;
     left: 50px;
     right: 50px;
-    background-color: #d5d5d5;
+    background-color: #f0f0f0;
     border-radius: 12px;
     padding: 40px;
     text-align: center;
 }
 
-.overlay-title {
+.overlay_title {
     font-size: 1.5rem;
     font-weight: bold;
     text-align: left;
     margin: 0;
 }
 
-.overlay-date {
+.overlay_date {
     font-size: 1rem;
     color: #666;
     text-align: left;
@@ -173,13 +181,19 @@ body {
     margin-bottom: 15px;
 }
 
+.filter_icon{
+    margin-top: 6px;
+    height: 30px;
+    background-color: #ffffff;
+    border: none;
+}
+
 .expenses_filters {
     display: flex;
     gap: 15px;
     overflow-x: auto;
     padding-bottom: 8px;
     border-bottom: 1px solid #000000;
-    margin-bottom: 15px;
 }
 
 .filter_item {
@@ -189,11 +203,8 @@ body {
     border-radius: 12px;
 }
 
-.expense_list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 16px;
+.expenses_list {
+    margin-top: 15px;
 }
 
 .expense_item {
@@ -259,9 +270,11 @@ body {
     align-items: center;
     justify-content: center;
     margin-left: 16px;
+    border: none;
+    background-color: #ffffff;
 }
 
-.bot_nav {
+.expenses_nav {
     position: fixed;
     bottom: 0;
     left: 0;
@@ -319,7 +332,7 @@ body {
     justify-content: center;
     font-size: 60px;
     margin: auto;
-    border: 3px solid #000000;
+    border: 2px solid #000000;
 }
 
 .profile_name {
@@ -346,7 +359,7 @@ body {
 
 .profile_content {
     margin: 8px;
-    background-color: #dcdcdc;
+    background-color: #f0f0f0;
     border-radius: 10px;
 }
 
@@ -382,9 +395,10 @@ body {
     font-weight: 600;
 }
 
-.reg_continue {
-    margin-left: 16px;
-    margin-right: 16px;
+.continue_button {
+    color:#000000;
+    margin: 16px;
+    width: 360px;
     background-color: #f5de4c;
     padding: 16px;
     border-radius: 10px;
@@ -392,6 +406,7 @@ body {
     font-size: 17px;
     font-weight: 500;
     margin-top: 15px;
+    border: none;
 }
 
 .login_link {
@@ -439,4 +454,62 @@ body {
 
 .file_upload_input {
     display: none;
+}
+
+.create_travel_container{
+    padding: 20px 16px;
+    min-height: 100vh;
+}
+
+.create_travel_title{
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    padding: 20px 0;
+}
+
+.image_upload_block{
+    margin: 15px;
+    width: 360px;
+    height: 160px;
+    background: #c7c7c7;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.image_preview{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.create_button {
+    color:#000000;
+    margin: 15px;
+    width: 360px;
+    background-color: #f5de4c;
+    padding: 14px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 12px;
+    border: none;
+}
+
+.description_block textarea{
+    width: 360px;
+    height: 100px;
+    margin-left: 15px;
+    margin-right: 15px;
+}
+
+.create_travel_header{
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: 2px solid #ddd;
+    position: relative;
 }
