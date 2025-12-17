@@ -3,8 +3,8 @@ const { Pool } = require("pg");
 // Настройка подключения к PostgreSQL
 const pool = new Pool({
   user: "postgres",
-  host: "localhost",
-  database: "postgres",
+  host: "db",
+  database: "travel_app",
   password: "postgres",
   port: 5432,
 });
