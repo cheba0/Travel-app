@@ -100,28 +100,28 @@ try {
   console.error(" Ошибка подключения authRoutes:", error.message);
 }
 
-app.get("/", async (req, res) => {
-  try {
-    const usersResult = await db.query("SELECT * FROM users LIMIT 5");
-    const tripsResult = await db.query("SELECT * FROM trips LIMIT 5");
+// app.get("/", async (req, res) => {
+//   try {
+//     const usersResult = await db.query("SELECT * FROM users LIMIT 5");
+//     const tripsResult = await db.query("SELECT * FROM trips LIMIT 5");
 
-    res.render("index", {
-      users: usersResult.rows,
-      trips: tripsResult.rows,
-    });
-  } catch (error) {
-    console.error("Database error:", error);
-    res.render("index", {
-      users: [],
-      trips: [],
-      error: "Ошибка загрузки данных",
-    });
-  }
-});
+//     res.render("index", {
+//       users: usersResult.rows,
+//       trips: tripsResult.rows,
+//     });
+//   } catch (error) {
+//     console.error("Database error:", error);
+//     res.render("index", {
+//       users: [],
+//       trips: [],
+//       error: "Ошибка загрузки данных",
+//     });
+//   }
+// });
 
 // В самый конец index.js, перед app.listen
 
 const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(`Server started: http://87.242.100.137:${PORT}`);
+  console.log(`Server started: http://127.0.0.1:${PORT}`);
 });
