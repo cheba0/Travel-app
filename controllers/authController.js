@@ -112,5 +112,36 @@ class AuthController {
       });
     }
   }
+  static async logout(req, res) {
+    try {
+      console.log("🚪 Logout request received");
+
+      // Уничтожаем сессию
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("❌ Logout session destroy error:", err);
+          return res.status(500).json({
+            success: false,
+            error: "Не удалось выйти из системы",
+          });
+        }
+
+        // Очищаем cookie сессии
+        res.clearCookie("travel.sid");
+
+        console.log("✅ Logout successful");
+        return res.json({
+          success: true,
+          message: "Вы успешно вышли из системы",
+        });
+      });
+    } catch (error) {
+      console.error("❌ Logout error:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Внутренняя ошибка сервера",
+      });
+    }
+  }
 }
 module.exports = AuthController;

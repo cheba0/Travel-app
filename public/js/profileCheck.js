@@ -62,26 +62,18 @@ async function checkAuthStatus() {
     try {
       const data = JSON.parse(responseText);
       console.log("✅ JSON распарсен:", data);
-
-      if (data.success && data.isAuthenticated) {
-        updateProfileButton(true, data.user);
-      } else {
-        updateProfileButton(false, null);
-      }
     } catch (jsonError) {
       console.error("❌ Ошибка парсинга JSON:", jsonError.message);
       console.log(
         "📄 Полный ответ (первые 500 символов):",
         responseText.substring(0, 500)
       );
-      updateProfileButton(false, null);
     }
   } catch (error) {
     console.error("❌ Общая ошибка проверки авторизации:", error);
     console.error("Тип ошибки:", typeof error);
     console.error("Сообщение:", error.message);
     console.error("Стек:", error.stack);
-    updateProfileButton(false, null);
   }
 }
 
@@ -124,6 +116,11 @@ async function handleProfileClick() {
 
   // Если не авторизован, идем на вход
   console.log("❌ Не авторизован, переход на вход");
+  localStorage.removeItem("userId");
+  localStorage.removeItem("username");
+  localStorage.removeItem("userEmail");
+
+  console.log("✅ Переход на вход");
   window.location.href = "/login";
 }
 
@@ -135,9 +132,6 @@ function updateAfterAuth(userData) {
     localStorage.setItem("userId", userData.id);
     localStorage.setItem("username", userData.username || "Пользователь");
     localStorage.setItem("userEmail", userData.email || "");
-
-    // Немедленно обновляем кнопку
-    updateProfileButton(true, userData);
 
     // Перезагружаем проверку сервера
     setTimeout(checkServerAuth, 1000);

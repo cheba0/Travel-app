@@ -75,6 +75,7 @@ router.get("/api/auth/check", (req, res) => {
         id: req.session.userId,
         username: req.session.user?.username || "Пользователь",
         email: req.session.user?.email || "",
+        sessionId: req.sessionID,
       },
     });
   }
@@ -84,65 +85,72 @@ router.get("/api/auth/check", (req, res) => {
     success: true,
     isAuthenticated: false,
     user: null,
+    message: "Пользователь не авторизован",
+    sessionExists: !!req.session,
+    sessionId: req.sessionID,
   });
+});
+
+router.get("/api/auth/logout", (req, res) => {
+  console.log("🔍 GET /logout вызван");
 });
 
 router.post("/api/register", AuthController.register);
 router.post("/api/login", AuthController.login);
+router.post("/api/auth/logout", AuthController.logout);
+// // // Вход - POST /api/auth/login
+// // router.post("/api/login", async (req, res) => {
+// //   console.log("🔐 POST /login вызван");
+// //   console.log("Тело запроса:", req.body);
 
-// // Вход - POST /api/auth/login
-// router.post("/api/login", async (req, res) => {
-//   console.log("🔐 POST /login вызван");
-//   console.log("Тело запроса:", req.body);
+// //   try {
+// //     // Здесь должна быть проверка логина/пароля
+// //     // Пока просто создаем сессию для теста
+// //     req.session.userId = Date.now().toString();
+// //     req.session.user = {
+// //       id: req.session.userId,
+// //       username: "Тестовый пользователь",
+// //       email: req.body.email || "test@example.com",
+// //     };
 
-//   try {
-//     // Здесь должна быть проверка логина/пароля
-//     // Пока просто создаем сессию для теста
-//     req.session.userId = Date.now().toString();
-//     req.session.user = {
-//       id: req.session.userId,
-//       username: "Тестовый пользователь",
-//       email: req.body.email || "test@example.com",
-//     };
+// //     console.log("✅ Создана сессия для входа:", req.session.userId);
 
-//     console.log("✅ Создана сессия для входа:", req.session.userId);
+// //     return res.json({
+// //       success: true,
+// //       message: "Вход выполнен успешно (тест)",
+// //       user: req.session.user,
+// //     });
+// //   } catch (error) {
+// //     console.error("Ошибка входа:", error);
+// //     return res.status(500).json({
+// //       success: false,
+// //       error: "Ошибка сервера",
+// //     });
+// //   }
+// // });
 
+// // Выход - POST /api/auth/logout
+// router.post("/logout", (req, res) => {
+//   console.log("🚪 POST /logout вызван");
+
+//   req.session.destroy((err) => {
+//     if (err) {
+//       console.error("Ошибка выхода:", err);
+//       return res.status(500).json({
+//         success: false,
+//         error: "Ошибка выхода",
+//       });
+//     }
+
+//     res.clearCookie("travel.sid");
 //     return res.json({
 //       success: true,
-//       message: "Вход выполнен успешно (тест)",
-//       user: req.session.user,
+//       message: "Выход выполнен",
 //     });
-//   } catch (error) {
-//     console.error("Ошибка входа:", error);
-//     return res.status(500).json({
-//       success: false,
-//       error: "Ошибка сервера",
-//     });
-//   }
+//   });
 // });
 
-// Выход - POST /api/auth/logout
-router.post("/logout", (req, res) => {
-  console.log("🚪 POST /logout вызван");
-
-  req.session.destroy((err) => {
-    if (err) {
-      console.error("Ошибка выхода:", err);
-      return res.status(500).json({
-        success: false,
-        error: "Ошибка выхода",
-      });
-    }
-
-    res.clearCookie("travel.sid");
-    return res.json({
-      success: true,
-      message: "Выход выполнен",
-    });
-  });
-});
-
-// ========== PAGE ROUTES (страницы EJS) ==========
-// ВАЖНО: Страницы должны быть в ДРУГОМ файле или в server.js!
+// // ========== PAGE ROUTES (страницы EJS) ==========
+// // ВАЖНО: Страницы должны быть в ДРУГОМ файле или в server.js!
 
 module.exports = router;
