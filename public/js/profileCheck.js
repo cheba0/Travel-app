@@ -85,32 +85,65 @@ async function checkAuthStatus() {
   }
 }
 
-function updateProfileButton(isLoggedIn, user) {
-  const profileIcon = document.getElementById("profileIcon");
-  if (!profileIcon) {
-    console.error("❌ Элемент profileIcon не найден!");
-    return;
-  }
-
-  console.log(
-    `🔄 Обновляю кнопку: ${isLoggedIn ? "авторизован" : "не авторизован"}`
-  );
-
-  if (isLoggedIn && user) {
-    profileIcon.href = "/profile";
-    profileIcon.title = `Профиль: ${user.username}`;
-  } else {
-    profileIcon.href = "/login";
-    profileIcon.title = "Войти";
-  }
-}
-
 async function handleProfileClick() {
   console.log("🖱️ Клик по профилю");
 
-  // Просто переходим на страницу входа (без проверки)
+  // Сначала проверяем localStorage (быстро)
+  const userId = localStorage.getItem("userId");
+
+  if (userId) {
+    console.log("✅ Есть данные в localStorage, переход на профиль");
+    window.location.href = "/profile";
+    return;
+  }
+
+  // Если в localStorage нет, проверяем сервер
+  try {
+    console.log("🔍 Проверяю серверную авторизацию перед переходом...");
+    const response = await fetch("/api/auth/check");
+
+    if (response.ok) {
+      const data = await response.json();
+
+      if (data.success && data.isAuthenticated) {
+        console.log("✅ Сервер подтвердил авторизацию");
+
+        // Сохраняем в localStorage
+        if (data.user) {
+          localStorage.setItem("userId", data.user.id);
+          localStorage.setItem("username", data.user.username);
+        }
+
+        window.location.href = "/profile";
+        return;
+      }
+    }
+  } catch (error) {
+    console.error("Ошибка при проверке:", error);
+  }
+
+  // Если не авторизован, идем на вход
+  console.log("❌ Не авторизован, переход на вход");
   window.location.href = "/login";
 }
 
-// Экспортируем для глобального доступа
+// Функция для обновления данных после входа/регистрации
+function updateAfterAuth(userData) {
+  console.log("💾 Обновляю данные после авторизации:", userData);
+
+  if (userData && userData.id) {
+    localStorage.setItem("userId", userData.id);
+    localStorage.setItem("username", userData.username || "Пользователь");
+    localStorage.setItem("userEmail", userData.email || "");
+
+    // Немедленно обновляем кнопку
+    updateProfileButton(true, userData);
+
+    // Перезагружаем проверку сервера
+    setTimeout(checkServerAuth, 1000);
+  }
+}
+
+// Экспортируем функции для глобального доступа
 window.handleProfileClick = handleProfileClick;
+window.updateAfterAuth = updateAfterAuth;

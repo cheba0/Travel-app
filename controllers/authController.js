@@ -25,7 +25,12 @@ class AuthController {
           },
         });
       }
-
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
       return res.status(400).json(result);
     } catch (error) {
       console.error("Register error:", error);
@@ -49,7 +54,12 @@ class AuthController {
           username: result.user.username,
           email: result.user.email,
         };
-
+        await new Promise((resolve, reject) => {
+          req.session.save((err) => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
         return res.json({
           success: true,
           message: "Вход выполнен успешно",
