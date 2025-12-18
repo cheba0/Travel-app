@@ -85,99 +85,99 @@ async function checkAuthStatus() {
   }
 }
 
-async function handleProfileClick() {
-  console.log("🖱️ Клик по профилю");
+// async function handleProfileClick() {
+//   console.log("🖱️ Клик по профилю");
 
-  // Сначала проверяем localStorage (быстро)
-  const userId = localStorage.getItem("userId");
+//   // Сначала проверяем localStorage (быстро)
+//   const userId = localStorage.getItem("userId");
 
-  if (userId) {
-    console.log("✅ Есть данные в localStorage, переход на профиль");
-    window.location.href = "/profile";
-    return;
-  }
+//   if (userId) {
+//     console.log("✅ Есть данные в localStorage, переход на профиль");
+//     window.location.href = "/profile";
+//     return;
+//   }
 
-  // Если в localStorage нет, проверяем сервер
-  try {
-    console.log("🔍 Проверяю серверную авторизацию перед переходом...");
-    const response = await fetch("/api/auth/check");
+//   // Если в localStorage нет, проверяем сервер
+//   try {
+//     console.log("🔍 Проверяю серверную авторизацию перед переходом...");
+//     const response = await fetch("/api/auth/check");
 
-    if (response.ok) {
-      const data = await response.json();
+//     if (response.ok) {
+//       const data = await response.json();
 
-      if (data.success && data.isAuthenticated) {
-        console.log("✅ Сервер подтвердил авторизацию");
+//       if (data.success && data.isAuthenticated) {
+//         console.log("✅ Сервер подтвердил авторизацию");
 
-        // Сохраняем в localStorage
-        if (data.user) {
-          localStorage.setItem("userId", data.user.id);
-          localStorage.setItem("username", data.user.username);
-        }
+//         // Сохраняем в localStorage
+//         if (data.user) {
+//           localStorage.setItem("userId", data.user.id);
+//           localStorage.setItem("username", data.user.username);
+//         }
 
-        window.location.href = "/profile";
-        return;
-      }
-    }
-  } catch (error) {
-    console.error("Ошибка при проверке:", error);
-  }
+//         window.location.href = "/profile";
+//         return;
+//       }
+//     }
+//   } catch (error) {
+//     console.error("Ошибка при проверке:", error);
+//   }
 
-  // Если не авторизован, идем на вход
-  console.log("❌ Не авторизован, переход на вход");
-  localStorage.removeItem("userId");
-  localStorage.removeItem("username");
-  localStorage.removeItem("userEmail");
+//   // Если не авторизован, идем на вход
+//   console.log("❌ Не авторизован, переход на вход");
+//   localStorage.removeItem("userId");
+//   localStorage.removeItem("username");
+//   localStorage.removeItem("userEmail");
 
-  console.log("✅ Переход на вход");
-  window.location.href = "/login";
-}
+//   console.log("✅ Переход на вход");
+//   window.location.href = "/login";
+// }
 
-async function handleAddClick() {
-  console.log("🖱️ Клик по add");
+// async function handleAddClick() {
+//   console.log("🖱️ Клик по add");
 
-  // Сначала проверяем localStorage (быстро)
-  const userId = localStorage.getItem("userId");
+//   // Сначала проверяем localStorage (быстро)
+//   const userId = localStorage.getItem("userId");
 
-  if (userId) {
-    console.log("✅ Есть данные в localStorage, переход на add");
-    window.location.href = "/add";
-    return;
-  }
+//   if (userId) {
+//     console.log("✅ Есть данные в localStorage, переход на add");
+//     window.location.href = "/add";
+//     return;
+//   }
 
-  // Если в localStorage нет, проверяем сервер
-  try {
-    console.log("🔍 Проверяю серверную авторизацию перед переходом...");
-    const response = await fetch("/api/auth/check");
+//   // Если в localStorage нет, проверяем сервер
+//   try {
+//     console.log("🔍 Проверяю серверную авторизацию перед переходом...");
+//     const response = await fetch("/api/auth/check");
 
-    if (response.ok) {
-      const data = await response.json();
+//     if (response.ok) {
+//       const data = await response.json();
 
-      if (data.success && data.isAuthenticated) {
-        console.log("✅ Сервер подтвердил авторизацию");
+//       if (data.success && data.isAuthenticated) {
+//         console.log("✅ Сервер подтвердил авторизацию");
 
-        // Сохраняем в localStorage
-        if (data.user) {
-          localStorage.setItem("userId", data.user.id);
-          localStorage.setItem("username", data.user.username);
-        }
+//         // Сохраняем в localStorage
+//         if (data.user) {
+//           localStorage.setItem("userId", data.user.id);
+//           localStorage.setItem("username", data.user.username);
+//         }
 
-        window.location.href = "/add";
-        return;
-      }
-    }
-  } catch (error) {
-    console.error("Ошибка при проверке:", error);
-  }
+//         window.location.href = "/add";
+//         return;
+//       }
+//     }
+//   } catch (error) {
+//     console.error("Ошибка при проверке:", error);
+//   }
 
-  // Если не авторизован, идем на вход
-  console.log("❌ Не авторизован, переход на вход");
-  localStorage.removeItem("userId");
-  localStorage.removeItem("username");
-  localStorage.removeItem("userEmail");
+//   // Если не авторизован, идем на вход
+//   console.log("❌ Не авторизован, переход на вход");
+//   localStorage.removeItem("userId");
+//   localStorage.removeItem("username");
+//   localStorage.removeItem("userEmail");
 
-  console.log("✅ Переход на вход");
-  window.location.href = "/login";
-}
+//   console.log("✅ Переход на вход");
+//   window.location.href = "/login";
+// }
 
 // Функция для обновления данных после входа/регистрации
 function updateAfterAuth(userData) {
