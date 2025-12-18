@@ -123,5 +123,5 @@ try {
 
 const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(`Server started: http://localhost:${PORT}`); //87.242.100.137 //localhost
+  console.log(`Server started: http://87.242.100.137:${PORT}`); //87.242.100.137 //localhost
 });
