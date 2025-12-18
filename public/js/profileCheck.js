@@ -139,7 +139,7 @@ async function handleAddClick() {
   const userId = localStorage.getItem("userId");
 
   if (userId) {
-    console.log("✅ Есть данные в localStorage, переход на профиль");
+    console.log("✅ Есть данные в localStorage, переход на add");
     window.location.href = "/add";
     return;
   }
