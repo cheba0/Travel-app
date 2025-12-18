@@ -96,10 +96,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (result.travel) {
               messageDiv.textContent += ` (ID: ${result.travel.id})`;
-
-              setTimeout(() => {
-                window.location.href = `/last_travel`;
-              }, 200);
+              window.location.href = "/last_travel";
+              // setTimeout(() => {
+              //   window.location.href = `/last_travel`;
+              // }, 200);
             } else {
               setTimeout(() => {
                 window.location.href = "/last_travel";

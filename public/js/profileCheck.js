@@ -194,5 +194,5 @@ function updateAfterAuth(userData) {
 }
 
 // Экспортируем функции для глобального доступа
-window.handleProfileClick = handleProfileClick;
+// window.handleProfileClick = handleProfileClick;
 window.updateAfterAuth = updateAfterAuth;
