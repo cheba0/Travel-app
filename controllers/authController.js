@@ -25,7 +25,12 @@ class AuthController {
           },
         });
       }
-
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
       return res.status(400).json(result);
     } catch (error) {
       console.error("Register error:", error);
@@ -49,7 +54,12 @@ class AuthController {
           username: result.user.username,
           email: result.user.email,
         };
-
+        await new Promise((resolve, reject) => {
+          req.session.save((err) => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
         return res.json({
           success: true,
           message: "Вход выполнен успешно",
@@ -99,6 +109,37 @@ class AuthController {
       return res.status(500).json({
         success: false,
         error: "Internal server error",
+      });
+    }
+  }
+  static async logout(req, res) {
+    try {
+      console.log("🚪 Logout request received");
+
+      // Уничтожаем сессию
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("❌ Logout session destroy error:", err);
+          return res.status(500).json({
+            success: false,
+            error: "Не удалось выйти из системы",
+          });
+        }
+
+        // Очищаем cookie сессии
+        res.clearCookie("travel.sid");
+
+        console.log("✅ Logout successful");
+        return res.json({
+          success: true,
+          message: "Вы успешно вышли из системы",
+        });
+      });
+    } catch (error) {
+      console.error("❌ Logout error:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Внутренняя ошибка сервера",
       });
     }
   }
