@@ -2,17 +2,19 @@
 
 // Основная функция проверки авторизации
 async function checkHomePageAuth() {
+  const authContent = document.getElementById("authContent");
+  const nonAuthContent = document.getElementById("nonAuthContent");
+
+  if (authContent) authContent.style.display = "none";
+  if (nonAuthContent) nonAuthContent.style.display = "none";
+
   try {
     const response = await fetch("/api/auth/check", { credentials: "include" });
     const data = await response.json();
 
-    const authContent = document.getElementById("authContent");
-    const nonAuthContent = document.getElementById("nonAuthContent");
-
     if (data.isAuthenticated) {
       // Показываем контент для авторизованных
       authContent.style.display = "block";
-      nonAuthContent.style.display = "none";
 
       // Сохраняем данные
       if (data.user) {
@@ -20,7 +22,6 @@ async function checkHomePageAuth() {
       }
     } else {
       // Показываем приветствие для неавторизованных
-      authContent.style.display = "none";
       nonAuthContent.style.display = "block";
     }
   } catch (error) {
