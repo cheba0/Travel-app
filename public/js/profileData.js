@@ -5,6 +5,7 @@ async function loadAndDisplayUserData() {
     // Делаем запрос к серверу за данными пользователя
     const response = await fetch("/api/auth/check", {
       method: "GET",
+      credentials: "include",
     });
 
     if (!response.ok) {
