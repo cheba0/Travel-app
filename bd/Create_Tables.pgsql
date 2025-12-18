@@ -1,99 +1,98 @@
-DROP TABLE IF EXISTS expense_distribution CASCADE;
+DROP TABLE IF EXISTS expense_shares CASCADE;
 DROP TABLE IF EXISTS debts CASCADE;
 DROP TABLE IF EXISTS trip_participants CASCADE;
 DROP TABLE IF EXISTS expenses CASCADE;
 DROP TABLE IF EXISTS trips CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS settlements CASCADE;
+DROP TABLE IF EXISTS expense_files CASCADE;
+DROP TABLE IF EXISTS expense_categories CASCADE;
 
 -- Create users table
 CREATE TABLE users (
-  id SERIAL,
-  username VARCHAR(255) NOT NULL UNIQUE,
-  email VARCHAR(255) NOT NULL UNIQUE,
-  password_hash VARCHAR(255) NOT NULL,
-  CONSTRAINT users_id_pk PRIMARY KEY(id)
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name VARCHAR(200),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create trips table
 CREATE TABLE trips (
-    id SERIAL,
+    id SERIAL PRIMARY KEY,
     trip_name VARCHAR(255) NOT NULL,
     description TEXT,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
-    creator_id INT NOT NULL,
-    CONSTRAINT trips_id_pk PRIMARY KEY(id),
-    CONSTRAINT trips_creator_fk FOREIGN KEY(creator_id) REFERENCES users(id),
-    CONSTRAINT chk_dates_valid CHECK (end_date >= start_date)
+    currency VARCHAR(3) DEFAULT 'USD',
+    start_date DATE,
+    end_date DATE,
+    user_id INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE,
+    location TEXT,
+    CONSTRAINT trips_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- Create trip participants table
 CREATE TABLE trip_participants (
-    id SERIAL,
-    trip_id INT NOT NULL,
-    user_id INT NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    CONSTRAINT trip_participants_id_pk PRIMARY KEY(id),
-    CONSTRAINT trip_participants_trip_fk FOREIGN KEY(trip_id) REFERENCES trips(id),
-    CONSTRAINT trip_participants_user_fk FOREIGN KEY(user_id) REFERENCES users(id),
-    CONSTRAINT unique_participant UNIQUE(trip_id, user_id)
+    id SERIAL PRIMARY KEY,
+    trip_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_admin BOOLEAN DEFAULT FALSE,
+    UNIQUE(trip_id, user_id),
+    FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Create expenses table
+CREATE TABLE expense_categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL
+);
+
 CREATE TABLE expenses (
-    id SERIAL,
-    trip_id INT NOT NULL,
-    paid_by INT NOT NULL,
-    category VARCHAR(100) NOT NULL,
-    amount DECIMAL(10, 2) NOT NULL,
-    description TEXT,
-    expense_date DATE NOT NULL,
-    CONSTRAINT expenses_id_pk PRIMARY KEY(id),
-    CONSTRAINT expenses_trip_fk FOREIGN KEY(trip_id) REFERENCES trips(id),
-    CONSTRAINT expenses_paid_by_fk FOREIGN KEY(paid_by) REFERENCES users(id),
-    CONSTRAINT chk_positive_amount CHECK (amount > 0)
+    id SERIAL PRIMARY KEY,
+    trip_id INTEGER NOT NULL,
+    paid_by INTEGER NOT NULL,
+    category_id INTEGER,
+    amount DECIMAL(10,2) NOT NULL,
+    description VARCHAR(500),
+    date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_settled BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE,
+    FOREIGN KEY (paid_by) REFERENCES users(id),
+    FOREIGN KEY (category_id) REFERENCES expense_categories(id)
 );
 
--- Create expense distribution table
-CREATE TABLE expense_distribution (
-    id SERIAL,
-    expense_id INT NOT NULL,
-    user_id INT NOT NULL,
-    share_amount DECIMAL(10, 2) NOT NULL,
-    share_percentage DECIMAL(5, 2) NOT NULL,
-    CONSTRAINT expense_distribution_id_pk PRIMARY KEY(id),
-    CONSTRAINT expense_distribution_expense_fk FOREIGN KEY(expense_id) REFERENCES expenses(id) ON DELETE CASCADE,
-    CONSTRAINT expense_distribution_user_fk FOREIGN KEY(user_id) REFERENCES users(id),
-    CONSTRAINT chk_percentage_valid CHECK (share_percentage BETWEEN 0 AND 100),
-    CONSTRAINT chk_share_amount_valid CHECK (share_amount >= 0)
+CREATE TABLE expense_shares (
+    id SERIAL PRIMARY KEY,
+    expense_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    amount_owed DECIMAL(10,2),
+    is_paid BOOLEAN DEFAULT FALSE,
+    UNIQUE(expense_id, user_id),
+    FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- Create debts table
-CREATE TABLE debts (
-    id SERIAL,
-    trip_id INT NOT NULL,
-    creditor_id INT NOT NULL,
-    debtor_id INT NOT NULL,
-    total_amount DECIMAL(10, 2) NOT NULL,
-    is_paid BOOLEAN NOT NULL DEFAULT FALSE,
-    CONSTRAINT debts_id_pk PRIMARY KEY(id),
-    CONSTRAINT debts_trip_fk FOREIGN KEY(trip_id) REFERENCES trips(id),
-    CONSTRAINT debts_creditor_fk FOREIGN KEY(creditor_id) REFERENCES users(id),
-    CONSTRAINT debts_debtor_fk FOREIGN KEY(debtor_id) REFERENCES users(id),
-    CONSTRAINT chk_positive_debt CHECK (total_amount > 0),
-    CONSTRAINT chk_different_users CHECK (creditor_id != debtor_id)
+CREATE TABLE settlements (
+    id SERIAL PRIMARY KEY,
+    trip_id INTEGER NOT NULL,
+    from_user INTEGER NOT NULL,
+    to_user INTEGER NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending',
+    description VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE,
+    FOREIGN KEY (from_user) REFERENCES users(id),
+    FOREIGN KEY (to_user) REFERENCES users(id)
 );
 
--- Создание таблицы для хранения сессий (если connect-pg-simple не создаст автоматически)
-CREATE TABLE IF NOT EXISTS user_sessions (
-  sid VARCHAR NOT NULL COLLATE "default",
-  sess JSON NOT NULL,
-  expire TIMESTAMP(6) NOT NULL,
-  CONSTRAINT user_sessions_pkey PRIMARY KEY (sid)
+CREATE TABLE expense_files (
+    id SERIAL PRIMARY KEY,
+    expense_id INTEGER NOT NULL,
+    file_url VARCHAR(500) NOT NULL,
+    file_name VARCHAR(255),
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE
 );
-
--- Индекс для быстрого удаления устаревших сессий
-CREATE INDEX IF NOT EXISTS idx_user_sessions_expire ON user_sessions(expire);
-
--- Очистка старых сессий (можно добавить в cron)
-DELETE FROM user_sessions WHERE expire < NOW();
