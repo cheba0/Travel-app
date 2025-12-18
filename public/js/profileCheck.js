@@ -6,21 +6,21 @@ document.addEventListener("DOMContentLoaded", function () {
   // Не вызываем сразу проверку, дадим время на загрузку
   setTimeout(checkAuthStatus, 1000);
 
-  const profileIcon = document.getElementById("profileIcon");
-  if (profileIcon) {
-    profileIcon.addEventListener("click", function (e) {
-      e.preventDefault();
-      handleProfileClick();
-    });
-  }
+  // const profileIcon = document.getElementById("profileIcon");
+  // if (profileIcon) {
+  //   profileIcon.addEventListener("click", function (e) {
+  //     e.preventDefault();
+  //     handleProfileClick();
+  //   });
+  // }
 
-  const addIcon = document.getElementById("addIcon");
-  if (addIcon) {
-    addIcon.addEventListener("click", function (e) {
-      e.preventDefault();
-      handleAddClick();
-    });
-  }
+  // const addIcon = document.getElementById("addIcon");
+  // if (addIcon) {
+  //   addIcon.addEventListener("click", function (e) {
+  //     e.preventDefault();
+  //     handleAddClick();
+  //   });
+  // }
 });
 
 async function checkAuthStatus() {

@@ -6,9 +6,9 @@ async function checkHomePageAuth() {
   const authContentHeader = document.getElementById("authContentHeader");
   const nonAuthContent = document.getElementById("nonAuthContent");
 
-  if (authContent) authContent.style.display = "none";
-  if (authContentHeader) authContentHeader.style.display = "none";
-  if (nonAuthContent) nonAuthContent.style.display = "none";
+  if (authContent) authContent.hidden = true;
+  if (authContentHeader) authContentHeader.hidden = true;
+  if (nonAuthContent) nonAuthContent.hidden = true;
 
   try {
     const response = await fetch("/api/auth/check", { credentials: "include" });
@@ -16,22 +16,17 @@ async function checkHomePageAuth() {
 
     if (data.isAuthenticated) {
       // Показываем контент для авторизованных
-      authContent.style.display = "block";
-      authContentHeader.style.display = "block";
-
-      // Сохраняем данные
-      if (data.user) {
-        localStorage.setItem("userId", data.user.id);
-      }
+      authContent.hidden = false;
+      authContentHeader.hidden = false;
     } else {
       // Показываем приветствие для неавторизованных
-      nonAuthContent.style.display = "block";
+      nonAuthContent.hidden = false;
     }
   } catch (error) {
     // При ошибке показываем приветствие
-    document.getElementById("authContent").style.display = "none";
-    document.getElementById("authContentHeader").style.display = "none";
-    document.getElementById("nonAuthContent").style.display = "block";
+    document.getElementById("authContent").hidden = true;
+    document.getElementById("authContentHeader").hidden = true;
+    document.getElementById("nonAuthContent").hidden = true;
   }
 }
 
