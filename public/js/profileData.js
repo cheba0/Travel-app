@@ -4,7 +4,7 @@ async function loadAndDisplayUserData() {
 
     // Делаем запрос к серверу за данными пользователя
     const response = await fetch("/api/auth/check", {
-      method: "POST",
+      method: "GET",
     });
 
     if (!response.ok) {
