@@ -3,9 +3,11 @@
 // Основная функция проверки авторизации
 async function checkHomePageAuth() {
   const authContent = document.getElementById("authContent");
+  const authContentHeader = document.getElementById("authContentHeader");
   const nonAuthContent = document.getElementById("nonAuthContent");
 
   if (authContent) authContent.style.display = "none";
+  if (authContentHeader) authContentHeader.style.display = "none";
   if (nonAuthContent) nonAuthContent.style.display = "none";
 
   try {
@@ -15,6 +17,7 @@ async function checkHomePageAuth() {
     if (data.isAuthenticated) {
       // Показываем контент для авторизованных
       authContent.style.display = "block";
+      authContentHeader.style.display = "block";
 
       // Сохраняем данные
       if (data.user) {
@@ -27,6 +30,7 @@ async function checkHomePageAuth() {
   } catch (error) {
     // При ошибке показываем приветствие
     document.getElementById("authContent").style.display = "none";
+    document.getElementById("authContentHeader").style.display = "none";
     document.getElementById("nonAuthContent").style.display = "block";
   }
 }
