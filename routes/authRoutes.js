@@ -1,5 +1,6 @@
 const express = require("express");
 const AuthController = require("../controllers/authController");
+const { pool } = require("../db");
 const router = express.Router();
 
 console.log("✅ AuthRoutes загружен");
@@ -60,7 +61,7 @@ router.get("/login", (req, res) => {
   });
 });
 // Проверка авторизации - GET /api/auth/check
-router.get("/api/auth/check", (req, res) => {
+router.get("/api/auth/check", async (req, res) => {
   console.log("🔍 GET /check вызван");
   console.log("Session:", req.session);
   console.log("Session ID:", req.sessionID);
@@ -68,16 +69,43 @@ router.get("/api/auth/check", (req, res) => {
   // Проверяем сессию
   if (req.session && req.session.userId) {
     console.log("✅ Авторизован, userId:", req.session.userId);
-    return res.json({
-      success: true,
-      isAuthenticated: true,
-      user: {
-        id: req.session.userId,
-        username: req.session.user?.username || "Пользователь",
-        email: req.session.user?.email || "",
-        sessionId: req.sessionID,
-      },
-    });
+    try {
+      // Получаем данные пользователя из базы данных
+      const result = await pool.query(
+        "SELECT id, username, email FROM users WHERE id = $1",
+        [req.session.userId]
+      );
+
+      if (result.rows.length > 0) {
+        const userFromDB = result.rows[0];
+        console.log("✅ Данные пользователя из БД:", userFromDB);
+
+        return res.json({
+          success: true,
+          isAuthenticated: true,
+          user: {
+            id: userFromDB.id,
+            username: userFromDB.username || "Пользователь",
+            email: userFromDB.email || "",
+            sessionId: req.sessionID,
+          },
+        });
+      } else {
+        console.log("⚠️ Пользователь не найден в БД");
+      }
+    } catch (error) {
+      console.error("❌ Ошибка получения данных из БД:", error);
+    }
+    // return res.json({
+    //   success: true,
+    //   isAuthenticated: true,
+    //   user: {
+    //     id: req.session.userId,
+    //     username: req.session.user?.username || "Пользователь",
+    //     email: req.session.user?.email || "",
+    //     sessionId: req.sessionID,
+    //   },
+    // });
   }
 
   console.log("❌ Не авторизован");
