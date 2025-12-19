@@ -1,5 +1,8 @@
-const AuthService = require("../services/authService");
+const { AuthService } = require("../services/authService");
 
+console.log("✅ AuthController загружен");
+console.log("AuthService доступен?", AuthService);
+console.log("Метод login:", AuthService.login);
 class AuthController {
   static async register(req, res) {
     try {

@@ -91,5 +91,204 @@ class AuthService {
     return emailRegex.test(email);
   }
 }
+class TravelValidator {
+  // Валидация данных при создании путешествия
+  static validateTravelData(travelData, isUpdate = false) {
+    const { trip_name, location, start_date, end_date } = travelData;
 
-module.exports = AuthService;
+    // Для создания проверяем обязательные поля
+    if (!isUpdate) {
+      if (!trip_name || !location || !start_date) {
+        throw new Error(
+          "Пожалуйста, заполните все обязательные поля: название, локация, дата начала"
+        );
+      }
+    } else {
+      // Для обновления проверяем только если поля предоставлены
+      if (trip_name !== undefined && !trip_name.trim()) {
+        throw new Error("Название путешествия не может быть пустым");
+      }
+
+      if (location !== undefined && !location.trim()) {
+        throw new Error("Локация не может быть пустой");
+      }
+
+      if (start_date !== undefined && !start_date) {
+        throw new Error("Дата начала обязательна");
+      }
+    }
+
+    // Проверка дат (если предоставлены обе даты)
+    if (start_date && end_date) {
+      const startDate = new Date(start_date);
+      const endDate = new Date(end_date);
+
+      if (endDate < startDate) {
+        throw new Error("Дата окончания не может быть раньше даты начала");
+      }
+    }
+
+    // Дополнительные проверки
+    if (trip_name && trip_name.length > 100) {
+      throw new Error("Название путешествия не должно превышать 100 символов");
+    }
+
+    if (location && location.length > 200) {
+      throw new Error("Локация не должна превышать 200 символов");
+    }
+
+    // Проверка формата дат
+    if (start_date && isNaN(new Date(start_date).getTime())) {
+      throw new Error("Некорректный формат даты начала");
+    }
+
+    if (end_date && end_date !== "" && isNaN(new Date(end_date).getTime())) {
+      throw new Error("Некорректный формат даты окончания");
+    }
+
+    return true;
+  }
+
+  // Валидация ID путешествия
+  static validateTravelId(id) {
+    if (!id || isNaN(parseInt(id)) || parseInt(id) <= 0) {
+      throw new Error("Некорректный ID путешествия");
+    }
+    return true;
+  }
+
+  // Проверка авторизации пользователя
+  static validateUserAuthorization(userId) {
+    if (!userId) {
+      throw new Error("Вы не авторизованы");
+    }
+    return true;
+  }
+}
+
+// travelValidation.js
+console.log("TravelValidation загружен");
+
+class TravelFormValidator {
+  // Основная валидация формы
+  static validateForm(formData, isUpdate = false) {
+    const errors = {};
+
+    // Для создания проверяем обязательные поля
+    if (!isUpdate) {
+      if (!formData.trip_name || !formData.trip_name.trim()) {
+        errors.trip_name = "Пожалуйста, введите название";
+      }
+
+      if (!formData.location || !formData.location.trim()) {
+        errors.location = "Пожалуйста, укажите место";
+      }
+
+      if (!formData.start_date) {
+        errors.start_date = "Пожалуйста, выберите дату начала";
+      }
+    } else {
+      // Для обновления проверяем только если поля предоставлены
+      if (formData.trip_name !== undefined && !formData.trip_name.trim()) {
+        errors.trip_name = "Название путешествия не может быть пустым";
+      }
+
+      if (formData.location !== undefined && !formData.location.trim()) {
+        errors.location = "Локация не может быть пустой";
+      }
+    }
+
+    // Проверка длины полей
+    if (formData.trip_name && formData.trip_name.length > 100) {
+      errors.trip_name =
+        "Название путешествия не должно превышать 100 символов";
+    }
+
+    if (formData.location && formData.location.length > 200) {
+      errors.location = "Локация не должна превышать 200 символов";
+    }
+
+    // Проверка дат
+    if (formData.start_date && formData.end_date) {
+      const startDate = new Date(formData.start_date);
+      const endDate = new Date(formData.end_date);
+
+      if (endDate < startDate) {
+        errors.end_date = "Дата окончания не может быть раньше даты начала";
+      }
+    }
+
+    // Проверка формата дат
+    if (formData.start_date && isNaN(new Date(formData.start_date).getTime())) {
+      errors.start_date = "Некорректный формат даты начала";
+    }
+
+    if (
+      formData.end_date &&
+      formData.end_date !== "" &&
+      isNaN(new Date(formData.end_date).getTime())
+    ) {
+      errors.end_date = "Некорректный формат даты окончания";
+    }
+
+    return errors;
+  }
+
+  // Валидация отдельных полей
+  static validateField(fieldName, value, formData = {}) {
+    switch (fieldName) {
+      case "trip_name":
+        if (!value || !value.trim()) {
+          return "Пожалуйста, введите название";
+        }
+        if (value.length > 100) {
+          return "Название не должно превышать 100 символов";
+        }
+        break;
+
+      case "location":
+        if (!value || !value.trim()) {
+          return "Пожалуйста, укажите место";
+        }
+        if (value.length > 200) {
+          return "Локация не должна превышать 200 символов";
+        }
+        break;
+
+      case "start_date":
+        if (!value) {
+          return "Пожалуйста, выберите дату начала";
+        }
+        if (isNaN(new Date(value).getTime())) {
+          return "Некорректный формат даты";
+        }
+        break;
+
+      case "end_date":
+        if (value) {
+          if (isNaN(new Date(value).getTime())) {
+            return "Некорректный формат даты";
+          }
+          if (
+            formData.start_date &&
+            new Date(value) < new Date(formData.start_date)
+          ) {
+            return "Дата окончания не может быть раньше даты начала";
+          }
+        }
+        break;
+
+      case "description":
+        if (value && value.length > 2000) {
+          return "Описание не должно превышать 2000 символов";
+        }
+        break;
+    }
+
+    return "";
+  }
+}
+
+module.exports.AuthService = AuthService;
+module.exports.TravelValidator = TravelValidator;
+module.exports.TravelFormValidator = TravelFormValidator;

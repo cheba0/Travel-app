@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= travel.trip_name %></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .travel-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+
+        .travel-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            color: white;
+            position: relative;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .back-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: white;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-3px);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-edit {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-delete {
+            background: rgba(255, 59, 48, 0.9);
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: rgba(255, 59, 48, 1);
+            transform: translateY(-2px);
+        }
+
+        .travel-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .travel-location {
+            font-size: 18px;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .travel-dates {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .date-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .date-icon {
+            font-size: 24px;
+        }
+
+        .date-content h3 {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .date-content p {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .travel-content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .description {
+            line-height: 1.6;
+            color: #555;
+            font-size: 16px;
+        }
+
+        .no-description {
+            color: #999;
+            font-style: italic;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .info-item h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-item p {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .modal-content p {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 12px 30px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .modal-btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+
+        .modal-btn-confirm {
+            background: #F44336;
+            color: white;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .travel-header {
+                padding: 20px;
+            }
+
+            .header-actions {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .action-buttons {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .travel-title {
+                font-size: 24px;
+            }
+
+            .travel-content {
+                padding: 20px;
+            }
+
+            .travel-dates {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <!-- Подключаем скрипт для страницы деталей -->
+    <script src="/js/travelDetail.js"></script>
+</head>
+<body>
+    <div class="travel-container">
+        <!-- Шапка с информацией о путешествии -->
+        <div class="travel-header">
+            <div class="header-actions">
+                <a href="/travels" class="back-btn">←</a>
+                <div class="action-buttons">
+                    <a href="/travels/<%= travel.id %>/edit" class="action-btn btn-edit">
+                        ✏️ Редактировать
+                    </a>
+                    <button type="button" class="action-btn btn-delete" id="deleteBtn">
+                        🗑️ Удалить
+                    </button>
+                </div>
+            </div>
+
+            <h1 class="travel-title"><%= travel.trip_name %></h1>
+            
+            <div class="travel-location">
+                📍 <%= travel.location %>
+            </div>
+
+            <div class="travel-dates">
+                <div class="date-item">
+                    <div class="date-icon">📅</div>
+                    <div class="date-content">
+                        <h3>Начало</h3>
+                        <p><%= new Date(travel.start_date).toLocaleDateString('ru-RU') %></p>
+                    </div>
+                </div>
+                
+                <% if (travel.end_date) { %>
+                <div class="date-item">
+                    <div class="date-icon">🏁</div>
+                    <div class="date-content">
+                        <h3>Окончание</h3>
+                        <p><%= new Date(travel.end_date).toLocaleDateString('ru-RU') %></p>
+                    </div>
+                </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Основной контент -->
+        <div class="travel-content">
+            <% if (travel.description) { %>
+            <div class="section">
+                <h2>📝 Описание</h2>
+                <div class="description">
+                    <%= travel.description %>
+                </div>
+            </div>
+            <% } else { %>
+            <div class="section">
+                <h2>📝 Описание</h2>
+                <div class="description no-description">
+                    Описание путешествия отсутствует
+                </div>
+            </div>
+            <% } %>
+
+            <div class="section">
+                <h2>📊 Дополнительная информация</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <h3>Дата создания</h3>
+                        <p><%= new Date(travel.createdAt).toLocaleDateString('ru-RU') %></p>
+                    </div>
+                    <div class="info-item">
+                        <h3>Дата обновления</h3>
+                        <p><%= new Date(travel.updatedAt).toLocaleDateString('ru-RU') %></p>
+                    </div>
+                    <div class="info-item">
+                        <h3>Продолжительность</h3>
+                        <p>
+                            <% 
+                                const start = new Date(travel.start_date);
+                                const end = travel.end_date ? new Date(travel.end_date) : new Date();
+                                const duration = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+                            %>
+                            <%= duration %> <%= duration === 1 ? 'день' : duration < 5 ? 'дня' : 'дней' %>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно подтверждения удаления -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal-content">
+            <h2>⚠️ Подтверждение удаления</h2>
+            <p>
+                Вы действительно хотите удалить путешествие<br>
+                "<strong><%= travel.trip_name %></strong>"?<br>
+                Это действие нельзя отменить.
+            </p>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn modal-btn-cancel" id="cancelDeleteBtn">
+                    Отмена
+                </button>
+                <form action="/travels/<%= travel.id %>/delete" method="POST" id="deleteForm">
+                    <button type="submit" class="modal-btn modal-btn-confirm">
+                        Да, удалить
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Инициализируем скрипт с данными путешествия -->
+    <script>
+        // Передаем данные путешествия в скрипт
+        const travelData = {
+            id: '<%= travel.id %>',
+            name: '<%= travel.trip_name %>',
+            location: '<%= travel.location %>'
+        };
+        
+        // Инициализируем скрипт после загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof window.TravelDetail !== 'undefined') {
+                window.TravelDetail.init(travelData);
+            }
+        });
+    </script>
+</body>
+</html>
