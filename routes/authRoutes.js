@@ -45,7 +45,14 @@ router.get("/add_expense", (req, res) => {
     title: "Добавить траты",
   });
 });
-
+// router.get("/travelList", (req, res) => {
+//   console.log(" GET /travelList - страница travelList");
+//   res.render("travelList", {
+//     title: "Список путешествий",
+//   });
+// });
+router.get("/travellist", TravelController.list);
+router.get("/travelDetail", TravelController.showForm);
 // Страница регистрации
 router.get("/registration", (req, res) => {
   console.log(" GET /registration - страница регистрации");
@@ -108,6 +115,9 @@ router.get("/api/auth/check", async (req, res) => {
     //   },
     // });
   }
+  router.post("/api/register", AuthController.register);
+  router.post("/api/login", AuthController.login);
+  router.post("/api/auth/logout", AuthController.logout);
 
   console.log("❌ Не авторизован");
   return res.json({
@@ -123,10 +133,51 @@ router.get("/api/auth/check", async (req, res) => {
 router.get("/api/auth/logout", (req, res) => {
   console.log("🔍 GET /logout вызван");
 });
+router.post("/api/travels", TravelController.create);
+router.get("/api/travels", TravelController.getUserTravels);
+router.get("/api/travels/:id", TravelController.getTravelById);
+router.get("/api/travels/:id/edit", TravelController.showForm);
+router.get("/api/travels/:id/detail", TravelController.show);
+router.get("/", TravelController.list);
+router.put("/api/travels/:id", TravelController.update);
+router.delete("/api/travels/:id", TravelController.delete);
 
-router.post("/api/register", AuthController.register);
-router.post("/api/login", AuthController.login);
-router.post("/api/auth/logout", AuthController.logout);
+// Страница конкретного путешествия
+router.get("/travel/:id", async (req, res) => {
+  try {
+    const travelId = req.params.id;
+
+    // Проверяем авторизацию
+    if (!req.session.userId) {
+      return res.redirect("/login");
+    }
+
+    // Получаем данные путешествия
+    const travel = await require("../Models/Travel_model").findById(
+      travelId,
+      req.session.userId
+    );
+
+    if (!travel) {
+      return res.status(404).render("error", {
+        title: "Ошибка",
+        message: "Путешествие не найдено",
+      });
+    }
+
+    res.render("travel", {
+      title: travel.trip_name,
+      travel: travel,
+      userId: req.session.userId,
+    });
+  } catch (error) {
+    console.error("Ошибка загрузки страницы путешествия:", error);
+    res.status(500).render("error", {
+      title: "Ошибка",
+      message: "Не удалось загрузить страницу путешествия",
+    });
+  }
+});
 
 // // // Вход - POST /api/auth/login
 // // router.post("/api/login", async (req, res) => {

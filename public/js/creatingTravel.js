@@ -72,9 +72,9 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       try {
-        console.log("📤 Отправляю POST запрос на /api/travels/create...");
+        console.log("📤 Отправляю POST запрос на /api/travels...");
 
-        const response = await fetch("/api/travels/create", {
+        const response = await fetch("/api/travels", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= travel ? 'Редактировать' : 'Создать' %> путешествие</title>
+    <style>
+        /* Стили остаются такими же */
+    </style>
+    <!-- Подключаем скрипты -->
+    <script src="/js/travelValidation.js"></script>
+    <script src="/js/travelForm.js"></script>
+</head>
+<body>
+    <div class="form-container">
+        <!-- Шапка формы -->
+        <div class="form-header">
+            <a href="/travels" class="back-btn">←</a>
+            <h1>
+                <% if (travel) { %>
+                    ✏️ Редактировать путешествие
+                <% } else { %>
+                    🧳 Создать новое путешествие
+                <% } %>
+            </h1>
+        </div>
+
+        <!-- Сообщения -->
+        <% if (successMessage) { %>
+            <div class="success-message" id="successMessage">
+                ✅ <%= successMessage %>
+            </div>
+            <script>
+                document.getElementById('successMessage').style.display = 'block';
+                setTimeout(() => {
+                    window.location.href = '/travels';
+                }, 2000);
+            </script>
+        <% } %>
+
+        <% if (error) { %>
+            <div class="error-message" style="display: block; background: #f8d7da; color: #721c24; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                ❌ <%= error %>
+            </div>
+        <% } %>
+
+        <!-- Форма -->
+        <form 
+            id="travelForm" 
+            action="<%= travel ? `/travels/${travel.id}/update` : '/travels/create' %>" 
+            method="POST"
+            onsubmit="return validateForm()"
+        >
+            <!-- Поля формы остаются такими же -->
+            
+            <!-- Кнопки -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-submit">
+                    <% if (travel) { %>
+                        💾 Сохранить изменения
+                    <% } else { %>
+                        ➕ Создать путешествие
+                    <% } %>
+                </button>
+                
+                <a href="/travels" class="btn btn-cancel">
+                    ↩️ Отмена
+                </a>
+                
+                <% if (travel) { %>
+                    <button 
+                        type="button" 
+                        class="btn btn-delete">
+                        🗑️ Удалить
+                    </button>
+                <% } %>
+            </div>
+        </form>
+    </div>
+
+    <!-- Модальное окно удаления -->
+    <% if (travel) { %>
+        <div class="modal-overlay" id="deleteModal" style="display: none;">
+            <!-- Содержимое модального окна -->
+        </div>
+        <script src="/js/travelFormUpdate.js"></script>
+    <% } %>
+</body>
+</html>

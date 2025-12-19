@@ -1,5 +1,6 @@
 // controllers/travelController.js
 const Travel = require("../Models/Travel_model");
+const { TravelValidator } = require("../services/authService");
 
 class TravelController {
   static async create(req, res) {
@@ -12,29 +13,15 @@ class TravelController {
       const userId = req.session.userId;
 
       // Проверка авторизации
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          error: "Вы не авторизованы",
-        });
-      }
+      TravelValidator.validateUserAuthorization(userId);
 
-      // Валидация обязательных полей
-      if (!trip_name || !location || !start_date) {
-        return res.status(400).json({
-          success: false,
-          error:
-            "Пожалуйста, заполните все обязательные поля: название, локация, дата начала",
-        });
-      }
-
-      // Проверка дат
-      if (end_date && new Date(end_date) < new Date(start_date)) {
-        return res.status(400).json({
-          success: false,
-          error: "Дата окончания не может быть раньше даты начала",
-        });
-      }
+      // Валидация данных путешествия
+      TravelValidator.validateTravelData({
+        trip_name,
+        location,
+        start_date,
+        end_date,
+      });
 
       // Создаем путешествие
       const travel = await Travel.create({
@@ -64,10 +51,18 @@ class TravelController {
       });
     } catch (error) {
       console.error("Create travel error:", error);
-      return res.status(500).json({
-        success: false,
-        error: error.message || "Внутренняя ошибка сервера",
-      });
+      return res
+        .status(
+          error.message.includes("авторизованы")
+            ? 401
+            : error.message.includes("обязательные поля")
+            ? 400
+            : 500
+        )
+        .json({
+          success: false,
+          error: error.message || "Внутренняя ошибка сервера",
+        });
     }
   }
 
@@ -75,12 +70,7 @@ class TravelController {
     try {
       const userId = req.session.userId;
 
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          error: "Вы не авторизованы",
-        });
-      }
+      TravelValidator.validateUserAuthorization(userId);
 
       const travels = await Travel.findByUserId(userId);
 
@@ -90,10 +80,12 @@ class TravelController {
       });
     } catch (error) {
       console.error("Get user travels error:", error);
-      return res.status(500).json({
-        success: false,
-        error: "Внутренняя ошибка сервера",
-      });
+      return res
+        .status(error.message.includes("авторизованы") ? 401 : 500)
+        .json({
+          success: false,
+          error: error.message || "Внутренняя ошибка сервера",
+        });
     }
   }
 
@@ -102,12 +94,8 @@ class TravelController {
       const { id } = req.params;
       const userId = req.session.userId;
 
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          error: "Вы не авторизованы",
-        });
-      }
+      TravelValidator.validateUserAuthorization(userId);
+      TravelValidator.validateTravelId(id);
 
       const travel = await Travel.findById(id, userId);
 
@@ -124,9 +112,98 @@ class TravelController {
       });
     } catch (error) {
       console.error("Get travel by id error:", error);
-      return res.status(500).json({
+      const statusCode = error.message.includes("авторизованы")
+        ? 401
+        : error.message.includes("ID")
+        ? 400
+        : 500;
+      return res.status(statusCode).json({
         success: false,
-        error: "Внутренняя ошибка сервера",
+        error: error.message || "Внутренняя ошибка сервера",
+      });
+    }
+  }
+
+  static async showForm(req, res) {
+    try {
+      let travel = null;
+
+      // Если редактируем существующее путешествие
+      if (req.params.id) {
+        TravelValidator.validateTravelId(req.params.id);
+
+        travel = await Travel.findById(req.params.id, req.session.userId);
+
+        if (!travel) {
+          return res.status(404).render("error", {
+            error: "Путешествие не найдено",
+            user: req.session.user,
+          });
+        }
+      }
+
+      res.render("travelDetail", {
+        // travel: travel,
+        // user: req.session.user,
+        // title: travel ? "Редактировать" : "Создать",
+        title: "Редактировать путешествие",
+        travel: travel,
+        user: { id: req.session.userId },
+        successMessage: null, // или req.flash('success') если используете flash
+        error: null,
+      });
+    } catch (error) {
+      console.error("Ошибка при загрузке формы:", error);
+      res.status(500).render("error", {
+        error: "Ошибка сервера",
+        user: req.session.user,
+      });
+    }
+  }
+
+  static async list(req, res) {
+    try {
+      TravelValidator.validateUserAuthorization(req.session.userId);
+
+      const travels = await Travel.findByUserId(req.session.userId);
+
+      res.render("travelList", {
+        travels: travels,
+        user: req.session.user,
+        successMessage: req.query.success,
+        error: req.query.error,
+      });
+    } catch (error) {
+      console.error("Ошибка при загрузке списка:", error);
+      res.status(500).render("error", {
+        error: "Ошибка сервера",
+        user: req.session.user,
+      });
+    }
+  }
+
+  static async show(req, res) {
+    try {
+      const travel = await Travel.findById(req.params.id);
+
+      if (!travel) {
+        return res.status(404).render("error", {
+          error: "Путешествие не найдено",
+          user: req.session.user,
+        });
+      }
+
+      res.render("travel-details", {
+        travel: travel,
+        user: req.session.user,
+        successMessage: req.query.success,
+        error: req.query.error,
+      });
+    } catch (error) {
+      console.error("Ошибка при загрузке:", error);
+      res.status(500).render("error", {
+        error: "Ошибка сервера",
+        user: req.session.user,
       });
     }
   }
@@ -138,12 +215,17 @@ class TravelController {
       const { trip_name, location, start_date, end_date, description } =
         req.body;
 
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          error: "Вы не авторизованы",
-        });
-      }
+      TravelValidator.validateUserAuthorization(userId);
+      TravelValidator.validateTravelId(id);
+      TravelValidator.validateTravelData(
+        {
+          trip_name,
+          location,
+          start_date,
+          end_date,
+        },
+        true
+      ); // true - означает режим обновления
 
       const travel = await Travel.findById(id, userId);
 
@@ -169,9 +251,14 @@ class TravelController {
       });
     } catch (error) {
       console.error("Update travel error:", error);
-      return res.status(500).json({
+      const statusCode = error.message.includes("авторизованы")
+        ? 401
+        : error.message.includes("ID") || error.message.includes("обязательные")
+        ? 400
+        : 500;
+      return res.status(statusCode).json({
         success: false,
-        error: "Внутренняя ошибка сервера",
+        error: error.message || "Внутренняя ошибка сервера",
       });
     }
   }
@@ -181,12 +268,8 @@ class TravelController {
       const { id } = req.params;
       const userId = req.session.userId;
 
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          error: "Вы не авторизованы",
-        });
-      }
+      TravelValidator.validateUserAuthorization(userId);
+      TravelValidator.validateTravelId(id);
 
       const deletedTravel = await Travel.delete(id, userId);
 
@@ -203,9 +286,14 @@ class TravelController {
       });
     } catch (error) {
       console.error("Delete travel error:", error);
-      return res.status(500).json({
+      const statusCode = error.message.includes("авторизованы")
+        ? 401
+        : error.message.includes("ID")
+        ? 400
+        : 500;
+      return res.status(statusCode).json({
         success: false,
-        error: "Внутренняя ошибка сервера",
+        error: error.message || "Внутренняя ошибка сервера",
       });
     }
   }
