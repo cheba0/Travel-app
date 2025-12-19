@@ -18,7 +18,7 @@ CREATE TABLE trips (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
     location TEXT,
-    FOREIGN KEY (created_by) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE TABLE trip_participants (
