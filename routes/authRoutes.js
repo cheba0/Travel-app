@@ -127,7 +127,7 @@ router.get("/api/auth/logout", (req, res) => {
 router.post("/api/register", AuthController.register);
 router.post("/api/login", AuthController.login);
 router.post("/api/auth/logout", AuthController.logout);
-router.post("/api/travels/create", TravelController.create);
+
 // // // Вход - POST /api/auth/login
 // // router.post("/api/login", async (req, res) => {
 // //   console.log("🔐 POST /login вызван");
