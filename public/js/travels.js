@@ -40,18 +40,13 @@ function displayTravels(travels) {
   }
 
   // Создаем контейнер для списка путешествий
-  let travelsContainer = document.getElementById("travelsContainer");
+  let travelsContainer = document.createElement("div");
+  travelsContainer.id = "travelsContainer";
 
-  if (!travelsContainer) {
-    travelsContainer = document.createElement("div");
-    travelsContainer.id = "travelsContainer";
-    // Вставляем после заголовка "Мои путешествия"
-    const title = authContent.querySelector("h1");
-    if (title) {
-      authContent.insertBefore(travelsContainer, title.nextElementSibling);
-    }
+  const title = authContent.querySelector("h1");
+  if (title) {
+    authContent.insertBefore(travelsContainer, title.nextElementSibling);
   }
-  travelsContainer.innerHTML = "";
 
   if (!travels || travels.length === 0) {
     travelsContainer.innerHTML = `

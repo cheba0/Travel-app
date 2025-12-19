@@ -9,15 +9,15 @@ CREATE TABLE users (
 
 CREATE TABLE trips (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    trip_name VARCHAR(255) NOT NULL,
     description TEXT,
     currency VARCHAR(3) DEFAULT 'USD',
     start_date DATE,
     end_date DATE,
-    created_by INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
-    location TEXT;
+    location TEXT,
     FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
