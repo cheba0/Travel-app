@@ -91,20 +91,15 @@ document.addEventListener("DOMContentLoaded", function () {
         if (messageDiv) {
           if (result.success) {
             messageDiv.style.color = "green";
-            messageDiv.textContent =
-              result.message || "Путешествие успешно создано!";
+            messageDiv.textContent = "Путешествие успешно создано!";
 
             if (result.travel) {
               messageDiv.textContent += ` (ID: ${result.travel.id})`;
-              window.location.href = "/last_travel";
-              // setTimeout(() => {
-              //   window.location.href = `/last_travel`;
-              // }, 200);
-            } else {
-              setTimeout(() => {
-                window.location.href = "/last_travel";
-              }, 200);
             }
+
+            setTimeout(() => {
+              window.location.href = `/`;
+            }, 1000);
 
             travelForm.reset();
           } else {
