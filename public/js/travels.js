@@ -51,6 +51,7 @@ function displayTravels(travels) {
       authContent.insertBefore(travelsContainer, title.nextElementSibling);
     }
   }
+  travelsContainer.innerHTML = "";
 
   if (!travels || travels.length === 0) {
     travelsContainer.innerHTML = `
