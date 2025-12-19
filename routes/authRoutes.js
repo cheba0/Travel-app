@@ -128,57 +128,48 @@ router.post("/api/register", AuthController.register);
 router.post("/api/login", AuthController.login);
 router.post("/api/auth/logout", AuthController.logout);
 
-// // // Вход - POST /api/auth/login
-// // router.post("/api/login", async (req, res) => {
-// //   console.log("🔐 POST /login вызван");
-// //   console.log("Тело запроса:", req.body);
+router.post("/api/travels", TravelController.create);
+router.get("/api/travels", TravelController.getUserTravels);
+router.get("/api/travels/:id", TravelController.getTravelById);
+router.put("/api/travels/:id", TravelController.update);
+router.delete("/api/travels/:id", TravelController.delete);
 
-// //   try {
-// //     // Здесь должна быть проверка логина/пароля
-// //     // Пока просто создаем сессию для теста
-// //     req.session.userId = Date.now().toString();
-// //     req.session.user = {
-// //       id: req.session.userId,
-// //       username: "Тестовый пользователь",
-// //       email: req.body.email || "test@example.com",
-// //     };
+// Страница конкретного путешествия
+router.get("/travel/:id", async (req, res) => {
+  try {
+    const travelId = req.params.id;
 
-// //     console.log("✅ Создана сессия для входа:", req.session.userId);
+    // Проверяем авторизацию
+    if (!req.session.userId) {
+      return res.redirect("/login");
+    }
 
-// //     return res.json({
-// //       success: true,
-// //       message: "Вход выполнен успешно (тест)",
-// //       user: req.session.user,
-// //     });
-// //   } catch (error) {
-// //     console.error("Ошибка входа:", error);
-// //     return res.status(500).json({
-// //       success: false,
-// //       error: "Ошибка сервера",
-// //     });
-// //   }
-// // });
+    // Получаем данные путешествия
+    const travel = await require("../Models/Travel_model").findById(
+      travelId,
+      req.session.userId
+    );
 
-// // Выход - POST /api/auth/logout
-// router.post("/logout", (req, res) => {
-//   console.log("🚪 POST /logout вызван");
+    if (!travel) {
+      return res.status(404).render("error", {
+        title: "Ошибка",
+        message: "Путешествие не найдено",
+      });
+    }
 
-//   req.session.destroy((err) => {
-//     if (err) {
-//       console.error("Ошибка выхода:", err);
-//       return res.status(500).json({
-//         success: false,
-//         error: "Ошибка выхода",
-//       });
-//     }
-
-//     res.clearCookie("travel.sid");
-//     return res.json({
-//       success: true,
-//       message: "Выход выполнен",
-//     });
-//   });
-// });
+    res.render("travel", {
+      title: travel.trip_name,
+      travel: travel,
+      userId: req.session.userId,
+    });
+  } catch (error) {
+    console.error("Ошибка загрузки страницы путешествия:", error);
+    res.status(500).render("error", {
+      title: "Ошибка",
+      message: "Не удалось загрузить страницу путешествия",
+    });
+  }
+});
 
 // // ========== PAGE ROUTES (страницы EJS) ==========
 // // ВАЖНО: Страницы должны быть в ДРУГОМ файле или в server.js!

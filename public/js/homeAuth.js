@@ -1,4 +1,4 @@
-// public/js/homeAuth.js (упрощенная версия)
+// public/js/homeAuth.js
 
 // Основная функция проверки авторизации
 async function checkHomePageAuth() {
@@ -12,6 +12,7 @@ async function checkHomePageAuth() {
 
   try {
     const response = await fetch("/api/auth/check", { credentials: "include" });
+    if (!response.ok) return;
     const data = await response.json();
 
     if (data.isAuthenticated) {

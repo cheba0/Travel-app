@@ -1,5 +1,5 @@
-// public/js/Travel.js
-console.log("✅ Travel.js загружен");
+// public/js/creatingTravel.js
+console.log("✅ creatingTravel.js загружен");
 
 document.addEventListener("DOMContentLoaded", function () {
   console.log("✅ DOM полностью загружен");
@@ -72,9 +72,9 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       try {
-        console.log("📤 Отправляю POST запрос на /api/travels/create...");
+        console.log("📤 Отправляю POST запрос на /api/travels...");
 
-        const response = await fetch("/api/travels/create", {
+        const response = await fetch("/api/travels", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
