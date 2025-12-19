@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
               setTimeout(() => {
                 window.location.href = "/";
-              }, 2000);
+              }, 1000);
             } else {
               messageDiv.textContent =
                 result.message || "Вход выполнен успешно!";
