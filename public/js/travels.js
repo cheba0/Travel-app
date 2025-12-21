@@ -229,6 +229,7 @@ window.travels = {
   displayTravels,
   initTravelsOnHomePage,
   waitForAuthAndInit,
+  formatDate,
 };
 
 // Автоматическая инициализация если мы на главной

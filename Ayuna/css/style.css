@@ -140,6 +140,7 @@ body {
     height: 100%;
     object-fit: cover;
     display: block;
+    background-color: #4e4e4e;
 }
 
 .overlay_block {

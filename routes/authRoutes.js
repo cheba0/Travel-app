@@ -117,6 +117,15 @@ router.get("/api/auth/check", async (req, res) => {
   });
 });
 
+function formatDate(dateString) {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "numeric",
+  });
+}
+
 router.post("/api/register", AuthController.register);
 router.post("/api/login", AuthController.login);
 router.post("/api/auth/logout", AuthController.logout);
@@ -138,35 +147,94 @@ router.get("/travel/:id", async (req, res) => {
   try {
     const travelId = req.params.id;
 
+    console.log(`📱 Загрузка страницы путешествия ID: ${travelId}`);
+
     // Проверяем авторизацию
     if (!req.session.userId) {
       return res.redirect("/login");
     }
 
     // Получаем данные путешествия
-    const travel = await require("../Models/Travel_model").findById(
-      travelId,
-      req.session.userId
+    const result = await pool.query(
+      `SELECT t.*, u.username as creator_name
+       FROM trips t
+       LEFT JOIN users u ON t.user_id = u.id
+       WHERE t.id = $1`,
+      [travelId]
     );
 
-    if (!travel) {
-      return res.status(404).render("error", {
-        title: "Ошибка",
-        message: "Путешествие не найдено",
-      });
+    if (result.rows.length === 0) {
+      console.log("❌ Путешествие не найдено");
+      return res.status(404).send("Путешествие не найдено");
     }
 
-    res.render("travel", {
+    const travel = result.rows[0];
+
+    // Получаем участников
+    const participantsResult = await pool.query(
+      `SELECT u.id, u.username
+       FROM trip_participants tp
+       JOIN users u ON tp.user_id = u.id
+       WHERE tp.trip_id = $1`,
+      [travelId]
+    );
+
+    // Получаем расходы
+    // Получаем расходы (пока просто проверяем, есть ли они)
+    // const expensesCount = await pool.query(
+    //   "SELECT COUNT(*) FROM expenses WHERE trip_id = $1",
+    //   [travelId]
+    // );
+    const expensesResult = await pool.query(
+      `SELECT e.*, u.username as payer_name
+       FROM expenses e
+       JOIN users u ON e.paid_by = u.id
+       WHERE e.trip_id = $1
+       ORDER BY e.date DESC`,
+      [travelId]
+    );
+
+    console.log(`✅ Загружено: ${expensesResult.rows.length} расходов`);
+
+    // Подготавливаем данные для шаблона
+    const travelData = {
+      id: travel.id,
+      name: travel.trip_name,
+      start_date: formatDate(travel.start_date),
+      end_date: formatDate(travel.end_date),
+      date_range:
+        formatDate(travel.start_date) +
+        (travel.end_date ? " - " + formatDate(travel.end_date) : ""),
+      location: travel.location || "",
+      description: travel.description || "",
+      currency: travel.currency || "RUB",
+    };
+
+    const participants = participantsResult.rows;
+    const expenses = expensesResult.rows.map((exp) => ({
+      id: exp.id,
+      name: exp.description || "Без названия",
+      date: formatDate(exp.date),
+      amount: exp.amount,
+      payer: exp.payer_name,
+      currency: travel.currency || "RUB",
+    }));
+
+    const userId = req.session.userId;
+
+    res.render("travelPage", {
       title: travel.trip_name,
-      travel: travel,
-      userId: req.session.userId,
+      travel: travelData,
+      participants: participants,
+      expenses: expenses,
+      userId: userId,
+      // Преобразуем данные в JSON строку для безопасной передачи
+      travelJSON: JSON.stringify(travelData),
+      participantsJSON: JSON.stringify(participants),
+      expensesJSON: JSON.stringify(expenses),
     });
   } catch (error) {
     console.error("Ошибка загрузки страницы путешествия:", error);
-    res.status(500).render("error", {
-      title: "Ошибка",
-      message: "Не удалось загрузить страницу путешествия",
-    });
   }
 });
 
