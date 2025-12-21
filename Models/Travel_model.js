@@ -18,6 +18,14 @@ class Travel {
         [trip_name, location, start_date, end_date, description, user_id]
       );
 
+      const trip_id = result.rows[0].id;
+
+      await pool.query(
+        `INSERT INTO trip_participants (trip_id, user_id) 
+         VALUES ($1, $2)`,
+        [trip_id, user_id]
+      );
+
       return result.rows[0];
     } catch (error) {
       console.error("Ошибка при создании путешествия:", error);

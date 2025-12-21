@@ -593,12 +593,12 @@ body {
 
 .participants_left {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     gap: 8px;
 }
 
 .participants_title {
-    margin-top: 4px;
+    margin-top: 2px;
     font-size: 17px;
     font-weight: 600;
 }

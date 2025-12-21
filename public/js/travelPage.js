@@ -49,10 +49,10 @@ function updateParticipantsAvatars() {
                 color: white;
                 border-radius: 50%;
                 text-align: center;
-                line-height: 30px;
+                line-height: 25px;
                 margin-left: ${index > 0 ? "-10px" : "0"};
                 border: 2px solid white;
-                font-size: 12px;
+                font-size: 20px;
             ">
                 ${
                   participant.username
@@ -74,10 +74,10 @@ function updateParticipantsAvatars() {
                 color: white;
                 border-radius: 50%;
                 text-align: center;
-                line-height: 30px;
+                line-height: 25px;
                 margin-left: -10px;
                 border: 2px solid white;
-                font-size: 12px;
+                font-size: 15px;
             ">
                 +${participants.length - 3}
             </div>
@@ -108,7 +108,7 @@ function updateTotalAmount() {
 
 function addEventListeners() {
   // Кнопка "Добавить первый расход"
-  const addFirstBtn = document.querySelector(".create_button");
+  const addFirstBtn = document.getElementById("add_expense");
   if (addFirstBtn) {
     addFirstBtn.addEventListener("click", function () {
       window.location.href = "/add_expense?trip_id=" + window.travelData.id;
@@ -134,8 +134,7 @@ function addEventListeners() {
   // Кнопки фильтров категорий
   document.querySelectorAll(".filter_item").forEach((item) => {
     item.addEventListener("click", function () {
-      const category = this.querySelector("span").textContent;
-      alert(`Фильтрация по категории: ${category}`);
+      alert(`Фильтры будут доступны позже`);
     });
   });
 }
