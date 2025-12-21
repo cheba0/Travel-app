@@ -210,7 +210,7 @@ router.get("/travel/:id", async (req, res) => {
     const participants = participantsResult.rows;
     const expenses = expensesResult.rows.map((exp) => ({
       id: exp.id,
-      name: exp.description || "Без названия",
+      name: exp.expense_name || "Без названия",
       date: formatDate(exp.date),
       amount: exp.amount,
       payer: exp.payer_name,

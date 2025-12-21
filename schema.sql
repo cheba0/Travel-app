@@ -11,14 +11,14 @@ CREATE TABLE trips (
     id SERIAL PRIMARY KEY,
     trip_name VARCHAR(255) NOT NULL,
     description TEXT,
-    currency VARCHAR(3) DEFAULT 'USD',
+    currency VARCHAR(3) DEFAULT 'RUB',
     start_date DATE,
     end_date DATE,
     user_id INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
     location TEXT,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    CONSTRAINT trips_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE TABLE trip_participants (
@@ -26,7 +26,6 @@ CREATE TABLE trip_participants (
     trip_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_admin BOOLEAN DEFAULT FALSE,
     UNIQUE(trip_id, user_id),
     FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -39,6 +38,7 @@ CREATE TABLE expense_categories (
 
 CREATE TABLE expenses (
     id SERIAL PRIMARY KEY,
+    expense_name VARCHAR(255) NOT NULL,
     trip_id INTEGER NOT NULL,
     paid_by INTEGER NOT NULL,
     category_id INTEGER,

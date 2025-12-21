@@ -57,6 +57,8 @@ document.addEventListener("DOMContentLoaded", function () {
         trip_id: tripId,
         paid_by: userId,
         amount: parseFloat(formData.get("amount")),
+        date: formData.get("date"),
+        expense_name: formData.get("expense_name"),
       };
 
       console.log("Данные расхода для отправки:", expenseData);
@@ -90,7 +92,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       } catch (error) {
         console.error("Ошибка:", error);
-        showMessage("Сетевая ошибка: " + error.message, "red");
+        // showMessage("Сетевая ошибка: " + error.message, "red");
       }
     });
   }

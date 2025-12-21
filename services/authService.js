@@ -168,11 +168,12 @@ class TravelValidator {
 
   // Валидация данных расхода
   static validateExpenseData(expenseData, isUpdate = false) {
-    const { expense_name, amount, date, trip_id } = expenseData;
+    const { expense_name, amount, date, trip_id, paid_by } = expenseData;
 
     // Для создания проверяем обязательные поля
     if (!isUpdate) {
-      if (!expense_name || !amount || !date || !trip_id) {
+      if (!expense_name || !amount || !date || !trip_id || !paid_by) {
+        console.log("хуй");
         throw new Error(
           "Пожалуйста, заполните все обязательные поля: название, сумма, дата, ID путешествия"
         );

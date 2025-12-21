@@ -22,7 +22,7 @@ CREATE TABLE trips (
     id SERIAL PRIMARY KEY,
     trip_name VARCHAR(255) NOT NULL,
     description TEXT,
-    currency VARCHAR(3) DEFAULT 'USD',
+    currency VARCHAR(3) DEFAULT 'RUB',
     start_date DATE,
     end_date DATE,
     user_id INTEGER NOT NULL,
@@ -37,7 +37,6 @@ CREATE TABLE trip_participants (
     trip_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_admin BOOLEAN DEFAULT FALSE,
     UNIQUE(trip_id, user_id),
     FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
