@@ -182,12 +182,6 @@ router.get("/travel/:id", async (req, res) => {
       [travelId]
     );
 
-    // Получаем расходы
-    // Получаем расходы (пока просто проверяем, есть ли они)
-    // const expensesCount = await pool.query(
-    //   "SELECT COUNT(*) FROM expenses WHERE trip_id = $1",
-    //   [travelId]
-    // );
     const expensesResult = await pool.query(
       `SELECT e.*, u.username as payer_name
        FROM expenses e

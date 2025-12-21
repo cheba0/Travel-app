@@ -6,12 +6,13 @@ document.addEventListener("DOMContentLoaded", function () {
   const expensesList = document.getElementById("expensesList");
 
   // Получаем tripId из разных источников (в порядке приоритета)
-  let tripId =
-    document.getElementById("tripId")?.value ||
-    document.querySelector('input[name="trip_id"]')?.value ||
-    localStorage.getItem("tripId") ||
-    new URLSearchParams(window.location.search).get("tripId");
-
+  const tripIdInput = document.getElementById("tripId");
+  const urlParams = new URLSearchParams(window.location.search);
+  const tripIdFromUrl = urlParams.get("trip_id");
+  if (tripIdFromUrl && tripIdInput) {
+    tripIdInput.value = tripIdFromUrl;
+  }
+  const tripId = tripIdInput?.value || tripIdFromUrl;
   const userId = localStorage.getItem("userId");
 
   console.log("Форма расходов найдена:", !!expenseForm);

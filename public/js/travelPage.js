@@ -110,18 +110,19 @@ function addEventListeners() {
   // Кнопка "Добавить первый расход"
   const addFirstBtn = document.getElementById("add_expense");
   if (addFirstBtn) {
+    console.log(window.travelData.id);
     addFirstBtn.addEventListener("click", function () {
       window.location.href = "/add_expense?trip_id=" + window.travelData.id;
     });
   }
   // В файле для списка путешествий
-  document.querySelectorAll(".add-expense-btn").forEach((button) => {
-    button.addEventListener("click", function () {
-      const tripId = this.dataset.tripId;
-      localStorage.setItem("tripId", tripId);
-      window.location.href = `/travels/${tripId}/expenses/add`;
-    });
-  });
+  // document.getElementById("add_expense").forEach((button) => {
+  //   button.addEventListener("click", function () {
+  //     const tripId = this.dataset.tripId;
+  //     localStorage.setItem("tripId", tripId);
+  //     window.location.href = `/travels/${tripId}/expenses/add`;
+  //   });
+  // });
   // Кнопка Share
   const shareBtn = document.querySelector(".participants_share");
   if (shareBtn) {

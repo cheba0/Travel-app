@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Добавить трату</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <div class="header" type="button" value="back" onclick="history.back()">
@@ -14,17 +14,18 @@
         <div class="add_exp_title">Добавление траты</div>
     </div>
      <form id="expenseForm">
+        <input type="hidden" id="tripId" name="trip_id" value="">
     <div class="add_exp_container">
         <div class="input_field">
         <input type="text" placeholder="Название">
     </div>
 
     <div class="input_field">
-        <input type="date" value="2025-11-25">
+        <input type="date">
     </div>
 
     <div class="input_field">
-        <input type="number" placeholder="Сумма">
+        <input type="number" name="amount" placeholder="Сумма">
     </div>
 
     <div class="input_field">
