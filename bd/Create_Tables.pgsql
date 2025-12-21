@@ -50,6 +50,7 @@ CREATE TABLE expense_categories (
 
 CREATE TABLE expenses (
     id SERIAL PRIMARY KEY,
+    expense_name VARCHAR(255) NOT NULL,
     trip_id INTEGER NOT NULL,
     paid_by INTEGER NOT NULL,
     category_id INTEGER,

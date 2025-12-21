@@ -1,6 +1,7 @@
 const express = require("express");
 const AuthController = require("../controllers/authController");
 const TravelController = require("../controllers/travelController");
+const ExpenseController = require("../controllers/expenseController");
 const { pool } = require("../db");
 const router = express.Router();
 
@@ -141,6 +142,8 @@ router.get("/api/travels/:id/detail", TravelController.show);
 router.get("/", TravelController.list);
 router.put("/api/travels/:id", TravelController.update);
 router.delete("/api/travels/:id", TravelController.delete);
+
+router.post("/api/expenses", ExpenseController.create);
 
 // Страница конкретного путешествия
 router.get("/travel/:id", async (req, res) => {

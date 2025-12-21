@@ -91,8 +91,25 @@ class AuthService {
     return emailRegex.test(email);
   }
 }
+// services/validationService.js
 class TravelValidator {
-  // Валидация данных при создании путешествия
+  // Проверка авторизации пользователя
+  static validateUserAuthorization(userId) {
+    if (!userId) {
+      throw new Error("Вы не авторизованы");
+    }
+    return true;
+  }
+
+  // Валидация ID (общая для всех сущностей)
+  static validateId(id, entityName = "объекта") {
+    if (!id || isNaN(parseInt(id)) || parseInt(id) <= 0) {
+      throw new Error(`Некорректный ID ${entityName}`);
+    }
+    return true;
+  }
+
+  // Валидация данных путешествия
   static validateTravelData(travelData, isUpdate = false) {
     const { trip_name, location, start_date, end_date } = travelData;
 
@@ -149,25 +166,62 @@ class TravelValidator {
     return true;
   }
 
-  // Валидация ID путешествия
-  static validateTravelId(id) {
-    if (!id || isNaN(parseInt(id)) || parseInt(id) <= 0) {
-      throw new Error("Некорректный ID путешествия");
-    }
-    return true;
-  }
+  // Валидация данных расхода
+  static validateExpenseData(expenseData, isUpdate = false) {
+    const { expense_name, amount, date, trip_id } = expenseData;
 
-  // Проверка авторизации пользователя
-  static validateUserAuthorization(userId) {
-    if (!userId) {
-      throw new Error("Вы не авторизованы");
+    // Для создания проверяем обязательные поля
+    if (!isUpdate) {
+      if (!expense_name || !amount || !date || !trip_id) {
+        throw new Error(
+          "Пожалуйста, заполните все обязательные поля: название, сумма, дата, ID путешествия"
+        );
+      }
+    } else {
+      // Для обновления проверяем только если поля предоставлены
+      if (expense_name !== undefined && !expense_name.trim()) {
+        throw new Error("Название расхода не может быть пустым");
+      }
+
+      if (amount !== undefined && (!amount || parseFloat(amount) <= 0)) {
+        throw new Error("Сумма должна быть положительным числом");
+      }
+
+      if (date !== undefined && !date) {
+        throw new Error("Дата обязательна");
+      }
     }
+
+    // Проверка суммы
+    if (amount) {
+      const amountNum = parseFloat(amount);
+      if (isNaN(amountNum) || amountNum <= 0) {
+        throw new Error("Сумма должна быть положительным числом");
+      }
+
+      if (amountNum > 10000000) {
+        throw new Error("Сумма не должна превышать 10,000,000");
+      }
+    }
+
+    // Дополнительные проверки
+    if (expense_name && expense_name.length > 255) {
+      throw new Error("Название расхода не должно превышать 255 символов");
+    }
+
+    // Проверка формата даты
+    if (date && isNaN(new Date(date).getTime())) {
+      throw new Error("Некорректный формат даты");
+    }
+
+    // Проверка описания
+    if (expenseData.description && expenseData.description.length > 500) {
+      throw new Error("Описание не должно превышать 500 символов");
+    }
+
     return true;
   }
 }
-
-// travelValidation.js
-console.log("TravelValidation загружен");
 
 class TravelFormValidator {
   // Основная валидация формы

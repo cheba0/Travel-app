@@ -114,7 +114,14 @@ function addEventListeners() {
       window.location.href = "/add_expense?trip_id=" + window.travelData.id;
     });
   }
-
+  // В файле для списка путешествий
+  document.querySelectorAll(".add-expense-btn").forEach((button) => {
+    button.addEventListener("click", function () {
+      const tripId = this.dataset.tripId;
+      localStorage.setItem("tripId", tripId);
+      window.location.href = `/travels/${tripId}/expenses/add`;
+    });
+  });
   // Кнопка Share
   const shareBtn = document.querySelector(".participants_share");
   if (shareBtn) {
