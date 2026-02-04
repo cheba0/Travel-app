@@ -20,9 +20,10 @@ body {
     top: 0;
     left: 0;
     right: 0;
+    z-index: 1000;
     justify-content: space-between;
     align-items: center;
-    padding: 14px 16px;
+    padding: 12px 16px;
     background-color: white;
     border-bottom: 1px solid #ddd;
     max-width: 390px;
@@ -48,13 +49,13 @@ body {
 }
 
 .main_container {
-    margin-top: 62px;
+    margin-top: 60px;
     padding: 16px;
 }
 
 .main_container h1 {
     font-size: 24px;
-    font-weight: 700;
+    font-weight: 650;
 }
 
 .year {
@@ -75,14 +76,14 @@ body {
     border-radius: 16px;
     background: #ffffff;
     border-left: 4px solid #f5de4c;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
     transition: transform 0.1s ease, box-shadow 0.1s ease;
     cursor: pointer;
 }
 
 .card:active {
     transform: scale(0.98);
-    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
 }
 
 .card_left {
@@ -150,6 +151,7 @@ body {
 .hero {
     position: relative;
     height: 20vh;
+    margin-top: 58px;
 }
 
 .hero_image {
@@ -162,24 +164,29 @@ body {
 
 .overlay_block {
     position: absolute;
-    bottom: -40px;
-    left: 50px;
-    right: 50px;
-    background-color: #f0f0f0;
-    border-radius: 12px;
+    bottom: -35px;
+    left: 40px;
+    right: 40px;
+    background-color: #ffffff;
+    border-radius: 16px;
     padding: 40px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
     text-align: center;
 }
 
 .overlay_title {
-    font-size: 1.5rem;
+    font-size: 22px;
     font-weight: bold;
     text-align: left;
     margin: 0;
+    max-width: 210px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .overlay_date {
-    font-size: 1rem;
+    font-size: 17px;
     color: #666;
     text-align: left;
     margin: 0;
@@ -190,100 +197,119 @@ body {
 }
 
 .expenses_header {
-    margin-top: 16px;
+    margin-top: 10px;
     display: flex;
     justify-content: space-between;
 }
 
 .expenses_title {
+    margin-top: 4px;
     text-align: left;
-    font-size: 1.25rem;
+    font-size: 21px;
     font-weight: 500;
     color: #000000;
-    margin-bottom: 15px;
 }
 
-.filter_icon{
+.filter_icon {
     margin-top: 6px;
-    height: 30px;
+    padding-top: 4px;
+    padding-left: 4px;
+    padding-right: 4px;
     background-color: #ffffff;
     border: none;
+    border-radius: 12px;
+}
+
+.filter_icon:hover {
+    background: #e5e5e5;
+}
+
+.filter_icon.active {
+    background: #e5e5e5;
 }
 
 .expenses_filters {
     display: flex;
-    gap: 15px;
-    overflow-x: auto;
-    padding-bottom: 8px;
+    gap: 6px;
+    padding-bottom: 4px;
     border-bottom: 1px solid #000000;
 }
 
 .filter_item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border: none;
+    background: #ffffff;
+    padding: 4px;
     border-radius: 12px;
+    transition: 0.2s;
 }
 
-.expenses_list {
-    margin-top: 15px;
+.filter_item:hover {
+    background: #e5e5e5;
+}
+
+.filter_item.active {
+    background: #e5e5e5;
 }
 
 .expense_item {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-
+    margin-bottom: 4px;
+    border-radius: 8px;
+    border: 1px solid #e4e4e4;
 }
 
 .expense_item_main {
     display: flex;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 8px;
     justify-content: space-between;
-    align-items: flex-start;
-    width: 100%;
 }
 
-.expense_item_header {
-    display: flex;
+.expense_item_header{
     align-items: center;
-    gap: 8px;
-
+    gap: 6px;
+    min-width: 0; 
+    flex: 1;
+    display: flex;
 }
 
 .expenses_item_number {
-    font-size: 1rem;
-    color: #000000;
+    font-size: 17px;
     font-weight: 500;
-    min-width: 20px;
+    min-width: 16px;
+    flex-shrink: 0;
 }
 
 .expense_item_name {
-    font-size: 1rem;
-    color: #000000;
+    font-size: 17px;
     font-weight: 500;
-    line-height: 1.4;
+    flex: 1;     
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .expense_item_date {
-    font-size: 0.85rem;
+    font-size: 14px;
     color: #525252;
     font-weight: 400;
-    margin-left: 16px;
 }
 
 .expense_item_cost {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 100%;
-    padding: 10px 0;
-    border-bottom: 1px solid #000000;
+    padding-bottom: 8px;
+    padding-top: 6px;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .expense_item_amount {
     font-size: 1rem;
     font-weight: 600;
-    color: #000000;
+    color: #4a4a4a;
 
 }
 
@@ -291,9 +317,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: 16px;
+    margin-left: 4px;
     border: none;
     background-color: #ffffff;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
 .expenses_nav {
@@ -397,7 +425,7 @@ body {
 .input_field {
     padding: 0 16px;
     width: 100%;
-    margin-bottom: 16px; 
+    margin-bottom: 16px;
 }
 
 .input_field input {
@@ -409,7 +437,7 @@ body {
     outline: none;
 }
 
-.add_exp_title{
+.add_exp_title {
     position: absolute;
     left: 30%;
     font-size: 18px;
@@ -417,7 +445,7 @@ body {
 }
 
 .continue_button {
-    color:#000000;
+    color: #000000;
     margin: 16px;
     width: 360px;
     background-color: #f5de4c;
@@ -457,39 +485,38 @@ body {
     font-weight: 500;
 }
 
-.add_exp_container{
-    padding: 10% 0;
+.add_exp_container {
+    padding: 80px 0;
 }
 
 .file_upload {
-    padding: 6px 16px;
-    font-size: 14px;
+    padding: 4px 16px;
 }
 
-.file_upload_label {
-    font-size: 14px;
-    padding: 10px 0;
-    display: inline-block;
-    font-weight: 500;
+.camera_btn{
+    margin-top: 4px;
+    border: none;
+    background: none;
+    cursor: pointer;
 }
 
 .file_upload_input {
     display: none;
 }
 
-.create_travel_container{
+.create_travel_container {
     padding: 20px 16px;
     min-height: 100vh;
 }
 
-.create_travel_title{
+.create_travel_title {
     text-align: center;
     font-size: 18px;
     font-weight: 600;
     padding: 20px 0;
 }
 
-.image_upload_block{
+.image_upload_block {
     margin: 15px;
     width: 360px;
     height: 160px;
@@ -501,14 +528,14 @@ body {
     overflow: hidden;
 }
 
-.image_preview{
+.image_preview {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
 .create_button {
-    color:#000000;
+    color: #000000;
     margin: 15px;
     width: 360px;
     background-color: #f5de4c;
@@ -521,21 +548,21 @@ body {
     border: none;
 }
 
-.description_block textarea{
+.description_block textarea {
     width: 360px;
     height: 100px;
     margin-left: 15px;
     margin-right: 15px;
 }
 
-.create_travel_header{
+.create_travel_header {
     align-items: center;
     padding: 0 16px;
     border-bottom: 2px solid #ddd;
     position: relative;
 }
 
-.hello_conteiner{
+.hello_conteiner {
     flex-direction: column;
     align-items: center;
     text-align: center;
@@ -543,7 +570,7 @@ body {
     width: 100%;
 }
 
-.hello_text{
+.hello_text {
     margin-top: 55%;
     font-size: 20px;
     font-weight: 700;
@@ -553,8 +580,8 @@ body {
     max-width: 260px;
 }
 
-.hello_button{
-    color:#000000;
+.hello_button {
+    color: #000000;
     margin: 15px;
     width: 360px;
     background-color: #f5de4c;
@@ -567,14 +594,14 @@ body {
     border: none;
 }
 
-.password_field{
+.password_field {
     position: relative;
     padding: 0 16px;
     width: 100%;
     margin-bottom: 16px;
 }
 
-.password_field input{
+.password_field input {
     width: 100%;
     padding: 14px 40px 14px 14px;
     border: none;
@@ -598,11 +625,11 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
-    margin-top: 55px;
+    padding: 10px 14px;
+    margin-top: 50px;
     margin-left: 10px;
     margin-right: 10px;
-    border-radius: 12px;
+    border-radius: 16px;
     border: 2px solid #dddddd;
     text-decoration: none;
     color: #000;
@@ -615,7 +642,6 @@ body {
 }
 
 .participants_title {
-    margin-top: 2px;
     font-size: 17px;
     font-weight: 600;
 }
@@ -649,7 +675,7 @@ body {
     font-weight: 600;
 }
 
-.no_travel_conteiner{
+.no_travel_conteiner {
     flex-direction: column;
     align-items: center;
     text-align: center;
@@ -657,7 +683,7 @@ body {
     width: 100%;
 }
 
-.no_travel_text{
+.no_travel_text {
     margin-top: 50%;
     font-size: 18px;
     font-weight: 600;
@@ -666,11 +692,73 @@ body {
     text-align: center;
     max-width: 300px;
 }
-.no_travel_textadd{
+
+.no_travel_textadd {
     font-size: 18px;
     font-weight: 600;
     margin-bottom: 12px;
     margin-left: 25px;
     text-align: center;
     max-width: 340px;
+}
+
+.download,
+.delete_travel {
+    border: none;
+    cursor: pointer;
+    background: none;
+}
+
+.expense_item_actions {
+    display: flex;
+    gap: 6px;
+    margin-left: 8px;
+}
+
+.expense_edit,
+.expense_delete {
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+}
+
+.travel_actions{
+    display: flex;
+    gap: 8px;
+}
+
+.save_btn{
+    color: #000000;
+    width: 180px;
+    background-color: #f5de4c;
+    padding: 10px 14px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 12px;
+    border: none;
+}
+
+.cancel_btn{
+   color: #000000;
+    width: 180px;
+    background-color: #afafafae;
+    padding: 10px 14px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 12px;
+    border: none; 
+}
+
+.edit_exp_actions{
+    margin-left: 14px;
+}
+
+.file_upload_label {
+    font-size: 14px;
+    padding: 6px 0;
+    display: inline-block;
+    font-weight: 500;
 }
