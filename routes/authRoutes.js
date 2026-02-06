@@ -2,6 +2,7 @@ const express = require("express");
 const AuthController = require("../controllers/authController");
 const TravelController = require("../controllers/travelController");
 const ExpenseController = require("../controllers/expenseController");
+const qrController = require("../controllers/qrController");
 const { pool } = require("../db");
 const router = express.Router();
 
@@ -82,7 +83,7 @@ router.get("/api/auth/check", async (req, res) => {
       // Получаем данные пользователя из базы данных
       const result = await pool.query(
         "SELECT id, username, email FROM users WHERE id = $1",
-        [req.session.userId]
+        [req.session.userId],
       );
 
       if (result.rows.length > 0) {
@@ -144,6 +145,38 @@ router.put("/api/travels/:id", TravelController.update);
 router.delete("/api/travels/:id", TravelController.delete);
 
 router.post("/api/expenses", ExpenseController.create);
+router.get("/api/expenses/:id", ExpenseController.getById);
+router.put("/api/expenses/:id", ExpenseController.update);
+router.delete("/api/expenses/:id", ExpenseController.delete);
+
+// Маршрут для отображения страницы сканирования
+router.get("/scan/:travelId", qrController.showScannerPage);
+// Маршрут для ОБРАБОТКИ ДАННЫХ ЧЕКА (замените старый /process)
+// router.post("/process-receipt", qrController.processReceiptQR);
+
+router.post("/process-receipt", async (req, res) => {
+  console.log("🔥 ПРОСТОЙ ОБРАБОТЧИК /process-receipt ВЫЗВАН");
+  console.log("📦 Полное тело запроса:", JSON.stringify(req.body, null, 2));
+  console.log("👤 Сессия:", req.session);
+
+  try {
+    // Простой тестовый ответ
+    res.json({
+      success: true,
+      message: "✅ Простой обработчик работает!",
+      receivedData: req.body,
+      timestamp: new Date().toISOString(),
+      server: "Node.js " + process.version,
+    });
+  } catch (error) {
+    console.error("❌ Ошибка в простом обработчике:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      stack: error.stack,
+    });
+  }
+});
 
 // Страница конкретного путешествия
 router.get("/travel/:id", async (req, res) => {
@@ -163,7 +196,7 @@ router.get("/travel/:id", async (req, res) => {
        FROM trips t
        LEFT JOIN users u ON t.user_id = u.id
        WHERE t.id = $1`,
-      [travelId]
+      [travelId],
     );
 
     if (result.rows.length === 0) {
@@ -179,7 +212,7 @@ router.get("/travel/:id", async (req, res) => {
        FROM trip_participants tp
        JOIN users u ON tp.user_id = u.id
        WHERE tp.trip_id = $1`,
-      [travelId]
+      [travelId],
     );
 
     const expensesResult = await pool.query(
@@ -188,7 +221,7 @@ router.get("/travel/:id", async (req, res) => {
        JOIN users u ON e.paid_by = u.id
        WHERE e.trip_id = $1
        ORDER BY e.date DESC`,
-      [travelId]
+      [travelId],
     );
 
     console.log(`✅ Загружено: ${expensesResult.rows.length} расходов`);
@@ -209,7 +242,7 @@ router.get("/travel/:id", async (req, res) => {
 
     const participants = participantsResult.rows;
     const expenses = expensesResult.rows.map((exp) => ({
-      id: exp.id,
+      id: exp.id, // ← ЭТА СТРОКА ОБЯЗАТЕЛЬНА!
       name: exp.expense_name || "Без названия",
       date: formatDate(exp.date),
       amount: exp.amount,

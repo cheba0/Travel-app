@@ -45,6 +45,8 @@ CREATE TABLE expenses (
     amount DECIMAL(10,2) NOT NULL,
     description VARCHAR(500),
     date DATE NOT NULL,
+    raw_qr_data TEXT,
+    shop_identifier VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_settled BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE,
@@ -85,3 +87,4 @@ CREATE TABLE expense_files (
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE
 );
+
