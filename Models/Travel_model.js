@@ -106,15 +106,42 @@ class Travel {
     try {
       const result = await pool.query(
         `UPDATE trips 
-         SET trip_name = $1, location = $2, start_date = $3, end_date = $4, description = $5, updated_at = NOW()
-         WHERE id = $6 AND user_id = $7
-         RETURNING id, trip_name, location, start_date, end_date, description, updated_at`,
+       SET trip_name = $1, location = $2, start_date = $3, end_date = $4, 
+           description = $5, updated_at = NOW()
+       WHERE id = $6 AND user_id = $7
+       RETURNING id, trip_name, location, start_date, end_date, 
+                description, user_id, updated_at`,
         [trip_name, location, start_date, end_date, description, id, userId],
       );
 
       return result.rows[0];
     } catch (error) {
       console.error("Ошибка при обновлении путешествия:", error);
+      throw error;
+    }
+  }
+
+  // ДОБАВЬТЕ этот метод если его нет - получение путешествия для редактирования
+  static async findForEdit(id, userId) {
+    try {
+      const result = await pool.query(
+        `SELECT t.*, u.username as creator_name
+       FROM trips t
+       LEFT JOIN users u ON t.user_id = u.id
+       WHERE t.id = $1 AND t.user_id = $2`,
+        [id, userId],
+      );
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return result.rows[0];
+    } catch (error) {
+      console.error(
+        "Ошибка при получении путешествия для редактирования:",
+        error,
+      );
       throw error;
     }
   }
