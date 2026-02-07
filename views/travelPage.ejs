@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru">
-    
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= travel.name %></title>
     <link rel="stylesheet" href="/css/style.css">
-    <script src="/js/travelPage.js" defer></script>
 </head>
 
 <body>
@@ -29,13 +27,25 @@
         </div>
     </div>
 
-    <a href="participants" class="participants_block">
+    <!-- ИЗМЕНИТЕ эту ссылку: -->
+    <div class="participants_block" onclick="inviteParticipants()">
         <div class="participants_left">
             <span class="participants_title">Участники (<%= participants.length %>)</span>
-            <div class="participants_avatars" id="participantsAvatars"></div>
+            <div class="participants_avatars" id="participantsAvatars">
+                <% participants.forEach(function(participant, index) { %>
+                    <% if (index < 3) { %>
+                        <div class="participant-avatar">
+                            <%= participant.username.charAt(0).toUpperCase() %>
+                        </div>
+                    <% } %>
+                <% }); %>
+                <% if (participants.length > 3) { %>
+                    <div class="participant-avatar more">+<%= participants.length - 3 %></div>
+                <% } %>
+            </div>
         </div>
         <button class="participants_share">Share</button>
-    </a>
+    </div>
 
     <div class ="expenses">
         <div class="expenses_header">
@@ -68,11 +78,8 @@
                             <span class="expense_item_amount"><%= expense.amount %> <%= expense.currency %></span>
                             <button class="expense_item_receipt" onclick="showEditExpenseModal(<%= expense.id %>)">
                             <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -1060 960 960" width="20px" fill="#000000">
-                                <path d="M120-80v-800l60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60v800l-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60Zm120-200h480v-80H240v80Zm0-160h480v-80H240v80Zm0-160h480v-80H240v80Zm-40 404h560v-568H200v568Zm0-568v568-568Z"/>
+                                <path d="M120-80v-800l60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60 60 60 60-60v800l-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60-60-60-60 60Zm120-200h480v-80H240v80Zm0-160h480v-80H240v80Zm0-160h480v-80H240v80Zm-40 404h560v-568H200v568Zm0-568v568-568Z"/>
                             </svg>
-                            <a href="/scan/<%= travel.id %>" class="btn">
-                            <i class="camera-icon"></i> Scan Receipt
-                            </a>
                             </button>
                         </div>
                     </div>
@@ -86,8 +93,32 @@
         <a class="nav" id="add_expense"><svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="30px" fill="#e3e3e3"><path d="M440-280h80v-160h160v-80H520v-160h-80v160H280v80h160v160Zm40 200q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg></a>
     </div>
 
+    <!-- Кнопка для сканирования (отдельно) -->
+    <a href="/scan/<%= travel.id %>" class="btn" style="position: fixed; bottom: 100px; right: 20px; background: #007bff; color: white; padding: 15px; border-radius: 50%; text-decoration: none;">
+        📷 Scan Receipt
+    </a>
+
+    <!-- Модальное окно для приглашения участников -->
+    <div id="inviteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="background: white; width: 90%; max-width: 500px; margin: 50px auto; padding: 20px; border-radius: 10px;">
+            <h2>👥 Пригласить участников</h2>
+            <div style="margin: 20px 0;">
+                <input type="text" id="userSearch" placeholder="Поиск по имени или email..." 
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                <div id="searchResults" style="margin-top: 10px; max-height: 200px; overflow-y: auto;"></div>
+            </div>
+            <div style="margin: 20px 0;">
+                <h4>Участники:</h4>
+                <div id="currentParticipants"></div>
+            </div>
+            <button onclick="closeInviteModal()" style="background: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 5px;">
+                Закрыть
+            </button>
+        </div>
+    </div>
+
     <script>
-        // Передаем данные из сервера в JavaScript
+        // Инициализация данных
         window.travelData = {
             id: '<%= travel.id %>',
             name: '<%= travel.name %>',
@@ -96,31 +127,173 @@
             expenses: <%- expensesJSON || '[]' %>,
             userId: '<%= userId %>'
         };
+
+        // Подсчет общей суммы
+        document.addEventListener('DOMContentLoaded', function() {
+            const total = window.travelData.expenses.reduce((sum, expense) => {
+                return sum + parseFloat(expense.amount || 0);
+            }, 0);
+            
+            document.getElementById('totalAmount').textContent = 
+                `Всего: ${total.toFixed(2)} ${window.travelData.currency}`;
+        });
+
+        // Функции для приглашения участников
+        let inviteModalOpen = false;
+
+        function inviteParticipants() {
+            document.getElementById('inviteModal').style.display = 'block';
+            inviteModalOpen = true;
+            loadCurrentParticipants();
+        }
+
+        function closeInviteModal() {
+            document.getElementById('inviteModal').style.display = 'none';
+            inviteModalOpen = false;
+            document.getElementById('searchResults').innerHTML = '';
+            document.getElementById('userSearch').value = '';
+        }
+
+        async function loadCurrentParticipants() {
+            try {
+                const response = await fetch(`/api/trips/${window.travelData.id}/participants`);
+                const data = await response.json();
+                
+                const container = document.getElementById('currentParticipants');
+                if (data.success && data.participants.length > 0) {
+                    let html = '<ul style="list-style: none; padding: 0;">';
+                    data.participants.forEach(participant => {
+                        html += `<li style="padding: 5px 0;">👤 ${participant.username} (${participant.email})</li>`;
+                    });
+                    html += '</ul>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<p>Участников пока нет</p>';
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки участников:', error);
+            }
+        }
+
+        // Поиск пользователей
+        let searchTimeout;
+        document.getElementById('userSearch').addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => searchUsers(e.target.value), 500);
+        });
+
+        async function searchUsers(query) {
+            if (!query || query.length < 2) {
+                document.getElementById('searchResults').innerHTML = '';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/users/search?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                const resultsDiv = document.getElementById('searchResults');
+                resultsDiv.innerHTML = '';
+                
+                if (data.success && data.users.length > 0) {
+                    data.users.forEach(user => {
+                        const userDiv = document.createElement('div');
+                        userDiv.style.padding = '10px';
+                        userDiv.style.borderBottom = '1px solid #eee';
+                        userDiv.style.display = 'flex';
+                        userDiv.style.justifyContent = 'space-between';
+                        userDiv.style.alignItems = 'center';
+                        
+                        userDiv.innerHTML = `
+                            <div>
+                                <strong>${user.username}</strong><br>
+                                <small>${user.email}</small>
+                            </div>
+                            <button onclick="inviteUser(${user.id}, '${user.username}')" 
+                                    style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+                                Пригласить
+                            </button>
+                        `;
+                        resultsDiv.appendChild(userDiv);
+                    });
+                } else {
+                    resultsDiv.innerHTML = '<p style="color: #666; padding: 10px;">Пользователи не найдены</p>';
+                }
+            } catch (error) {
+                console.error('Ошибка поиска:', error);
+            }
+        }
+
+        // Пригласить пользователя
+        async function inviteUser(userId, username) {
+            try {
+                const response = await fetch(`/api/trips/${window.travelData.id}/invite`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: userId })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`✅ Пользователь ${username} приглашен!`);
+                    loadCurrentParticipants(); // Обновляем список
+                    document.getElementById('searchResults').innerHTML = '';
+                    document.getElementById('userSearch').value = '';
+                } else {
+                    alert(`❌ ${data.message || 'Ошибка приглашения'}`);
+                }
+            } catch (error) {
+                console.error('Ошибка приглашения:', error);
+                alert('❌ Ошибка приглашения');
+            }
+        }
+
+        // Закрытие модального окна по клику вне его
+        document.getElementById('inviteModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeInviteModal();
+            }
+        });
+
+        // Вешаем обработчик на кнопку Share
+        document.addEventListener('DOMContentLoaded', function() {
+            const shareButton = document.querySelector('.participants_share');
+            if (shareButton) {
+                shareButton.addEventListener('click', inviteParticipants);
+            }
+            
+            // Обработчик для всего блока участников
+            const participantsBlock = document.querySelector('.participants_block');
+            if (participantsBlock) {
+                participantsBlock.addEventListener('click', function(e) {
+                    if (e.target !== shareButton && !shareButton.contains(e.target)) {
+                        inviteParticipants();
+                    }
+                });
+            }
+        });
+
+        // CSS для аватаров участников
+        const style = document.createElement('style');
+        style.textContent = `
+            .participant-avatar {
+                display: inline-block;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background: #007bff;
+                color: white;
+                text-align: center;
+                line-height: 32px;
+                margin-right: -10px;
+                border: 2px solid white;
+            }
+            .participant-avatar.more {
+                background: #6c757d;
+            }
+        `;
+        document.head.appendChild(style);
     </script>
-    <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ТРАТЫ -->
-<div id="editExpenseModal" class="modal" style="display: none;">
-  <div class="modal-content">
-    <span class="close" onclick="closeEditExpenseModal()" style="cursor: pointer;">&times;</span>
-    <h3>Редактировать трату</h3>
-    <form id="editExpenseForm">
-      <input type="hidden" id="expense_id" name="id"> <!-- ← ЭТОТ ID ОБЯЗАТЕЛЕН! -->
-      <input type="hidden" id="trip_id" name="trip_id" value="<%= travel.id %>">
-
-      <label>Название:</label>
-      <input type="text" id="expense_name" required>
-
-      <label>Сумма:</label>
-      <input type="number" step="0.01" id="amount" required>
-
-      <label>Дата:</label>
-      <input type="date" id="date" required>
-
-      <button type="submit" onclick="submitEditExpenseForm(event)">Сохранить</button>
-      <button type="button" onclick="closeEditExpenseModal()">Отмена</button>
-    </form>
-  </div>
-</div>
-    <script src="/js/expenseFormUpdate.js"></script>
 </body>
-
 </html>

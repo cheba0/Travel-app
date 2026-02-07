@@ -1,4 +1,3 @@
-// controllers/travelController.js
 const Travel = require("../Models/Travel_model");
 const { TravelValidator } = require("../services/authService");
 
@@ -12,10 +11,7 @@ class TravelController {
         req.body;
       const userId = req.session.userId;
 
-      // Проверка авторизации
       TravelValidator.validateUserAuthorization(userId);
-
-      // Валидация данных путешествия
       TravelValidator.validateTravelData({
         trip_name,
         location,
@@ -23,7 +19,6 @@ class TravelController {
         end_date,
       });
 
-      // Создаем путешествие
       const travel = await Travel.create({
         trip_name,
         location,
@@ -56,8 +51,8 @@ class TravelController {
           error.message.includes("авторизованы")
             ? 401
             : error.message.includes("обязательные поля")
-            ? 400
-            : 500
+              ? 400
+              : 500,
         )
         .json({
           success: false,
@@ -72,11 +67,24 @@ class TravelController {
 
       TravelValidator.validateUserAuthorization(userId);
 
+      // Используем обновленный метод модели
       const travels = await Travel.findByUserId(userId);
+
+      // Добавляем участников к каждому путешествию
+      const travelsWithParticipants = await Promise.all(
+        travels.map(async (travel) => {
+          const participants = await Travel.getParticipants(travel.id);
+          return {
+            ...travel,
+            participants: participants,
+            participant_count: participants.length,
+          };
+        }),
+      );
 
       return res.json({
         success: true,
-        travels,
+        travels: travelsWithParticipants,
       });
     } catch (error) {
       console.error("Get user travels error:", error);
@@ -97,6 +105,7 @@ class TravelController {
       TravelValidator.validateUserAuthorization(userId);
       TravelValidator.validateTravelId(id);
 
+      // Используем обновленный метод модели с проверкой доступа
       const travel = await Travel.findById(id, userId);
 
       if (!travel) {
@@ -106,17 +115,24 @@ class TravelController {
         });
       }
 
+      // Получаем участников
+      const participants = await Travel.getParticipants(id);
+
       return res.json({
         success: true,
-        travel,
+        travel: {
+          ...travel,
+          participants: participants,
+          participant_count: participants.length,
+        },
       });
     } catch (error) {
       console.error("Get travel by id error:", error);
       const statusCode = error.message.includes("авторизованы")
         ? 401
         : error.message.includes("ID")
-        ? 400
-        : 500;
+          ? 400
+          : 500;
       return res.status(statusCode).json({
         success: false,
         error: error.message || "Внутренняя ошибка сервера",
@@ -128,9 +144,20 @@ class TravelController {
     try {
       let travel = null;
 
-      // Если редактируем существующее путешествие
       if (req.params.id) {
         TravelValidator.validateTravelId(req.params.id);
+
+        // Проверяем доступ
+        const hasAccess = await Travel.hasAccess(
+          req.params.id,
+          req.session.userId,
+        );
+        if (!hasAccess) {
+          return res.status(403).render("error", {
+            error: "Нет доступа к этому путешествию",
+            user: req.session.user,
+          });
+        }
 
         travel = await Travel.findById(req.params.id, req.session.userId);
 
@@ -140,16 +167,16 @@ class TravelController {
             user: req.session.user,
           });
         }
+
+        // Получаем участников для отображения
+        travel.participants = await Travel.getParticipants(req.params.id);
       }
 
       res.render("travelDetail", {
-        // travel: travel,
-        // user: req.session.user,
-        // title: travel ? "Редактировать" : "Создать",
-        title: "Редактировать путешествие",
+        title: travel ? "Редактировать" : "Создать",
         travel: travel,
         user: { id: req.session.userId },
-        successMessage: null, // или req.flash('success') если используете flash
+        successMessage: null,
         error: null,
       });
     } catch (error) {
@@ -163,12 +190,27 @@ class TravelController {
 
   static async list(req, res) {
     try {
-      TravelValidator.validateUserAuthorization(req.session.userId);
+      const userId = req.session.userId;
 
-      const travels = await Travel.findByUserId(req.session.userId);
+      TravelValidator.validateUserAuthorization(userId);
+
+      // Используем обновленный метод модели
+      const travels = await Travel.findByUserId(userId);
+
+      // Добавляем участников к каждому путешествию
+      const travelsWithParticipants = await Promise.all(
+        travels.map(async (travel) => {
+          const participants = await Travel.getParticipants(travel.id);
+          return {
+            ...travel,
+            participants: participants,
+            participant_count: participants.length,
+          };
+        }),
+      );
 
       res.render("travelList", {
-        travels: travels,
+        travels: travelsWithParticipants,
         user: req.session.user,
         successMessage: req.query.success,
         error: req.query.error,
@@ -184,7 +226,25 @@ class TravelController {
 
   static async show(req, res) {
     try {
-      const travel = await Travel.findById(req.params.id);
+      const userId = req.session.userId;
+
+      if (!userId) {
+        return res.status(401).render("error", {
+          error: "Требуется авторизация",
+          user: null,
+        });
+      }
+
+      // Проверяем доступ
+      const hasAccess = await Travel.hasAccess(req.params.id, userId);
+      if (!hasAccess) {
+        return res.status(403).render("error", {
+          error: "Нет доступа к этому путешествию",
+          user: req.session.user,
+        });
+      }
+
+      const travel = await Travel.findById(req.params.id, userId);
 
       if (!travel) {
         return res.status(404).render("error", {
@@ -193,8 +253,15 @@ class TravelController {
         });
       }
 
+      // Получаем участников
+      const participants = await Travel.getParticipants(req.params.id);
+
       res.render("travel-details", {
-        travel: travel,
+        travel: {
+          ...travel,
+          participants: participants,
+          participant_count: participants.length,
+        },
         user: req.session.user,
         successMessage: req.query.success,
         error: req.query.error,
@@ -224,15 +291,23 @@ class TravelController {
           start_date,
           end_date,
         },
-        true
-      ); // true - означает режим обновления
+        true,
+      );
 
+      // Проверяем, является ли пользователь создателем
       const travel = await Travel.findById(id, userId);
-
       if (!travel) {
         return res.status(404).json({
           success: false,
-          error: "Путешествие не найдено или у вас нет к нему доступа",
+          error: "Путешествие не найдено или у вас нет прав для редактирования",
+        });
+      }
+
+      // Только создатель может редактировать
+      if (travel.user_id !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: "Только создатель может редактировать путешествие",
         });
       }
 
@@ -254,8 +329,8 @@ class TravelController {
       const statusCode = error.message.includes("авторизованы")
         ? 401
         : error.message.includes("ID") || error.message.includes("обязательные")
-        ? 400
-        : 500;
+          ? 400
+          : 500;
       return res.status(statusCode).json({
         success: false,
         error: error.message || "Внутренняя ошибка сервера",
@@ -271,12 +346,29 @@ class TravelController {
       TravelValidator.validateUserAuthorization(userId);
       TravelValidator.validateTravelId(id);
 
+      // Проверяем, является ли пользователь создателем
+      const travel = await Travel.findById(id, userId);
+      if (!travel) {
+        return res.status(404).json({
+          success: false,
+          error: "Путешествие не найдено",
+        });
+      }
+
+      // Только создатель может удалять
+      if (travel.user_id !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: "Только создатель может удалить путешествие",
+        });
+      }
+
       const deletedTravel = await Travel.delete(id, userId);
 
       if (!deletedTravel) {
         return res.status(404).json({
           success: false,
-          error: "Путешествие не найдено или у вас нет к нему доступа",
+          error: "Путешествие не найдено",
         });
       }
 
@@ -289,8 +381,8 @@ class TravelController {
       const statusCode = error.message.includes("авторизованы")
         ? 401
         : error.message.includes("ID")
-        ? 400
-        : 500;
+          ? 400
+          : 500;
       return res.status(statusCode).json({
         success: false,
         error: error.message || "Внутренняя ошибка сервера",

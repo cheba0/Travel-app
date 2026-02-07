@@ -15,150 +15,267 @@ class qrController {
     });
   }
 
-  // Обработать QR-код (упрощенная версия)
+  // Обработать QR-код
   async processReceiptQR(req, res) {
     console.log("\n=== НАЧАЛО ОБРАБОТКИ ЧЕКА ===");
 
     try {
-      // Детальное логирование
-      console.log("📦 Headers:", JSON.stringify(req.headers, null, 2));
-      console.log("📦 Body:", JSON.stringify(req.body, null, 2));
-      console.log("📦 Session:", req.session);
-      console.log("📦 Raw body:", req.body);
-
-      // Проверка body
-      if (!req.body) {
-        throw new Error("req.body is null or undefined");
-      }
-
       const { qrRawData, travelId } = req.body;
-      const userId = req.session.userId || 1; // Для теста
+      const userId = req.session.userId || 1;
 
-      console.log("✅ Данные получены:", { qrRawData, travelId, userId });
+      console.log("✅ Данные получены:", {
+        qrRawData: qrRawData?.substring(0, 50) + "...",
+        travelId,
+        userId,
+      });
 
-      // Проверяем обязательные поля
       if (!qrRawData) {
-        console.error("❌ Ошибка: qrRawData отсутствует");
         return res.status(400).json({
           success: false,
           message: "Отсутствуют данные QR-кода",
-          debug: { body: req.body },
         });
       }
 
-      // ПРОСТОЙ ПАРСИНГ
-      const amount = this.extractAmount(qrRawData);
-      console.log("✅ Извлеченная сумма:", amount);
+      // Извлекаем сумму И дату из QR-кода
+      const { amount, date } = this.extractReceiptData(qrRawData);
+      console.log("💰 Извлеченная сумма:", amount);
+      console.log("📅 Извлеченная дата:", date);
 
       if (amount <= 0) {
         return res.status(400).json({
           success: false,
-          message: `Не удалось извлечь сумму из QR-кода: ${qrRawData.substring(0, 50)}...`,
-          debug: { qrRawData },
+          message: "Не удалось извлечь сумму из QR-кода",
         });
       }
 
-      // Сохраняем в БД
-      const expense = await this.saveExpense({
+      console.log("💾 Сохраняем в БД...");
+      const newExpense = await this.saveExpense({
         travelId: parseInt(travelId) || 1,
         userId: userId,
         amount: amount,
         description: `Чек покупки (${amount} руб.)`,
         qrData: qrRawData,
+        date: date, // Передаем дату из чека
       });
 
-      console.log("✅ Чек сохранен:", expense);
+      console.log("✅ Чек сохранен с датой:", newExpense.date);
 
-      // УСПЕШНЫЙ ОТВЕТ - ДОЛЖЕН СОДЕРЖАТЬ expense с amount!
+      // УСПЕШНЫЙ ОТВЕТ
       res.json({
         success: true,
-        message: "Чек успешно добавлен из чека!",
+        message: "Чек успешно добавлен!",
         expense: {
-          id: newExpense.id, // ОБЯЗАТЕЛЬНО
-          amount: newExpense.amount, // ОБЯЗАТЕЛЬНО - именно это поле ищет клиент
-          description: newExpense.description || "Чек покупки",
-          date: newExpense.date || new Date(),
-          category: newExpense.category || "Покупки",
-        },
-        debug: {
-          // опционально
-          rawData: qrRawData?.substring(0, 100),
-          timestamp: new Date().toISOString(),
+          id: newExpense.id,
+          amount: newExpense.amount,
+          description: newExpense.description || newExpense.expense_name,
+          date: newExpense.date, // Дата из чека
+          created_at: newExpense.created_at,
+          category: "Покупки",
         },
       });
     } catch (error) {
-      console.error("Ошибка:", error);
+      console.error("🔥 ОШИБКА в processReceiptQR:", error.message);
+
       res.status(500).json({
-        success: false, // Важно: success: false при ошибке
-        message: "Ошибка обработки чека",
-        error:
-          process.env.NODE_ENV === "development" ? error.message : undefined,
+        success: false,
+        message: "Ошибка обработки чека: " + error.message,
       });
     }
   }
 
-  // Извлечение суммы из QR-строки
-  extractAmount(qrString) {
-    console.log("🔍 Извлечение суммы из:", qrString.substring(0, 100));
+  // ИЗВЛЕЧЕНИЕ ДАННЫХ ИЗ ЧЕКА (сумма + дата)
+  extractReceiptData(qrString) {
+    console.log("🔍 Извлечение данных из чека:", qrString.substring(0, 100));
 
-    // Пробуем найти сумму по ключу 's='
-    if (qrString.includes("s=")) {
-      const match = qrString.match(/s=([\d.,]+)/);
-      if (match && match[1]) {
-        const amount = parseFloat(match[1].replace(",", "."));
+    let amount = 0;
+    let date = null;
+
+    // 1. ФИСКАЛЬНЫЕ QR-коды РФ (ФНС)
+    if (qrString.includes("t=") && qrString.includes("s=")) {
+      console.log("🧾 Фискальный QR-код (ФНС РФ)");
+
+      // Извлекаем сумму (s=)
+      const amountMatch = qrString.match(/s=([\d.,]+)/);
+      if (amountMatch && amountMatch[1]) {
+        amount = parseFloat(amountMatch[1].replace(",", "."));
         if (!isNaN(amount) && amount > 0) {
-          return amount;
+          console.log("✅ Сумма из чека:", amount, "руб.");
+        }
+      }
+
+      // Извлекаем дату (t=)
+      const dateMatch = qrString.match(/t=(\d{8})T?(\d{0,6})/);
+      if (dateMatch && dateMatch[1]) {
+        const dateStr = dateMatch[1]; // 20250206
+        // Преобразуем 20250206 в 2025-02-06
+        const year = dateStr.substring(0, 4);
+        const month = dateStr.substring(4, 6);
+        const day = dateStr.substring(6, 8);
+        date = `${year}-${month}-${day}`;
+        console.log("📅 Дата из чека:", date);
+      }
+
+      if (amount > 0 && date) {
+        return { amount, date };
+      }
+    }
+
+    // 2. ОНЛАЙН-ЧЕКИ (URL)
+    try {
+      const url = new URL(qrString);
+      console.log("🔗 Онлайн-чек:", url.hostname);
+
+      // Для checkout.ru и подобных
+      if (url.hostname.includes("checkout.ru")) {
+        console.log("🛒 Чек checkout.ru");
+
+        // Пробуем извлечь сумму из параметров
+        const params = url.searchParams;
+        const amountParam =
+          params.get("s") || params.get("sum") || params.get("amount");
+        if (amountParam) {
+          amount = parseFloat(amountParam.replace(",", "."));
+          if (!isNaN(amount) && amount > 0) {
+            console.log("✅ Сумма из параметров:", amount);
+          }
+        }
+
+        // Пробуем извлечь дату
+        const dateParam = params.get("t") || params.get("date");
+        if (dateParam) {
+          // Формат может быть разным, пробуем распарсить
+          try {
+            // Пробуем формат 20250206
+            if (dateParam.match(/^\d{8}$/)) {
+              const year = dateParam.substring(0, 4);
+              const month = dateParam.substring(4, 6);
+              const day = dateParam.substring(6, 8);
+              date = `${year}-${month}-${day}`;
+            }
+            // Или уже готовый формат
+            else if (dateParam.match(/^\d{4}-\d{2}-\d{2}$/)) {
+              date = dateParam;
+            }
+            console.log("📅 Дата из параметров:", date);
+          } catch (e) {
+            console.log("❌ Не удалось распарсить дату");
+          }
+        }
+
+        // Если не нашли дату, берем сегодняшнюю
+        if (!date) {
+          date = new Date().toISOString().split("T")[0];
+          console.log("📅 Использую текущую дату:", date);
+        }
+
+        if (amount > 0) {
+          return { amount, date };
+        }
+      }
+    } catch (e) {
+      // Не URL
+    }
+
+    // 3. ТЕКСТОВЫЕ QR-коды
+    console.log("📄 Анализируем как текст...");
+
+    // Ищем сумму
+    const amountPattern = qrString.match(/(\d+[.,]\d{2})/);
+    if (amountPattern) {
+      amount = parseFloat(amountPattern[0].replace(",", "."));
+      if (!isNaN(amount) && amount > 0) {
+        console.log("✅ Сумма из текста:", amount);
+      }
+    }
+
+    // Ищем дату в тексте
+    const datePatterns = [
+      /(\d{4})[-./](\d{2})[-./](\d{2})/, // 2025-02-06
+      /(\d{2})[-./](\d{2})[-./](\d{4})/, // 06.02.2025
+      /(\d{4})(\d{2})(\d{2})/, // 20250206
+    ];
+
+    for (const pattern of datePatterns) {
+      const dateMatch = qrString.match(pattern);
+      if (dateMatch) {
+        let year, month, day;
+
+        if (pattern.toString().includes("\\d{4}.\\d{2}.\\d{2}")) {
+          // 2025-02-06
+          year = dateMatch[1];
+          month = dateMatch[2];
+          day = dateMatch[3];
+        } else if (pattern.toString().includes("\\d{2}.\\d{2}.\\d{4}")) {
+          // 06.02.2025
+          day = dateMatch[1];
+          month = dateMatch[2];
+          year = dateMatch[3];
+        } else if (pattern.toString().includes("\\d{4}\\d{2}\\d{2}")) {
+          // 20250206
+          year = dateMatch[1].substring(0, 4);
+          month = dateMatch[1].substring(4, 6);
+          day = dateMatch[1].substring(6, 8);
+        }
+
+        if (year && month && day) {
+          date = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+          console.log("📅 Дата из текста:", date);
+          break;
         }
       }
     }
 
-    // Ищем любое число с копейками
-    const amountMatch = qrString.match(/(\d+[.,]\d{2})/);
-    if (amountMatch) {
-      const amount = parseFloat(amountMatch[0].replace(",", "."));
-      if (!isNaN(amount) && amount > 0) {
-        return amount;
-      }
+    // Если дату не нашли, берем сегодняшнюю
+    if (!date) {
+      date = new Date().toISOString().split("T")[0];
+      console.log("📅 Использую текущую дату:", date);
     }
 
-    // Ищем просто число
-    const simpleMatch = qrString.match(/(\d+)/);
-    if (simpleMatch) {
-      const amount = parseFloat(simpleMatch[0]);
-      if (!isNaN(amount) && amount > 0) {
-        return amount;
-      }
+    if (amount <= 0) {
+      console.log("❌ Не удалось извлечь сумму");
+      return { amount: 0, date };
     }
 
-    return 0;
+    return { amount, date };
   }
 
-  // Сохранение в БД
+  // Сохранение в БД с датой из чека
   async saveExpense(data) {
+    console.log("📝 saveExpense вызван с данными:", data);
+    console.log("📅 Дата для сохранения:", data.date);
+
     try {
-      // Сначала проверяем/создаем таблицу
+      // Проверяем/создаем таблицу
       await this.ensureTableExists();
 
-      // Простой запрос
+      // SQL запрос с датой из чека
       const query = `
         INSERT INTO expenses 
-        (travel_id, user_id, amount, description, raw_qr_data)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, amount, description, created_at
+        (expense_name, trip_id, paid_by, amount, description, raw_qr_data, date)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id, expense_name, amount, description, date, created_at
       `;
 
       const values = [
+        `Чек ${data.amount} руб.`,
         data.travelId,
         data.userId,
         data.amount,
         data.description,
-        data.qrData,
+        data.qrData.substring(0, 500),
+        data.date || new Date().toISOString().split("T")[0], // Дата из чека
       ];
 
+      console.log("💾 Сохраняем с датой из чека:", data.date);
+
       const result = await db.query(query, values);
+      console.log("✅ Данные сохранены. Дата в БД:", result.rows[0].date);
+
       return result.rows[0];
     } catch (dbError) {
-      console.error("Ошибка БД:", dbError);
+      console.error("❌ ОШИБКА БАЗЫ ДАННЫХ:");
+      console.error("Сообщение:", dbError.message);
+      console.error("Детали:", dbError.detail);
       throw dbError;
     }
   }
@@ -169,23 +286,28 @@ class qrController {
       await db.query(`
         CREATE TABLE IF NOT EXISTS expenses (
           id SERIAL PRIMARY KEY,
-          travel_id INTEGER,
-          user_id INTEGER,
-          amount DECIMAL(10,2),
-          description TEXT,
+          expense_name VARCHAR(255) DEFAULT 'Чек покупки' NOT NULL,
+          trip_id INTEGER NOT NULL,
+          paid_by INTEGER NOT NULL,
+          category_id INTEGER,
+          amount DECIMAL(10,2) NOT NULL,
+          description VARCHAR(255),
+          date DATE NOT NULL DEFAULT CURRENT_DATE,
           raw_qr_data TEXT,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          shop_identifier VARCHAR(100),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          is_settled BOOLEAN DEFAULT FALSE
         )
       `);
+      console.log("✅ Таблица expenses проверена");
     } catch (error) {
-      console.error("Ошибка создания таблицы:", error);
+      console.error("❌ Ошибка создания таблицы:", error.message);
     }
   }
 }
 
 // Экспорт
 const controller = new qrController();
-module.exports = qrController;
 module.exports = {
   showScannerPage: (req, res) => controller.showScannerPage(req, res),
   processReceiptQR: (req, res) => controller.processReceiptQR(req, res),

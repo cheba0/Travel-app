@@ -287,118 +287,90 @@ function startScanning() {
         
         // Обработка QR-кода
         async function processQRCode(qrData) {
-  console.log('📱 QR найден:', qrData);
-  updateStatus('Чек обнаружен! Обработка...', 'info');
-  
-  try {
-    const response = await fetch('/process-receipt', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        qrRawData: qrData,
-        travelId: travelId
-      })
-    });
-    
-    console.log('📥 Статус ответа:', response.status);
-    console.log('📥 Заголовки:', response.headers);
-    
-    // ВАЖНО: Получаем текст ответа для отладки
-    const responseText = await response.text();
-    console.log('📥 Полный текст ответа:', responseText);
-    
-    let result;
-    try {
-      result = JSON.parse(responseText);
-      console.log('📥 Парсинг JSON успешен:', result);
-    } catch (parseError) {
-      console.error('❌ Ошибка парсинга JSON:', parseError);
-      console.error('❌ Текст который не парсится:', responseText);
-      throw new Error(`Сервер вернул невалидный JSON: ${responseText.substring(0, 100)}`);
-    }
-    
-    // Проверяем структуру ответа
-    if (!result) {
-      throw new Error('Пустой ответ от сервера');
-    }
-    
-    // Проверяем успешность операции
-    if (result.success === false) {
-      showResult(`
-        <h3>❌ Ошибка сервера</h3>
-        <p>${result.message || 'Неизвестная ошибка'}</p>
-        ${result.debug ? `<pre>${JSON.stringify(result.debug, null, 2)}</pre>` : ''}
-        <button onclick="location.reload()">Попробовать снова</button>
-      `, 'error');
-      return;
-    }
-    
-    // Проверяем наличие expense
-    if (!result.expense) {
-      console.warn('⚠️ Ответ успешен, но expense отсутствует:', result);
-      
-      // Если expense нет, но есть другие данные
-      showResult(`
-        <h3>⚠️ Ответ получен, но данные неполные</h3>
-        <pre>${JSON.stringify(result, null, 2)}</pre>
-        <p>Сервер ответил, но не вернул данные о расходе.</p>
-        <a href="/" class="back-link">Вернуться на главную</a>
-      `, 'warning');
-      return;
-    }
-    
-    // Проверяем наличие amount
-    if (result.expense.amount === undefined) {
-      console.warn('⚠️ expense есть, но amount отсутствует:', result.expense);
-      
-      showResult(`
-        <h3>⚠️ Данные чека неполные</h3>
-        <p>Сервер не вернул сумму расхода.</p>
-        <p>Полученные данные: ${JSON.stringify(result.expense)}</p>
-        <a href="/" class="back-link">Вернуться на главную</a>
-      `, 'warning');
-      return;
-    }
-    
-    // УСПЕШНЫЙ СЦЕНАРИЙ - все данные есть
-    console.log('✅ Успешный ответ:', result);
-    updateStatus('✅ Чек сохранен!', 'success');
-    
-    showResult(`
-      <div class="success">
-        <h3>✅ Чек успешно обработан!</h3>
-        <p><strong>Сумма:</strong> ${result.expense.amount} руб.</p>
-        <p><strong>Описание:</strong> ${result.expense.description || 'Чек покупки'}</p>
-        <p><strong>Дата:</strong> ${new Date(result.expense.date || Date.now()).toLocaleString()}</p>
-        <p><strong>Категория:</strong> ${result.expense.category || 'Покупки'}</p>
-        <a href="/travel/${travelId}" class="back-link">Вернуться к путешествию</a>
-        <button onclick="location.reload()" class="btn-secondary">Сканировать ещё</button>
-      </div>
-    `, 'success');
-    
-    // Автоматически останавливаем сканер
-    setTimeout(() => {
-      if (stopBtn && !stopBtn.disabled) {
-        stopBtn.click();
-      }
-    }, 3000);
-    
-  } catch (error) {
-    console.error('🔥 Критическая ошибка:', error);
-    updateStatus('🔥 Ошибка', 'error');
-    
-    showResult(`
-      <div class="error">
-        <h3>🔥 Ошибка</h3>
-        <p><strong>Тип:</strong> ${error.name || 'Unknown'}</p>
-        <p><strong>Сообщение:</strong> ${error.message}</p>
-        <p><strong>Детали:</strong> Проверьте консоль браузера (F12)</p>
-        <button onclick="location.reload()">Перезагрузить страницу</button>
-        <button onclick="stopBtn.click();">Остановить сканер</button>
-      </div>
-    `, 'error');
-  }
-}
+            console.log('🚀 === НАЧАЛО processQRCode ===');
+            console.log('📱 QR данные:', qrData);
+            console.log('📏 Длина:', qrData.length);
+            
+            updateStatus('Чек обнаружен! Обработка...', 'info');
+            
+            try {
+                console.log('1. Формируем запрос...');
+                const requestBody = {
+                qrRawData: qrData,
+                travelId: travelId
+                };
+                
+                console.log('2. Данные для отправки:', requestBody);
+                
+                console.log('3. Отправляем fetch запрос...');
+                const response = await fetch('/process-receipt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+                });
+                
+                console.log('4. Ответ получен. Статус:', response.status);
+                console.log('5. Заголовки ответа:', response.headers);
+                
+                const responseText = await response.text();
+                console.log('6. Полный текст ответа:', responseText);
+                
+                console.log('7. Парсим JSON...');
+                let result;
+                try {
+                result = JSON.parse(responseText);
+                console.log('8. JSON распарсен:', result);
+                } catch (parseError) {
+                console.error('❌ Ошибка парсинга JSON:', parseError);
+                console.error('❌ Текст ответа:', responseText);
+                throw new Error('Сервер вернул невалидный JSON');
+                }
+                
+                console.log('9. Проверяем success...');
+                if (result.success === false) {
+                console.error('❌ Сервер вернул ошибку:', result.message);
+                showResult(`Ошибка: ${result.message}`, 'error');
+                return;
+                }
+                
+                console.log('10. Проверяем наличие expense...');
+                if (!result.expense) {
+                console.warn('⚠️ expense отсутствует в ответе:', result);
+                showResult('Данные о расходе не получены', 'warning');
+                return;
+                }
+                
+                console.log('11. Всё успешно! expense:', result.expense);
+                updateStatus('✅ Чек сохранен!', 'success');
+                
+                // Показываем результат
+                showResult(`
+                <div class="success">
+                    <h3>✅ Чек успешно обработан!</h3>
+                    <p><strong>Сумма:</strong> ${result.expense.amount} руб.</p>
+                    <p><strong>Описание:</strong> ${result.expense.description || 'Чек покупки'}</p>
+                    <button onclick="location.reload()">Сканировать ещё</button>
+                </div>
+                `, 'success');
+                
+                // Останавливаем сканер
+                setTimeout(() => {
+                if (stopBtn && !stopBtn.disabled) {
+                    console.log('12. Автоматически останавливаем сканер...');
+                    stopBtn.click();
+                }
+                }, 3000);
+                
+            } catch (error) {
+                console.error('🔥 КРИТИЧЕСКАЯ ОШИБКА:', error);
+                console.error('🔥 Stack:', error.stack);
+                
+                updateStatus('🔥 Ошибка', 'error');
+                showResult(`Ошибка: ${error.message}`, 'error');
+            }
+            
+            console.log('🏁 === КОНЕЦ processQRCode ===');
+            }
         
         // Показать результат
         function showResult(message, type) {
