@@ -1,0 +1,269 @@
+// controllers/qrControllerSimple.js
+const db = require("../db");
+
+class qrController {
+  constructor() {
+    console.log("✅ SimpleQRController загружен");
+  }
+
+  // Показать страницу сканера
+  showScannerPage(req, res) {
+    console.log("📱 showScannerPage вызван");
+    res.render("scan", {
+      travelId: req.params.travelId,
+      title: "Сканирование чека",
+    });
+  }
+
+  // Обработать QR-код
+  async processReceiptQR(req, res) {
+    console.log("\n=== НАЧАЛО ОБРАБОТКИ ЧЕКА ===");
+
+    try {
+      const { qrRawData, travelId } = req.body;
+      const userId = req.session.userId || 1;
+
+      console.log("✅ Данные получены:", {
+        qrRawData: qrRawData?.substring(0, 50) + "...",
+        travelId,
+        userId,
+      });
+
+      if (!qrRawData) {
+        return res.status(400).json({
+          success: false,
+          message: "Отсутствуют данные QR-кода",
+        });
+      }
+
+      const amount = this.extractAmount(qrRawData);
+      console.log("💰 Извлеченная сумма:", amount);
+
+      if (amount <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Не удалось извлечь сумму из QR-кода",
+        });
+      }
+
+      console.log("💾 Сохраняем в БД...");
+      const newExpense = await this.saveExpense({
+        travelId: parseInt(travelId) || 1,
+        userId: userId,
+        amount: amount,
+        description: `Чек покупки (${amount} руб.)`,
+        qrData: qrRawData,
+      });
+
+      console.log("✅ Чек сохранен:", newExpense);
+
+      // УСПЕШНЫЙ ОТВЕТ
+      res.json({
+        success: true,
+        message: "Чек успешно добавлен!",
+        expense: {
+          id: newExpense.id,
+          amount: newExpense.amount,
+          description: newExpense.description || newExpense.expense_name,
+          date: newExpense.date || new Date().toISOString().split("T")[0],
+          created_at: newExpense.created_at,
+          category: "Покупки",
+        },
+      });
+    } catch (error) {
+      console.error("🔥 ОШИБКА в processReceiptQR:", error.message);
+
+      res.status(500).json({
+        success: false,
+        message: "Ошибка обработки чека: " + error.message,
+      });
+    }
+  }
+
+  // Извлечение суммы из QR-строки (улучшенная версия)
+  extractAmount(qrString) {
+    console.log("🔍 Извлечение суммы из:", qrString.substring(0, 100));
+
+    // 1. ФИСКАЛЬНЫЕ QR-коды РФ (приоритет)
+    if (
+      qrString.includes("t=") &&
+      qrString.includes("s=") &&
+      qrString.includes("fn=")
+    ) {
+      console.log("🧾 Обнаружен фискальный QR-код (ФНС РФ)");
+
+      // Ищем сумму в формате s=1234.56
+      const match = qrString.match(/s=([\d.,]+)/);
+      if (match && match[1]) {
+        const amount = parseFloat(match[1].replace(",", "."));
+        if (!isNaN(amount) && amount > 0) {
+          console.log("✅ Сумма из фискального QR:", amount, "руб.");
+          return amount;
+        }
+      }
+
+      // Ищем другие параметры с суммой
+      const sumPatterns = [
+        /sum=([\d.,]+)/i,
+        /amount=([\d.,]+)/i,
+        /total=([\d.,]+)/i,
+      ];
+
+      for (const pattern of sumPatterns) {
+        const match = qrString.match(pattern);
+        if (match && match[1]) {
+          const amount = parseFloat(match[1].replace(",", "."));
+          if (!isNaN(amount) && amount > 0) {
+            console.log(`✅ Сумма из параметра ${pattern}:`, amount, "руб.");
+            return amount;
+          }
+        }
+      }
+    }
+
+    // 2. ОНЛАЙН-ЧЕКИ (checkout.ru, ofd.ru и др.)
+    try {
+      const url = new URL(qrString);
+      console.log("🔗 Это URL. Хост:", url.hostname);
+
+      // Для онлайн-чеков
+      if (
+        url.hostname.includes("checkout.ru") ||
+        url.hostname.includes("ofd.ru") ||
+        url.hostname.includes("nalog.ru")
+      ) {
+        console.log("🛒 Онлайн-чек обнаружен");
+
+        // Пробуем извлечь ID чека для ручного ввода суммы
+        const pathParts = url.pathname.split("/").filter((p) => p);
+        const receiptId = pathParts[pathParts.length - 1] || url.pathname;
+
+        console.log("📋 ID чека:", receiptId.substring(0, 50));
+        console.log("ℹ️ Для онлайн-чеков требуется ручной ввод суммы");
+
+        // ВОЗВРАЩАЕМ 0, чтобы фронтенд запросил ручной ввод
+        return 0;
+      }
+    } catch (e) {
+      // Не URL, продолжаем
+    }
+
+    // 3. ТЕКСТОВЫЕ QR-коды с явной суммой
+    console.log("📄 Анализируем как текст...");
+
+    // Ищем паттерны сумм
+    const amountPatterns = [
+      /(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/, // 1,234.56 или 1.234,56
+      /(\d+[.,]\d{2})/, // 1234.56
+      /цена[:]?\s*(\d+(?:[.,]\d+)?)/i, // цена: 1234.56
+      /сумм[аы]?[:]?\s*(\d+(?:[.,]\d+)?)/i, // сумма: 1234.56
+      /итого[:]?\s*(\d+(?:[.,]\d+)?)/i, // итого: 1234.56
+      /([1-9]\d{2,})/, // числа от 100
+    ];
+
+    for (const pattern of amountPatterns) {
+      const match = qrString.match(pattern);
+      if (match && match[1]) {
+        const amount = parseFloat(
+          match[1].replace(/[.,]/g, (m) => (m === "," ? "." : "")),
+        );
+        if (!isNaN(amount) && amount > 0) {
+          console.log(`✅ Сумма из текста (${pattern}):`, amount, "руб.");
+          return amount;
+        }
+      }
+    }
+
+    console.log("❌ Не удалось извлечь сумму автоматически");
+    return 0; // 0 = требуется ручной ввод
+  }
+
+  // Сохранение в БД (исправленная версия)
+  async saveExpense(data) {
+    console.log("📝 saveExpense вызван с данными:", data);
+
+    try {
+      // Проверяем структуру таблицы
+      console.log("🔍 Проверяем структуру таблицы expenses...");
+      const tableInfo = await db.query(`
+      SELECT column_name, data_type, is_nullable
+      FROM information_schema.columns 
+      WHERE table_name = 'expenses'
+      ORDER BY ordinal_position
+    `);
+
+      console.log("📊 Реальная структура таблицы expenses:");
+      const columnNames = tableInfo.rows.map((col) => col.column_name);
+      tableInfo.rows.forEach((col) => {
+        console.log(
+          `  - ${col.column_name} (${col.data_type}) ${col.is_nullable === "NO" ? "NOT NULL" : ""}`,
+        );
+      });
+
+      // АДАПТИРУЕМ SQL под реальную структуру
+      // Обязательные поля: expense_name, trip_id, paid_by, amount, date
+      const query = `
+      INSERT INTO expenses 
+      (expense_name, trip_id, paid_by, amount, description, raw_qr_data, date)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id, expense_name, amount, description, date, created_at
+    `;
+
+      const values = [
+        `Чек ${data.amount} руб.`,
+        data.travelId,
+        data.userId,
+        data.amount,
+        data.description,
+        data.qrData.substring(0, 500),
+        new Date().toISOString().split("T")[0], // Текущая дата в формате YYYY-MM-DD
+      ];
+
+      console.log("💾 SQL запрос:", query);
+      console.log("💾 Значения:", values);
+
+      const result = await db.query(query, values);
+      console.log("✅ Данные сохранены:", result.rows[0]);
+
+      return result.rows[0];
+    } catch (dbError) {
+      console.error("❌ ОШИБКА БАЗЫ ДАННЫХ:");
+      console.error("Сообщение:", dbError.message);
+      console.error("Детали:", dbError.detail);
+      console.error("Код:", dbError.code);
+      throw dbError;
+    }
+  }
+
+  // Вспомогательная функция для создания таблицы
+  async ensureTableExists() {
+    try {
+      await db.query(`
+      CREATE TABLE IF NOT EXISTS expenses (
+        id SERIAL PRIMARY KEY,
+        expense_name VARCHAR(255) DEFAULT 'Чек покупки' NOT NULL,
+        trip_id INTEGER NOT NULL,
+        paid_by INTEGER NOT NULL,
+        category_id INTEGER,
+        amount DECIMAL(10,2) NOT NULL,
+        description VARCHAR(255),
+        date DATE NOT NULL DEFAULT CURRENT_DATE,  ← ДОБАВЛЕНО date
+        raw_qr_data TEXT,
+        shop_identifier VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        is_settled BOOLEAN DEFAULT FALSE
+      )
+    `);
+      console.log("✅ Таблица expenses проверена/создана (с полем date)");
+    } catch (error) {
+      console.error("❌ Ошибка создания таблицы:", error.message);
+    }
+  }
+}
+
+// Экспорт
+const controller = new qrController();
+module.exports = {
+  showScannerPage: (req, res) => controller.showScannerPage(req, res),
+  processReceiptQR: (req, res) => controller.processReceiptQR(req, res),
+};

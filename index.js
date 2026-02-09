@@ -11,6 +11,8 @@ const app = express();
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
+app.use(express.json()); // ← ДЛЯ application/json
+app.use(express.urlencoded({ extended: true }));
 // ========== MIDDLEWARE (ТОЛЬКО ОДИН РАЗ!) ==========
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
@@ -42,7 +44,7 @@ app.use(
     },
     name: "travel.sid",
     rolling: false,
-  })
+  }),
 );
 
 // ========== ПРОВЕРКА СЕССИИ (ИСПРАВЛЕННАЯ) ==========
@@ -123,5 +125,5 @@ try {
 
 const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(`Server started: http://87.242.100.137:${PORT}`); //87.242.100.137 //localhost
+  console.log(`Server started: http://localhost:${PORT}`); //87.242.100.137 //localhost
 });

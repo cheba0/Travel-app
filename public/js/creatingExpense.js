@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", function () {
           }
         }
         if (result.success) {
-          showMessage(result.message || "Расход успешно добавлен!", "green");
+          // showMessage(result.message || "Расход успешно добавлен!", "green");
 
           // Сбрасываем форму
           expenseForm.reset();

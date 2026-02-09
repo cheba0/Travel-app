@@ -105,7 +105,16 @@ function updateTotalAmount() {
   const currency = window.travelData.currency || "RUB";
   totalElement.textContent = `Мои траты: ${total.toFixed(2)} ${currency}`;
 }
-
+if (window.travelData && window.travelData.expenses) {
+  window.travelData.expenses.forEach((exp) => {
+    // Если у вас в базе дата в формате "2024-01-15", добавляем её как date_raw
+    // Это нужно для поля <input type="date">
+    if (!exp.date_raw && exp.date) {
+      // Пытаемся извлечь дату из базы (если она там есть)
+      // В противном случае пользователь сам выберет дату
+    }
+  });
+}
 function addEventListeners() {
   // Кнопка "Добавить первый расход"
   const addFirstBtn = document.getElementById("add_expense");

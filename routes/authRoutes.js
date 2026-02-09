@@ -2,12 +2,13 @@ const express = require("express");
 const AuthController = require("../controllers/authController");
 const TravelController = require("../controllers/travelController");
 const ExpenseController = require("../controllers/expenseController");
+const qrController = require("../controllers/qrController");
 const { pool } = require("../db");
 const router = express.Router();
 
 console.log("✅ AuthRoutes загружен");
 
-// ========== ПРЯМОЙ API (без контроллера для теста) ==========
+// ========== СТРАНИЦЫ ==========
 router.get("/", (req, res) => {
   console.log(" GET / - главная страница");
   res.render("index", {
@@ -15,7 +16,6 @@ router.get("/", (req, res) => {
   });
 });
 
-// Страница путешествий
 router.get("/last_travel", (req, res) => {
   console.log(" GET /last_travel - страница путешествий");
   res.render("last_travel", {
@@ -23,7 +23,6 @@ router.get("/last_travel", (req, res) => {
   });
 });
 
-// Страница добавить путешествия
 router.get("/add", (req, res) => {
   console.log(" GET /add - страница добавить путешествия");
   res.render("add", {
@@ -31,7 +30,6 @@ router.get("/add", (req, res) => {
   });
 });
 
-// Страница профиль
 router.get("/profile", (req, res) => {
   console.log(" GET /profile - страница профиль");
   res.render("profile", {
@@ -39,22 +37,16 @@ router.get("/profile", (req, res) => {
   });
 });
 
-// Страница add_expense
 router.get("/add_expense", (req, res) => {
   console.log(" GET /add_expense - страница add_expense");
   res.render("add_expense", {
     title: "Добавить траты",
   });
 });
-// router.get("/travelList", (req, res) => {
-//   console.log(" GET /travelList - страница travelList");
-//   res.render("travelList", {
-//     title: "Список путешествий",
-//   });
-// });
+
 router.get("/travellist", TravelController.list);
 router.get("/travelDetail", TravelController.showForm);
-// Страница регистрации
+
 router.get("/registration", (req, res) => {
   console.log(" GET /registration - страница регистрации");
   res.render("registration", {
@@ -62,33 +54,28 @@ router.get("/registration", (req, res) => {
   });
 });
 
-// Страница входа
 router.get("/login", (req, res) => {
   console.log(" GET /login - страница входа");
   res.render("login", {
     title: "Вход в систему",
   });
 });
-// Проверка авторизации - GET /api/auth/check
+
+// ========== API ==========
 router.get("/api/auth/check", async (req, res) => {
   console.log("🔍 GET /check вызван");
   console.log("Session:", req.session);
-  console.log("Session ID:", req.sessionID);
 
-  // Проверяем сессию
   if (req.session && req.session.userId) {
     console.log("✅ Авторизован, userId:", req.session.userId);
     try {
-      // Получаем данные пользователя из базы данных
       const result = await pool.query(
         "SELECT id, username, email FROM users WHERE id = $1",
-        [req.session.userId]
+        [req.session.userId],
       );
 
       if (result.rows.length > 0) {
         const userFromDB = result.rows[0];
-        console.log("✅ Данные пользователя из БД:", userFromDB);
-
         return res.json({
           success: true,
           isAuthenticated: true,
@@ -99,8 +86,6 @@ router.get("/api/auth/check", async (req, res) => {
             sessionId: req.sessionID,
           },
         });
-      } else {
-        console.log("⚠️ Пользователь не найден в БД");
       }
     } catch (error) {
       console.error("❌ Ошибка получения данных из БД:", error);
@@ -130,13 +115,14 @@ function formatDate(dateString) {
 router.post("/api/register", AuthController.register);
 router.post("/api/login", AuthController.login);
 router.post("/api/auth/logout", AuthController.logout);
-
 router.get("/api/auth/logout", (req, res) => {
   console.log("🔍 GET /logout вызван");
 });
+
 router.post("/api/travels", TravelController.create);
 router.get("/api/travels", TravelController.getUserTravels);
 router.get("/api/travels/:id", TravelController.getTravelById);
+router.get("/travel/:id/form", TravelController.showForm);
 router.get("/api/travels/:id/edit", TravelController.showForm);
 router.get("/api/travels/:id/detail", TravelController.show);
 router.get("/", TravelController.list);
@@ -144,26 +130,234 @@ router.put("/api/travels/:id", TravelController.update);
 router.delete("/api/travels/:id", TravelController.delete);
 
 router.post("/api/expenses", ExpenseController.create);
+router.get("/api/expenses/:id", ExpenseController.getById);
+router.put("/api/expenses/:id", ExpenseController.update);
+router.delete("/api/expenses/:id", ExpenseController.delete);
 
-// Страница конкретного путешествия
+router.get("/scan/:travelId", qrController.showScannerPage);
+router.post("/process-receipt", qrController.processReceiptQR);
+
+// ========== УЧАСТНИКИ ПУТЕШЕСТВИЙ ==========
+
+// 1. Поиск пользователей
+router.get("/api/users/search", async (req, res) => {
+  try {
+    const { query } = req.query;
+    const userId = req.session ? req.session.userId : null;
+
+    console.log("🔍 Поиск пользователей:", query, "userId:", userId);
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Требуется авторизация",
+      });
+    }
+
+    if (!query || query.trim().length < 2) {
+      return res.json({
+        success: true,
+        users: [],
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT id, username, email 
+       FROM users 
+       WHERE (username ILIKE $1 OR email ILIKE $1) 
+         AND id != $2
+       LIMIT 10`,
+      [`%${query.trim()}%`, userId],
+    );
+
+    console.log("✅ Найдено пользователей:", result.rows.length);
+
+    res.json({
+      success: true,
+      users: result.rows,
+    });
+  } catch (error) {
+    console.error("❌ Ошибка поиска пользователей:", error);
+    res.status(500).json({
+      success: false,
+      message: "Ошибка поиска пользователей",
+    });
+  }
+});
+
+// 2. Пригласить участника
+router.post("/api/trips/:tripId/invite", async (req, res) => {
+  try {
+    const { tripId } = req.params;
+    const { userId: invitedUserId } = req.body;
+    const currentUserId = req.session ? req.session.userId : null;
+
+    if (!currentUserId) {
+      return res.status(401).json({
+        success: false,
+        message: "Требуется авторизация",
+      });
+    }
+
+    console.log(
+      `👥 Приглашение от ${currentUserId} в путешествие ${tripId}, пользователь ${invitedUserId}`,
+    );
+
+    const tripResult = await pool.query(
+      "SELECT user_id FROM trips WHERE id = $1",
+      [tripId],
+    );
+
+    if (tripResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Путешествие не найдено",
+      });
+    }
+
+    const userResult = await pool.query(
+      "SELECT id, username FROM users WHERE id = $1",
+      [invitedUserId],
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Пользователь не найден",
+      });
+    }
+
+    const invitedUser = userResult.rows[0];
+
+    const existing = await pool.query(
+      "SELECT * FROM trip_participants WHERE trip_id = $1 AND user_id = $2",
+      [tripId, invitedUserId],
+    );
+
+    if (existing.rows.length > 0) {
+      return res.json({
+        success: false,
+        message: `${invitedUser.username} уже участник`,
+      });
+    }
+
+    await pool.query(
+      `INSERT INTO trip_participants (trip_id, user_id, joined_at) 
+       VALUES ($1, $2, NOW())`,
+      [tripId, invitedUserId],
+    );
+
+    console.log(
+      `✅ Пользователь ${invitedUser.username} приглашен в путешествие ${tripId}`,
+    );
+
+    res.json({
+      success: true,
+      message: `${invitedUser.username} приглашен в путешествие`,
+    });
+  } catch (error) {
+    console.error("❌ Ошибка приглашения:", error);
+    res.status(500).json({
+      success: false,
+      message: "Ошибка приглашения",
+    });
+  }
+});
+
+// 3. Получить участников
+router.get("/api/trips/:tripId/participants", async (req, res) => {
+  try {
+    const { tripId } = req.params;
+    const userId = req.session ? req.session.userId : null;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Требуется авторизация",
+      });
+    }
+
+    console.log(`👥 Получение участников путешествия ${tripId}`);
+
+    const result = await pool.query(
+      `SELECT u.id, u.username, u.email, tp.joined_at
+       FROM trip_participants tp
+       JOIN users u ON tp.user_id = u.id
+       WHERE tp.trip_id = $1`,
+      [tripId],
+    );
+
+    res.json({
+      success: true,
+      participants: result.rows,
+    });
+  } catch (error) {
+    console.error("❌ Ошибка получения участников:", error);
+    res.status(500).json({
+      success: false,
+      message: "Ошибка получения участников",
+    });
+  }
+});
+
+// 4. Получить все путешествия пользователя
+router.get("/api/my-travels", async (req, res) => {
+  try {
+    const userId = req.session ? req.session.userId : null;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Требуется авторизация",
+      });
+    }
+
+    console.log(`🧳 Получение путешествий пользователя ${userId}`);
+
+    const result = await pool.query(
+      `SELECT DISTINCT t.*, u.username as creator_name,
+        CASE 
+          WHEN t.user_id = $1 THEN 'creator'
+          ELSE 'participant'
+        END as user_role
+       FROM trips t
+       LEFT JOIN users u ON t.user_id = u.id
+       LEFT JOIN trip_participants tp ON t.id = tp.trip_id
+       WHERE t.user_id = $1 OR tp.user_id = $1
+       ORDER BY t.created_at DESC`,
+      [userId],
+    );
+
+    res.json({
+      success: true,
+      travels: result.rows,
+    });
+  } catch (error) {
+    console.error("❌ Ошибка получения путешествий:", error);
+    res.status(500).json({
+      success: false,
+      message: "Ошибка получения путешествий",
+    });
+  }
+});
+
+// ========== СТРАНИЦА ПУТЕШЕСТВИЯ ==========
 router.get("/travel/:id", async (req, res) => {
   try {
     const travelId = req.params.id;
 
     console.log(`📱 Загрузка страницы путешествия ID: ${travelId}`);
 
-    // Проверяем авторизацию
     if (!req.session.userId) {
       return res.redirect("/login");
     }
 
-    // Получаем данные путешествия
     const result = await pool.query(
       `SELECT t.*, u.username as creator_name
        FROM trips t
        LEFT JOIN users u ON t.user_id = u.id
        WHERE t.id = $1`,
-      [travelId]
+      [travelId],
     );
 
     if (result.rows.length === 0) {
@@ -173,13 +367,12 @@ router.get("/travel/:id", async (req, res) => {
 
     const travel = result.rows[0];
 
-    // Получаем участников
     const participantsResult = await pool.query(
       `SELECT u.id, u.username
        FROM trip_participants tp
        JOIN users u ON tp.user_id = u.id
        WHERE tp.trip_id = $1`,
-      [travelId]
+      [travelId],
     );
 
     const expensesResult = await pool.query(
@@ -188,12 +381,11 @@ router.get("/travel/:id", async (req, res) => {
        JOIN users u ON e.paid_by = u.id
        WHERE e.trip_id = $1
        ORDER BY e.date DESC`,
-      [travelId]
+      [travelId],
     );
 
     console.log(`✅ Загружено: ${expensesResult.rows.length} расходов`);
 
-    // Подготавливаем данные для шаблона
     const travelData = {
       id: travel.id,
       name: travel.trip_name,
@@ -225,17 +417,14 @@ router.get("/travel/:id", async (req, res) => {
       participants: participants,
       expenses: expenses,
       userId: userId,
-      // Преобразуем данные в JSON строку для безопасной передачи
       travelJSON: JSON.stringify(travelData),
       participantsJSON: JSON.stringify(participants),
       expensesJSON: JSON.stringify(expenses),
     });
   } catch (error) {
     console.error("Ошибка загрузки страницы путешествия:", error);
+    res.status(500).send("Ошибка загрузки страницы");
   }
 });
-
-// // ========== PAGE ROUTES (страницы EJS) ==========
-// // ВАЖНО: Страницы должны быть в ДРУГОМ файле или в server.js!
 
 module.exports = router;
