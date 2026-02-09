@@ -133,12 +133,12 @@ function addEventListeners() {
   //   });
   // });
   // Кнопка Share
-  // const shareBtn = document.querySelector(".participants_share");
-  // if (shareBtn) {
-  //   shareBtn.addEventListener("click", function () {
-  //     alert("Функция Share будет доступна позже");
-  //   });
-  // }
+  const shareBtn = document.querySelector(".participants_share");
+  if (shareBtn) {
+    shareBtn.addEventListener("click", function () {
+      alert("Функция Share будет доступна позже");
+    });
+  }
 
   // Кнопка фильтра
   const filterBtn = document.querySelector(".filter_icon");
