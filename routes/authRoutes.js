@@ -122,7 +122,6 @@ router.get("/api/auth/logout", (req, res) => {
 router.post("/api/travels", TravelController.create);
 router.get("/api/travels", TravelController.getUserTravels);
 router.get("/api/travels/:id", TravelController.getTravelById);
-router.get("/travel/:id/form", TravelController.showForm);
 router.get("/api/travels/:id/edit", TravelController.showForm);
 router.get("/api/travels/:id/detail", TravelController.show);
 router.get("/", TravelController.list);

@@ -10,6 +10,7 @@ class Travel {
     try {
       console.log("Создание путешествия для пользователя:", user_id);
 
+      // Сохраняем путешествие
       const result = await pool.query(
         `INSERT INTO trips (trip_name, location, start_date, end_date, description, user_id) 
          VALUES ($1, $2, $3, $4, $5, $6) 
@@ -32,20 +33,14 @@ class Travel {
     }
   }
 
-  // Получение ВСЕХ путешествий пользователя (созданные + где участник)
+  // Получение всех путешествий пользователя
   static async findByUserId(userId) {
     try {
       const result = await pool.query(
-        `SELECT DISTINCT t.*, u.username as creator_name,
-          CASE 
-            WHEN t.user_id = $1 THEN 'creator'
-            ELSE 'participant'
-          END as user_role
-         FROM trips t
-         LEFT JOIN users u ON t.user_id = u.id
-         LEFT JOIN trip_participants tp ON t.id = tp.trip_id
-         WHERE t.user_id = $1 OR tp.user_id = $1
-         ORDER BY t.created_at DESC`,
+        `SELECT id, trip_name, location, start_date, end_date, description, created_at
+         FROM trips 
+         WHERE user_id = $1 
+         ORDER BY created_at DESC`,
         [userId],
       );
       return result.rows;
@@ -55,21 +50,16 @@ class Travel {
     }
   }
 
-  // Получение путешествия по ID с проверкой доступа
+  // Получение путешествия по ID
   static async findById(id, userId = null) {
     try {
-      let query = `SELECT t.*, u.username as creator_name
-                   FROM trips t
-                   LEFT JOIN users u ON t.user_id = u.id
-                   WHERE t.id = $1`;
+      let query = `SELECT id, trip_name, location, start_date, end_date, description, user_id, created_at 
+                   FROM trips WHERE id = $1`;
       let params = [id];
 
-      // Если передан userId, проверяем доступ (создатель или участник)
+      // Если передан userId, проверяем принадлежность
       if (userId) {
-        query += ` AND (t.user_id = $2 OR EXISTS (
-          SELECT 1 FROM trip_participants tp 
-          WHERE tp.trip_id = t.id AND tp.user_id = $2
-        ))`;
+        query += ` AND user_id = $2`;
         params.push(userId);
       }
 
@@ -81,36 +71,17 @@ class Travel {
     }
   }
 
-  // Получение участников путешествия
-  static async getParticipants(tripId) {
-    try {
-      const result = await pool.query(
-        `SELECT u.id, u.username, u.email, tp.joined_at
-         FROM trip_participants tp
-         JOIN users u ON tp.user_id = u.id
-         WHERE tp.trip_id = $1`,
-        [tripId],
-      );
-      return result.rows;
-    } catch (error) {
-      console.error("Ошибка при получении участников:", error);
-      throw error;
-    }
-  }
-
   // Обновление путешествия
-  static async update(id, userId, travelData) {
+  static async updateTravel(id, userId, travelData) {
     const { trip_name, location, start_date, end_date, description } =
       travelData;
 
     try {
       const result = await pool.query(
         `UPDATE trips 
-       SET trip_name = $1, location = $2, start_date = $3, end_date = $4, 
-           description = $5, updated_at = NOW()
-       WHERE id = $6 AND user_id = $7
-       RETURNING id, trip_name, location, start_date, end_date, 
-                description, user_id, updated_at`,
+         SET trip_name = $1, location = $2, start_date = $3, end_date = $4, description = $5, updated_at = NOW()
+         WHERE id = $6 AND user_id = $7
+         RETURNING id, trip_name, location, start_date, end_date, description, updated_at`,
         [trip_name, location, start_date, end_date, description, id, userId],
       );
 
@@ -121,33 +92,8 @@ class Travel {
     }
   }
 
-  // ДОБАВЬТЕ этот метод если его нет - получение путешествия для редактирования
-  static async findForEdit(id, userId) {
-    try {
-      const result = await pool.query(
-        `SELECT t.*, u.username as creator_name
-       FROM trips t
-       LEFT JOIN users u ON t.user_id = u.id
-       WHERE t.id = $1 AND t.user_id = $2`,
-        [id, userId],
-      );
-
-      if (result.rows.length === 0) {
-        return null;
-      }
-
-      return result.rows[0];
-    } catch (error) {
-      console.error(
-        "Ошибка при получении путешествия для редактирования:",
-        error,
-      );
-      throw error;
-    }
-  }
-
   // Удаление путешествия
-  static async delete(id, userId) {
+  static async deleteTravel(id, userId) {
     try {
       const result = await pool.query(
         `DELETE FROM trips WHERE id = $1 AND user_id = $2 RETURNING id`,
@@ -156,23 +102,6 @@ class Travel {
       return result.rows[0];
     } catch (error) {
       console.error("Ошибка при удалении путешествия:", error);
-      throw error;
-    }
-  }
-
-  // Проверка доступа к путешествию
-  static async hasAccess(tripId, userId) {
-    try {
-      const result = await pool.query(
-        `SELECT 1 
-         FROM trips t
-         LEFT JOIN trip_participants tp ON t.id = tp.trip_id
-         WHERE t.id = $1 AND (t.user_id = $2 OR tp.user_id = $2)`,
-        [tripId, userId],
-      );
-      return result.rows.length > 0;
-    } catch (error) {
-      console.error("Ошибка при проверке доступа:", error);
       throw error;
     }
   }
