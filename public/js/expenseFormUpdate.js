@@ -1,318 +1,279 @@
 // expenseFormUpdate.js
-// Глобальные функции — должны быть доступны из HTML
-window.showEditExpenseModal = function (expenseId) {
-  console.log("Попытка открыть редактирование траты с ID:", expenseId);
+// Все функции для работы с формами трат
+
+// Проверяем, существует ли объект expenseForm
+if (!window.expenseForm) {
+  window.expenseForm = {};
+}
+
+// ========== ОСНОВНЫЕ ФУНКЦИИ ==========
+
+// 1. Показать модальное окно редактирования траты
+window.expenseForm.showEditModal = function (expenseId) {
+  console.log("Показать модальное окно для траты ID:", expenseId);
 
   const modal = document.getElementById("editExpenseModal");
   if (!modal) {
-    console.error("❌ Модальное окно editExpenseModal не найдено!");
+    console.error("❌ Модальное окно не найдено!");
     return;
   }
 
-  const expenseInput = document.getElementById("expense_id");
-  if (!expenseInput) {
+  // Находим поле с ID
+  const expenseIdField = document.getElementById("expense_id");
+  if (!expenseIdField) {
     console.error("❌ Поле expense_id не найдено!");
     return;
   }
 
-  // Только если всё есть — продолжаем
-  expenseInput.value = expenseId;
+  // Устанавливаем ID
+  expenseIdField.value = expenseId;
 
-  // Заполняем остальные поля (если есть данные)
-  const expense = window.travelData?.expenses?.find((e) => e.id == expenseId);
-  if (expense) {
-    document.getElementById("expense_name").value = expense.name || "";
-    document.getElementById("amount").value = expense.amount || "";
-    document.getElementById("date").value =
-      expense.date_raw || expense.date || "";
-  }
+  // Загружаем данные траты
+  loadExpenseData(expenseId);
 
+  // Показываем модальное окно
   modal.style.display = "flex";
 };
 
-window.closeEditExpenseModal = function () {
-  document.getElementById("editExpenseModal").style.display = "none";
+// 2. Закрыть модальное окно редактирования
+window.expenseForm.closeEditModal = function () {
+  const modal = document.getElementById("editExpenseModal");
+  if (modal) {
+    modal.style.display = "none";
+
+    // Очищаем форму
+    const form = document.getElementById("editExpenseForm");
+    if (form) {
+      form.reset();
+    }
+  }
 };
 
-document.addEventListener("DOMContentLoaded", function () {
-  console.log("ExpenseFormUpdate инициализирован");
+// 3. Удалить текущую трату (из модального окна)
+window.expenseForm.deleteCurrentExpense = function () {
+  const expenseIdField = document.getElementById("expense_id");
 
-  // Автоматическая валидация при вводе
-  const inputs = document.querySelectorAll(
-    "#editExpenseForm input, #editExpenseForm textarea",
-  );
-  inputs.forEach((input) => {
-    input.addEventListener("input", function () {
-      clearError(this.id);
-    });
-    input.addEventListener("blur", function () {
-      validateField(this);
-    });
-  });
+  if (!expenseIdField || !expenseIdField.value) {
+    alert("❌ Ошибка: ID траты не найден");
+    return;
+  }
 
-  // Управление модальным окном удаления (если есть)
-  setupDeleteModal();
-});
+  const expenseId = expenseIdField.value;
 
-// Валидация всей формы
-function validateExpenseForm() {
-  let isValid = true;
+  if (confirm("Вы уверены, что хотите удалить эту трату?")) {
+    deleteExpense(expenseId);
+  }
+};
 
-  // Очищаем предыдущие ошибки
-  clearAllErrors();
+// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 
-  // Собираем данные формы
+// Загрузка данных траты
+async function loadExpenseData(expenseId) {
+  try {
+    console.log("Загружаю данные траты ID:", expenseId);
+
+    const response = await fetch(`/api/expenses/${expenseId}`);
+    if (!response.ok) {
+      throw new Error(`Ошибка сервера: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success && result.expense) {
+      fillForm(result.expense);
+    } else {
+      alert("Не удалось загрузить данные траты");
+      window.expenseForm.closeEditModal();
+    }
+  } catch (error) {
+    console.error("Ошибка загрузки данных:", error);
+    alert("Ошибка загрузки данных траты");
+    window.expenseForm.closeEditModal();
+  }
+}
+
+// Заполнение формы данными
+function fillForm(expense) {
+  console.log("Заполняю форму данными:", expense);
+
+  // Находим все поля
+  const nameField = document.getElementById("expense_name");
+  const amountField = document.getElementById("amount");
+  const dateField = document.getElementById("date");
+
+  if (nameField) nameField.value = expense.name || expense.expense_name || "";
+  if (amountField) amountField.value = expense.amount || "";
+
+  if (dateField && expense.date) {
+    // Форматируем дату для поля input[type="date"]
+    try {
+      const date = new Date(expense.date);
+      if (!isNaN(date.getTime())) {
+        dateField.value = date.toISOString().split("T")[0];
+      }
+    } catch (e) {
+      dateField.value = expense.date;
+    }
+  }
+}
+
+// Отправка формы редактирования
+async function submitExpenseForm(event) {
+  event.preventDefault();
+  console.log("Отправка формы редактирования траты");
+
+  const form = event.target;
+  if (!form) return;
+
+  // Получаем ID траты
+  const expenseIdField = document.getElementById("expense_id");
+  if (!expenseIdField || !expenseIdField.value) {
+    alert("❌ Ошибка: ID траты не найден");
+    return;
+  }
+
+  const expenseId = expenseIdField.value;
+
+  // Собираем данные
   const formData = {
     expense_name: document.getElementById("expense_name")?.value || "",
     amount: document.getElementById("amount")?.value || "",
     date: document.getElementById("date")?.value || "",
-    description: document.getElementById("description")?.value || "",
-  };
-
-  // Валидация полей
-  if (!formData.expense_name.trim()) {
-    showError("expense_name", "Название расхода обязательно");
-    isValid = false;
-  }
-
-  if (!formData.amount || parseFloat(formData.amount) <= 0) {
-    showError("amount", "Сумма должна быть больше 0");
-    isValid = false;
-  }
-
-  if (!formData.date) {
-    showError("date", "Дата обязательна");
-    isValid = false;
-  }
-
-  if (!isValid) {
-    scrollToFirstError();
-  }
-
-  return isValid;
-}
-
-// Валидация отдельного поля
-function validateField(inputElement) {
-  const fieldName = inputElement.id;
-  const value = inputElement.value;
-
-  if (fieldName === "expense_name" && !value.trim()) {
-    showError(fieldName, "Название обязательно");
-    return false;
-  }
-
-  if (fieldName === "amount") {
-    const num = parseFloat(value);
-    if (!num || num <= 0) {
-      showError(fieldName, "Сумма должна быть больше 0");
-      return false;
-    }
-  }
-
-  if (fieldName === "date" && !value) {
-    showError(fieldName, "Дата обязательна");
-    return false;
-  }
-
-  clearError(fieldName);
-  return true;
-}
-
-// Показать ошибку
-function showError(fieldName, message) {
-  const inputElement = document.getElementById(fieldName);
-  const errorElement = document.getElementById(fieldName + "Error");
-
-  if (inputElement) {
-    inputElement.style.borderColor = "#F44336";
-  }
-
-  if (errorElement) {
-    errorElement.textContent = message;
-    errorElement.style.display = "block";
-  }
-}
-
-// Очистить ошибку
-function clearError(fieldName) {
-  const inputElement = document.getElementById(fieldName);
-  const errorElement = document.getElementById(fieldName + "Error");
-
-  if (inputElement) {
-    inputElement.style.borderColor = "#e0e0e0";
-  }
-
-  if (errorElement) {
-    errorElement.style.display = "none";
-    errorElement.textContent = "";
-  }
-}
-
-// Очистить все ошибки
-function clearAllErrors() {
-  const errorElements = document.querySelectorAll(".error-message");
-  errorElements.forEach((el) => {
-    el.style.display = "none";
-    el.textContent = "";
-  });
-
-  const inputs = document.querySelectorAll(
-    "#editExpenseForm input, #editExpenseForm textarea",
-  );
-  inputs.forEach((input) => {
-    input.style.borderColor = "#e0e0e0";
-  });
-}
-
-// Прокрутить к первой ошибке
-function scrollToFirstError() {
-  const firstError = document.querySelector(
-    '#editExpenseForm .error-message[style*="display: block"]',
-  );
-  if (firstError) {
-    firstError.scrollIntoView({ behavior: "smooth", block: "center" });
-    firstError.previousElementSibling?.focus();
-  }
-}
-
-// Управление модальным окном удаления
-function setupDeleteModal() {
-  const deleteModal = document.getElementById("deleteExpenseModal");
-  if (!deleteModal) return;
-
-  function showDeleteModal() {
-    deleteModal.style.display = "flex";
-  }
-
-  function closeDeleteModal() {
-    deleteModal.style.display = "none";
-  }
-
-  // Назначаем обработчики для кнопок удаления
-  const deleteButtons = document.querySelectorAll(
-    '[onclick*="showDeleteExpenseModal"]',
-  );
-  deleteButtons.forEach((btn) => {
-    btn.addEventListener("click", showDeleteModal);
-  });
-
-  // Закрытие при клике вне модального окна
-  deleteModal.addEventListener("click", function (e) {
-    if (e.target === this) {
-      closeDeleteModal();
-    }
-  });
-
-  // Кнопка отмены в модальном окне
-  const cancelBtn = deleteModal.querySelector(
-    '[onclick*="closeDeleteExpenseModal"]',
-  );
-  if (cancelBtn) {
-    cancelBtn.addEventListener("click", closeDeleteModal);
-  }
-
-  // Экспортируем функции
-  window.showDeleteExpenseModal = showDeleteModal;
-  window.closeDeleteExpenseModal = closeDeleteModal;
-}
-
-// Отправка формы редактирования
-async function submitEditExpenseForm(e) {
-  e.preventDefault();
-
-  // === ПРОВЕРКА ЭЛЕМЕНТОВ ===
-  const getId = (id) => {
-    const el = document.getElementById(id);
-    if (!el) {
-      console.error(`❌ Элемент с id="${id}" не найден!`);
-      return null;
-    }
-    return el;
-  };
-
-  const expense_id = getId("expense_id");
-  const expense_name = getId("expense_name");
-  const amount = getId("amount");
-  const date = getId("date");
-
-  if (!expense_id || !expense_name || !amount || !date) {
-    alert("Ошибка: форма редактирования не загружена. Обновите страницу.");
-    return;
-  }
-
-  // === СБОР ДАННЫХ ===
-  const formData = {
-    expense_name: expense_name.value.trim(),
-    amount: parseFloat(amount.value),
-    date: date.value,
-    description: document.getElementById("description")?.value || "",
-    category_id: document.getElementById("category_id")?.value || null,
+    trip_id: document.getElementById("trip_id")?.value || "",
   };
 
   // Валидация
-  if (!formData.expense_name) {
-    showError("expense_name", "Название обязательно");
-    return;
-  }
-  if (isNaN(formData.amount) || formData.amount <= 0) {
-    showError("amount", "Сумма должна быть больше 0");
-    return;
-  }
-  if (!formData.date) {
-    showError("date", "Дата обязательна");
+  if (!formData.expense_name.trim()) {
+    alert("❌ Введите название траты");
     return;
   }
 
-  // === ОТПРАВКА ===
+  if (!formData.amount || parseFloat(formData.amount) <= 0) {
+    alert("❌ Введите корректную сумму");
+    return;
+  }
+
+  if (!formData.date) {
+    alert("❌ Выберите дату");
+    return;
+  }
+
+  // Отправка на сервер
   try {
-    const response = await fetch(`/api/expenses/${expense_id.value}`, {
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = "Сохранение...";
+    submitBtn.disabled = true;
+
+    console.log("Отправляю данные:", formData);
+
+    const response = await fetch(`/api/expenses/${expenseId}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(formData),
     });
 
     const result = await response.json();
+
     if (result.success) {
-      alert("✅ Трата обновлена!");
-      window.location.reload(); // или обновите список через JS
+      alert("✅ Трата успешно обновлена!");
+      window.expenseForm.closeEditModal();
+
+      // Обновляем страницу
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } else {
-      alert("❌ Ошибка: " + (result.error || "неизвестная"));
+      alert("❌ Ошибка: " + (result.error || "Неизвестная ошибка"));
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
     }
-  } catch (err) {
-    console.error(err);
-    alert("Сеть недоступна");
+  } catch (error) {
+    console.error("Ошибка сети:", error);
+    alert("❌ Ошибка сети");
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.textContent = "Сохранить изменения";
+    submitBtn.disabled = false;
   }
 }
-// Показать модальное окно редактирования
-function showEditExpenseModal(expenseId) {
-  // Находим трата в данных
-  const expense = window.travelData.expenses.find((e) => e.id == expenseId);
 
-  if (!expense) {
-    alert("Трата не найдена");
-    return;
+// Удаление траты
+async function deleteExpense(expenseId) {
+  try {
+    console.log("Удаляю трату ID:", expenseId);
+
+    const response = await fetch(`/api/expenses/${expenseId}`, {
+      method: "DELETE",
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      alert("✅ Трата успешно удалена!");
+      window.expenseForm.closeEditModal();
+
+      // Обновляем страницу
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } else {
+      alert("❌ Ошибка: " + (result.error || "Неизвестная ошибка"));
+    }
+  } catch (error) {
+    console.error("Ошибка удаления:", error);
+    alert("❌ Ошибка сети при удалении");
+  }
+}
+
+// ========== ИНИЦИАЛИЗАЦИЯ ==========
+
+// Инициализация при загрузке страницы
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("ExpenseFormUpdate.js загружен");
+
+  // Находим форму редактирования
+  const editForm = document.getElementById("editExpenseForm");
+  if (editForm) {
+    console.log("✅ Форма редактирования найдена");
+
+    // Вешаем обработчик отправки формы
+    editForm.addEventListener("submit", function (e) {
+      submitExpenseForm(e);
+    });
+  } else {
+    console.warn("⚠️ Форма редактирования не найдена");
   }
 
-  // Заполняем форму
-  document.getElementById("expense_id").value = expense.id;
-  document.getElementById("expense_name").value = expense.name;
-  document.getElementById("amount").value = expense.amount;
-  document.getElementById("description").value = expense.description || "";
-  document.getElementById("date").value = expense.date_raw || "";
+  // Находим модальное окно
+  const modal = document.getElementById("editExpenseModal");
+  if (modal) {
+    console.log("✅ Модальное окно найдено");
 
-  // Показываем модалку
-  document.getElementById("editExpenseModal").style.display = "flex";
-}
+    // Закрытие по клику вне окна
+    modal.addEventListener("click", function (e) {
+      if (e.target === this) {
+        window.expenseForm.closeEditModal();
+      }
+    });
 
-// Закрыть модальное окно
-function closeEditExpenseModal() {
-  document.getElementById("editExpenseModal").style.display = "none";
-  clearAllErrors();
-}
+    // Закрытие по Escape
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && modal.style.display === "flex") {
+        window.expenseForm.closeEditModal();
+      }
+    });
+  } else {
+    console.warn("⚠️ Модальное окно не найдено");
+  }
+});
 
-// Экспортируем функции
-window.validateExpenseForm = validateExpenseForm;
-window.submitEditExpenseForm = submitEditExpenseForm;
-window.showEditExpenseModal = showEditExpenseModal;
-window.closeEditExpenseModal = closeEditExpenseModal;
+// ========== ЭКСПОРТ ДЛЯ СТАРОГО КОДА ==========
+
+// Для обратной совместимости с другими файлами
+window.showEditExpenseModal = window.expenseForm.showEditModal;
+window.closeEditExpenseModal = window.expenseForm.closeEditModal;
+window.deleteCurrentExpense = window.expenseForm.deleteCurrentExpense;
+window.submitEditExpenseForm = submitExpenseForm;

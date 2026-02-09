@@ -132,26 +132,34 @@
             userId: '<%= userId %>'
         };
     </script>
-    <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ТРАТЫ -->
+   <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ТРАТЫ -->
 <div id="editExpenseModal" class="modal" style="display: none;">
   <div class="modal-content">
-    <span class="close" onclick="closeEditExpenseModal()" style="cursor: pointer;">&times;</span>
+    <span class="close" onclick="expenseForm.closeEditModal()" style="cursor: pointer;">&times;</span>
     <h3>Редактировать трату</h3>
     <form id="editExpenseForm">
-      <input type="hidden" id="expense_id" name="id"> <!-- ← ЭТОТ ID ОБЯЗАТЕЛЕН! -->
+      <input type="hidden" id="expense_id" name="id">
       <input type="hidden" id="trip_id" name="trip_id" value="<%= travel.id %>">
 
       <label>Название:</label>
-      <input type="text" id="expense_name" required>
+      <input type="text" id="expense_name" name="expense_name" required>
 
       <label>Сумма:</label>
-      <input type="number" step="0.01" id="amount" required>
+      <input type="number" step="0.01" id="amount" name="amount" required>
 
       <label>Дата:</label>
-      <input type="date" id="date" required>
+      <input type="date" id="date" name="date" required>
 
-      <button type="submit" onclick="submitEditExpenseForm(event)">Сохранить</button>
-      <button type="button" onclick="closeEditExpenseModal()">Отмена</button>
+      <div class="button-group">
+        <!-- Кнопка СОХРАНИТЬ -->
+        <button type="submit" class="btn-save">Сохранить изменения</button>
+        
+        <!-- Кнопка ОТМЕНА -->
+        <button type="button" class="btn-cancel" onclick="expenseForm.closeEditModal()">Отмена</button>
+        
+        <!-- Кнопка УДАЛИТЬ ТРАТУ - отдельная кнопка -->
+        <button type="button" class="btn-delete" onclick="expenseForm.deleteCurrentExpense()">Удалить трату</button>
+      </div>
     </form>
   </div>
 </div>
