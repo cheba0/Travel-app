@@ -88,6 +88,7 @@ class TravelController {
         });
     }
   }
+  //=================================================================
 
   static async getUserTravelsmob(req, res) {
     try {
@@ -135,6 +136,33 @@ class TravelController {
       });
     }
   }
+
+  static async getUserTravelsPublic(req, res) {
+    try {
+      const { id } = req.params; // ID пользователя из URL
+
+      if (!id || isNaN(parseInt(id))) {
+        return res.status(400).json({
+          success: false,
+          error: "Некорректный ID пользователя",
+        });
+      }
+      const travels = await Travel.findByUserId(id);
+
+      return res.json({
+        success: true,
+        travels,
+      });
+    } catch (error) {
+      console.error("Get user travels public error:", error);
+      return res.status(500).json({
+        success: false,
+        error: error.message || "Внутренняя ошибка сервера",
+      });
+    }
+  }
+
+  //=================================================================
 
   static async getTravelById(req, res) {
     try {

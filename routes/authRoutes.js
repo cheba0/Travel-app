@@ -120,6 +120,7 @@ router.get("/api/auth/logout", (req, res) => {
 });
 
 router.get("/api/travelsbyuserId/:id", TravelController.getUserTravelsmob);
+router.get("/api/travelsbyuserId/:id", TravelController.getUserTravelsPublic);
 
 router.post("/api/travels", TravelController.create);
 router.get("/api/travels", TravelController.getUserTravels);
