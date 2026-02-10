@@ -6,10 +6,10 @@ const pool = new Pool({
 
   // host: "localhost",
   // host: "26.96.80.103",
-  host: "85.208.86.134",
+  host: "db",
 
   // database: "postgres",
-  database: "postgres",
+  database: "travel_app",
 
   password: "postgres",
   port: 5432,
