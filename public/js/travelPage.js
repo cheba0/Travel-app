@@ -52,7 +52,8 @@ function updateParticipantsAvatars() {
                 line-height: 25px;
                 margin-left: ${index > 0 ? "-10px" : "0"};
                 border: 2px solid white;
-                font-size: 20px;
+                font-size: 15px;
+                font-weight: 500;
             ">
                 ${
                   participant.username
