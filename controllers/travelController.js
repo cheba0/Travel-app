@@ -89,13 +89,60 @@ class TravelController {
     }
   }
 
+  static async getUserTravelsmob(req, res) {
+    try {
+      // Получаем ID пользователя из параметров маршрута
+      const userId = req.params.id;
+
+      // Проверяем, передан ли ID
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          error: "ID пользователя не указан",
+        });
+      }
+
+      // Проверяем валидность ID
+      TravelValidator.validateUserAuthorization(userId);
+
+      // Получаем путешествия пользователя
+      const travels = await Travel.findByUserId(userId);
+
+      return res.json({
+        success: true,
+        travels,
+      });
+    } catch (error) {
+      console.error("Get user travels error:", error);
+
+      // Определяем статус ошибки на основе типа ошибки
+      let statusCode = 500;
+      if (
+        error.message.includes("авторизованы") ||
+        error.message.includes("не найден")
+      ) {
+        statusCode = 401;
+      } else if (
+        error.message.includes("не указан") ||
+        error.message.includes("неверный")
+      ) {
+        statusCode = 400;
+      }
+
+      return res.status(statusCode).json({
+        success: false,
+        error: error.message || "Внутренняя ошибка сервера",
+      });
+    }
+  }
+
   static async getTravelById(req, res) {
     try {
       const { id } = req.params;
       const userId = req.session.userId;
 
       TravelValidator.validateUserAuthorization(userId);
-      TravelValidator.validateTravelId(id);
+      // TravelValidator.validateTravelId(id);
 
       const travel = await Travel.findById(id, userId);
 

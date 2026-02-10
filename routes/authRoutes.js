@@ -119,6 +119,8 @@ router.get("/api/auth/logout", (req, res) => {
   console.log("🔍 GET /logout вызван");
 });
 
+router.get("/api/travelsbyuserId/:id", TravelController.getUserTravelsmob);
+
 router.post("/api/travels", TravelController.create);
 router.get("/api/travels", TravelController.getUserTravels);
 router.get("/api/travels/:id", TravelController.getTravelById);

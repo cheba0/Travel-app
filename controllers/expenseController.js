@@ -49,9 +49,9 @@ class ExpenseController {
       const status = error.message.includes("авторизованы")
         ? 401
         : error.message.includes("обязательные") ||
-          error.message.includes("Сумма")
-        ? 400
-        : 500;
+            error.message.includes("Сумма")
+          ? 400
+          : 500;
       return res.status(status).json({
         success: false,
         error: error.message,
@@ -88,8 +88,8 @@ class ExpenseController {
       const status = error.message.includes("авторизованы")
         ? 401
         : error.message.includes("ID")
-        ? 400
-        : 500;
+          ? 400
+          : 500;
       return res.status(status).json({
         success: false,
         error: error.message,
@@ -133,8 +133,8 @@ class ExpenseController {
       const status = error.message.includes("авторизованы")
         ? 401
         : error.message.includes("ID")
-        ? 400
-        : 500;
+          ? 400
+          : 500;
       return res.status(status).json({
         success: false,
         error: error.message,
@@ -163,12 +163,12 @@ class ExpenseController {
       }
 
       // Проверяем, что пользователь является владельцем расхода
-      if (expense.paid_by != userId) {
-        return res.status(403).json({
-          success: false,
-          error: "Нет прав для редактирования этого расхода",
-        });
-      }
+      // if (expense.paid_by != userId) {
+      //   return res.status(403).json({
+      //     success: false,
+      //     error: "Нет прав для редактирования этого расхода",
+      //   });
+      // }
 
       // Проверяем доступ к путешествию
       const travel = await Travel.findById(expense.trip_id, userId);
@@ -197,8 +197,8 @@ class ExpenseController {
       const status = error.message.includes("авторизованы")
         ? 401
         : error.message.includes("ID") || error.message.includes("Сумма")
-        ? 400
-        : 500;
+          ? 400
+          : 500;
       return res.status(status).json({
         success: false,
         error: error.message,
@@ -225,12 +225,12 @@ class ExpenseController {
       }
 
       // Проверяем, что пользователь является владельцем расхода
-      if (expense.paid_by != userId) {
-        return res.status(403).json({
-          success: false,
-          error: "Нет прав для удаления этого расхода",
-        });
-      }
+      // if (expense.paid_by != userId) {
+      //   return res.status(403).json({
+      //     success: false,
+      //     error: "Нет прав для удаления этого расхода",
+      //   });
+      // }
 
       const deletedExpense = await Expense.deleteExpense(id, userId);
 
@@ -250,8 +250,8 @@ class ExpenseController {
       const status = error.message.includes("авторизованы")
         ? 401
         : error.message.includes("ID")
-        ? 400
-        : 500;
+          ? 400
+          : 500;
       return res.status(status).json({
         success: false,
         error: error.message,
@@ -288,8 +288,8 @@ class ExpenseController {
       const status = error.message.includes("авторизованы")
         ? 401
         : error.message.includes("ID")
-        ? 400
-        : 500;
+          ? 400
+          : 500;
       return res.status(status).json({
         success: false,
         error: error.message,
@@ -326,8 +326,8 @@ class ExpenseController {
       const status = error.message.includes("авторизованы")
         ? 401
         : error.message.includes("ID")
-        ? 400
-        : 500;
+          ? 400
+          : 500;
       return res.status(status).json({
         success: false,
         error: error.message,

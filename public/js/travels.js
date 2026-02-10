@@ -19,6 +19,7 @@ async function loadTravelsFromServer() {
 
     if (data.success) {
       console.log(`✅ Загружено ${data.travels?.length || 0} путешествий`);
+
       return data.travels || [];
     } else {
       console.error("❌ Ошибка в данных:", data.error);
