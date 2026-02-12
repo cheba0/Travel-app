@@ -46,7 +46,12 @@ app.use(
     rolling: false,
   }),
 );
-
+app.use((req, res, next) => {
+  // Разрешаем камеру на мобильных устройствах
+  res.setHeader("Feature-Policy", "camera *");
+  res.setHeader("Permissions-Policy", "camera=*");
+  next();
+});
 // ========== ПРОВЕРКА СЕССИИ (ИСПРАВЛЕННАЯ) ==========
 const checkSession = (req, res, next) => {
   console.log("📋 Проверка сессии:", {
