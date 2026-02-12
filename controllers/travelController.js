@@ -136,7 +136,34 @@ class TravelController {
       });
     }
   }
+  static async getParticipants(req, res) {
+    try {
+      const { tripId } = req.params;
+      const userId = req.session.userId;
 
+      // Проверяем доступ к путешествию
+      const travel = await Travel.findById(tripId, userId);
+      if (!travel) {
+        return res.status(404).json({
+          success: false,
+          error: "Путешествие не найдено",
+        });
+      }
+
+      const participants = await Travel.getParticipants(tripId);
+
+      return res.json({
+        success: true,
+        participants,
+      });
+    } catch (error) {
+      console.error("Get participants error:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Ошибка при получении участников",
+      });
+    }
+  }
   static async getUserTravelsPublic(req, res) {
     try {
       const { id } = req.params; // ID пользователя из URL

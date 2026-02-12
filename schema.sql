@@ -54,15 +54,17 @@ CREATE TABLE expenses (
     FOREIGN KEY (category_id) REFERENCES expense_categories(id)
 );
 
-CREATE TABLE expense_shares (
-    id SERIAL PRIMARY KEY,
-    expense_id INTEGER NOT NULL,
-    user_id INTEGER NOT NULL,
-    amount_owed DECIMAL(10,2),
-    is_paid BOOLEAN DEFAULT FALSE,
-    UNIQUE(expense_id, user_id),
-    FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+CREATE TABLE IF NOT EXISTS expense_shares_detailed (
+  id SERIAL PRIMARY KEY,
+  expense_id INTEGER NOT NULL REFERENCES expenses(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount_owed DECIMAL(10, 2) NOT NULL CHECK (amount_owed >= 0),
+  custom_amount DECIMAL(10, 2), -- Фиксированная сумма
+  percentage DECIMAL(5, 2), -- Процент от общей суммы
+  is_paid BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(expense_id, user_id)
 );
 
 CREATE TABLE settlements (
@@ -88,3 +90,14 @@ CREATE TABLE expense_files (
     FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS debts (
+  id SERIAL PRIMARY KEY,
+  trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  from_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  to_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount DECIMAL(10, 2) NOT NULL,
+  expense_id INTEGER REFERENCES expenses(id) ON DELETE CASCADE,
+  is_settled BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

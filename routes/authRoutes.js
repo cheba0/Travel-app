@@ -3,6 +3,7 @@ const AuthController = require("../controllers/authController");
 const TravelController = require("../controllers/travelController");
 const ExpenseController = require("../controllers/expenseController");
 const qrController = require("../controllers/qrController");
+
 const { pool } = require("../db");
 const router = express.Router();
 
@@ -43,7 +44,18 @@ router.get("/add_expense", (req, res) => {
     title: "Добавить траты",
   });
 });
-
+router.get("/add_expense/:travelId", async (req, res) => {
+  try {
+    const travel = await Travel.findById(req.params.travelId);
+    res.render("add_expense", {
+      // travel: travel,
+      // user: req.user,
+    });
+  } catch (error) {
+    console.error(error);
+    res.redirect("/travels");
+  }
+});
 router.get("/travellist", TravelController.list);
 router.get("/travelDetail", TravelController.showForm);
 
@@ -135,6 +147,14 @@ router.post("/api/expenses", ExpenseController.create);
 router.get("/api/expenses/:id", ExpenseController.getById);
 router.put("/api/expenses/:id", ExpenseController.update);
 router.delete("/api/expenses/:id", ExpenseController.delete);
+router.get("/api/expenses/trip/:tripId", ExpenseController.getByTripId);
+router.get(
+  "/api/travels/:tripId/participants",
+  TravelController.getParticipants,
+);
+router.get("/trip/:trip_id/balance", ExpenseController.getTripBalance);
+router.get("/:id/edit", ExpenseController.getExpenseForEdit);
+// router.post("/:id/settle", ExpenseController.settleDebt);
 
 router.get("/scan/:travelId", qrController.showScannerPage);
 router.post("/process-receipt", qrController.processReceiptQR);
