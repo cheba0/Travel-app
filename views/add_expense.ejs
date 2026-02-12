@@ -12,34 +12,41 @@
         
         
         <div class="add_exp_title">Добавление траты</div>
-        <button class="camera_btn"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M80-680v-200h200v80H160v120H80Zm0 600v-200h80v120h120v80H80Zm600 0v-80h120v-120h80v200H680Zm120-600v-120H680v-80h200v200h-80ZM700-260h60v60h-60v-60Zm0-120h60v60h-60v-60Zm-60 60h60v60h-60v-60Zm-60 60h60v60h-60v-60Zm-60-60h60v60h-60v-60Zm120-120h60v60h-60v-60Zm-60 60h60v60h-60v-60Zm-60-60h60v60h-60v-60Zm240-320v240H520v-240h240ZM440-440v240H200v-240h240Zm0-320v240H200v-240h240Zm-60 500v-120H260v120h120Zm0-320v-120H260v120h120Zm320 0v-120H580v120h120Z"/></svg></button>
+        <button onclick="location.href='/scan/<%= travel.id %>'" class="camera_btn" id="camera_btn"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M80-680v-200h200v80H160v120H80Zm0 600v-200h80v120h120v80H80Zm600 0v-80h120v-120h80v200H680Zm120-600v-120H680v-80h200v200h-80ZM700-260h60v60h-60v-60Zm0-120h60v60h-60v-60Zm-60 60h60v60h-60v-60Zm-60 60h60v60h-60v-60Zm-60-60h60v60h-60v-60Zm120-120h60v60h-60v-60Zm-60 60h60v60h-60v-60Zm-60-60h60v60h-60v-60Zm240-320v240H520v-240h240ZM440-440v240H200v-240h240Zm0-320v240H200v-240h240Zm-60 500v-120H260v120h120Zm0-320v-120H260v120h120Zm320 0v-120H580v120h120Z"/></svg></button>
     </div>
      <form id="expenseForm">
         <input type="hidden" id="tripId" name="trip_id" value="">
-    <div class="add_exp_container">
+        <div class="add_exp_container">
+            <div class="input_field">
+            <input type="text" name="expense_name" placeholder="Название">
+        </div>
+
         <div class="input_field">
-        <input type="text" name="expense_name" placeholder="Название">
-    </div>
+            <input type="date" name="date">
+        </div>
 
-    <div class="input_field">
-        <input type="date" name="date">
-    </div>
+        <div class="input_field">
+            <input type="number" name="amount" placeholder="Сумма">
+        </div>
 
-    <div class="input_field">
-        <input type="number" name="amount" placeholder="Сумма">
-    </div>
+        <div class="input_field">
+            <input type="text" placeholder="Локация">
+        </div>
 
-    <div class="input_field">
-        <input type="text" placeholder="Локация">
-    </div>
-
-    <div class="file_upload">
-        <label for="fileInput" class="file_upload_label">+ Добавить файлы</label>
-        <input id="fileInput" type="file" multiple class="file_upload_input">
-    </div>
-    <div id="message"></div>
-    <button class="create_button">Создать</button>
+        <div class="file_upload">
+            <label for="fileInput" class="file_upload_label">+ Добавить файлы</label>
+            <input id="fileInput" type="file" multiple class="file_upload_input">
+        </div>
+        <div id="expenseMessage"></div>
+        <button class="create_button" type="submit">Создать</button>
     </form>
     <script src="/js/creatingExpense.js"></script>
+    <script>
+        // Передаем данные из сервера в JavaScript
+        window.travelData = {
+            id: '<%= travel.id %>',
+            name: '<%= travel.name %>',
+        };
+    </script>
 </body>
 </html>

@@ -122,7 +122,7 @@ function addEventListeners() {
   if (addFirstBtn) {
     console.log(window.travelData.id);
     addFirstBtn.addEventListener("click", function () {
-      window.location.href = "/add_expense?trip_id=" + window.travelData.id;
+      window.location.href = "/add_expense/" + window.travelData.id;
     });
   }
   // В файле для списка путешествий

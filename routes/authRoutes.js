@@ -38,24 +38,70 @@ router.get("/profile", (req, res) => {
   });
 });
 
-router.get("/add_expense", (req, res) => {
-  console.log(" GET /add_expense - страница add_expense");
-  res.render("add_expense", {
-    title: "Добавить траты",
-  });
-});
+// router.get("/add_expense", (req, res) => {
+//   console.log(" GET /add_expense - страница add_expense");
+//   res.render("add_expense", {
+//     title: "Добавить траты",
+//   });
+// });
 router.get("/add_expense/:travelId", async (req, res) => {
   try {
-    const travel = await Travel.findById(req.params.travelId);
+    const travelId = req.params.travelId;
+    console.log(
+      `📱 Загрузка страницы добавления траты для путешествия ID: ${travelId}`,
+    );
+
+    // Проверяем авторизацию
+    if (!req.session.userId) {
+      console.log("❌ Пользователь не авторизован");
+      return res.redirect("/login");
+    }
+
+    // Получаем данные путешествия из БД
+    const result = await pool.query(
+      `SELECT id, trip_name, currency 
+       FROM trips 
+       WHERE id = $1`,
+      [travelId],
+    );
+
+    if (result.rows.length === 0) {
+      console.log("❌ Путешествие не найдено");
+      return res.status(404).send("Путешествие не найдено");
+    }
+
+    const travel = result.rows[0];
+
+    console.log(`✅ Путешествие найдено: ${travel.trip_name}`);
+
+    // Рендерим страницу и передаем travel объект
     res.render("add_expense", {
-      // travel: travel,
-      // user: req.user,
+      title: "Добавить трату",
+      travel: {
+        id: travel.id,
+        name: travel.trip_name,
+      },
+      user: {
+        id: req.session.userId,
+      },
     });
   } catch (error) {
-    console.error(error);
-    res.redirect("/travels");
+    console.error("❌ Ошибка при загрузке страницы добавления траты:", error);
+    res.status(500).send("Ошибка сервера");
   }
 });
+// router.get("/add_expense/:travelId", async (req, res) => {
+//   try {
+//     const travel = await Travel.findById(req.params.travelId);
+//     res.render("add_expense", {
+//       // travel: travel,
+//       // user: req.user,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.redirect("/travels");
+//   }
+// });
 router.get("/travellist", TravelController.list);
 router.get("/travelDetail", TravelController.showForm);
 

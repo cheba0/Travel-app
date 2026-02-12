@@ -1,6 +1,7 @@
 console.log("expenses.js загружен");
 
 document.addEventListener("DOMContentLoaded", function () {
+  console.log("Данные путешествия:", window.travelData);
   const expenseForm = document.getElementById("expenseForm");
   const messageDiv = document.getElementById("expenseMessage");
   const expensesList = document.getElementById("expensesList");
@@ -12,7 +13,7 @@ document.addEventListener("DOMContentLoaded", function () {
   if (tripIdFromUrl && tripIdInput) {
     tripIdInput.value = tripIdFromUrl;
   }
-  const tripId = tripIdInput?.value || tripIdFromUrl;
+  const tripId = tripIdInput?.value || tripIdFromUrl || window.travelData.id;
   const userId = localStorage.getItem("userId");
 
   console.log("Форма расходов найдена:", !!expenseForm);
@@ -79,16 +80,27 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log("Полный ответ сервера:", result);
 
         if (messageDiv) {
+          if (!result.success) {
+            messageDiv.style.color = "red";
+            messageDiv.textContent = "Заполните все поля";
+          }
+        }
+
+        if (messageDiv) {
           if (result.success) {
             messageDiv.style.color = "green";
             messageDiv.textContent = "Путешествие успешно создано!";
           }
         }
         if (result.success) {
-          // showMessage(result.message || "Расход успешно добавлен!", "green");
-
+          ((messageDiv.textContent =
+            result.message || "Расход успешно добавлен!"),
+            "green");
           // Сбрасываем форму
           expenseForm.reset();
+          setTimeout(() => {
+            window.location.href = "/travel/" + window.travelData.id;
+          }, 1000);
         }
       } catch (error) {
         console.error("Ошибка:", error);

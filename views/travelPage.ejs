@@ -97,11 +97,6 @@
         <!-- class="nav" id="add_expense" href="/add_expense/<%= travel.id %>" -->
         <a class="nav" id="add_expense"><svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="30px" fill="#e3e3e3"><path d="M440-280h80v-160h160v-80H520v-160h-80v160H280v80h160v160Zm40 200q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg></a>
     </div>
-    <!-- Кнопка для сканирования (отдельно) -->
-    <a href="/scan/<%= travel.id %>" class="btn" style="position: fixed; bottom: 100px; right: 20px; background: #007bff; color: white; padding: 15px; border-radius: 50%; text-decoration: none;">
-        📷 Scan Receipt
-    </a>
-
     <!-- Модальное окно для приглашения участников -->
     <div id="inviteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
         <div style="background: white; width: 90%; max-width: 500px; margin: 50px auto; padding: 20px; border-radius: 10px;">
@@ -346,13 +341,6 @@
         `;
         document.head.appendChild(style);
     </script>
-
-
-
-
-
-
-
 
 
 </body>
