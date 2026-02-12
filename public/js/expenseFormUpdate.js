@@ -86,7 +86,7 @@ const expenseForm = {
 
     // Кнопка добавления участника
     html += `<button type="button" onclick="expenseForm.showParticipantSearch()" 
-                 style="width: 100%; padding: 10px; margin: 10px 0; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                 style="width: 100%; padding: 10px; margin: 10px 0; background: #f5de4c; border: none; border-radius: 8px; cursor: pointer;">
                     + Добавить участника
                  </button>`;
 
@@ -96,7 +96,7 @@ const expenseForm = {
     const isEqual = Math.abs(sharesTotal - totalAmount) < 0.01;
 
     html += `
-            <div style="margin-top: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px;">
+            <div style=" padding: 12px; background: #f5f5f5; border-radius: 8px;">
                 <div style="display: flex; justify-content: space-between;">
                     <span>Общая сумма:</span>
                     <span style="font-weight: bold;">${totalAmount.toFixed(2)} ₽</span>
