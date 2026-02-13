@@ -1222,7 +1222,7 @@ body {
 }
 
 .invite{
-    background: #f5de4c; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; color: #000;
+    background: #f5de4c; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; color: #000; font-size: 13px;
 }
 
 .invite:hover{
