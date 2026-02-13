@@ -47,9 +47,9 @@ app.use(
   }),
 );
 app.use((req, res, next) => {
-  // Разрешаем камеру на мобильных устройствах
-  res.setHeader("Feature-Policy", "camera *");
+  // Разрешаем камеру
   res.setHeader("Permissions-Policy", "camera=*");
+  res.setHeader("Feature-Policy", "camera *");
   next();
 });
 // ========== ПРОВЕРКА СЕССИИ (ИСПРАВЛЕННАЯ) ==========
