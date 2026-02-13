@@ -69,11 +69,11 @@
         console.log('📍 Хост:', location.hostname);
         
         // 1. Проверка HTTPS (на глобальном сервере)
-        // if (location.protocol !== 'https:' && location.hostname !== 'localhost' && !location.hostname.includes('192.168.')) {
-        //     updateStatus('❌ Камера требует HTTPS. Используйте https://', 'error');
-        //     if (startBtn) startBtn.disabled = true;
-        //     return false;
-        // }
+         if (location.protocol !== 'https:' && location.hostname !== 'localhost' && !location.hostname.includes('192.168.')) {
+             updateStatus('❌ Камера требует HTTPS. Используйте https://', 'error');
+             if (startBtn) startBtn.disabled = true;
+             return false;
+         }
         if (location.protocol !== 'https:' && location.hostname !== 'localhost' && !location.hostname.includes('192.168.')) {
         // Просто предупреждение, но не блокируем
         console.warn('⚠️ Камера лучше работает через HTTPS');
