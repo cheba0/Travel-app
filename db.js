@@ -9,7 +9,8 @@ const pool = new Pool({
   // 26.96.80.103
   host: "db",
 
-  // database: "postgres",
+  // postgres
+  // travel_app
   database: "travel_app",
 
   password: "postgres",
