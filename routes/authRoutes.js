@@ -447,8 +447,21 @@ router.get("/travel/:id", async (req, res) => {
       [travelId],
     );
 
+    // ✅ ИСПРАВЛЕННЫЙ ЗАПРОС - добавляем участников каждого расхода
     const expensesResult = await pool.query(
-      `SELECT e.*, u.username as payer_name
+      `SELECT 
+          e.*, 
+          u.username as payer_name,
+          (
+            SELECT json_agg(json_build_object(
+              'id', u2.id,
+              'username', u2.username,
+              'amount_owed', es.amount_owed
+            ))
+            FROM expense_shares es
+            JOIN users u2 ON es.user_id = u2.id
+            WHERE es.expense_id = e.id
+          ) as participants
        FROM expenses e
        JOIN users u ON e.paid_by = u.id
        WHERE e.trip_id = $1
@@ -472,6 +485,8 @@ router.get("/travel/:id", async (req, res) => {
     };
 
     const participants = participantsResult.rows;
+
+    // ✅ ТЕПЕРЬ ВКЛЮЧАЕМ participants В КАЖДЫЙ РАСХОД
     const expenses = expensesResult.rows.map((exp) => ({
       id: exp.id,
       name: exp.expense_name || "Без названия",
@@ -479,9 +494,12 @@ router.get("/travel/:id", async (req, res) => {
       amount: exp.amount,
       payer: exp.payer_name,
       currency: travel.currency || "RUB",
+      participants: exp.participants || [], // ← ВАЖНО: добавляем участников
     }));
 
     const userId = req.session.userId;
+
+    console.log("📊 Пример первого расхода с participants:", expenses[0]);
 
     res.render("travelPage", {
       title: travel.trip_name,
