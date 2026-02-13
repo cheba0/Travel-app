@@ -54,7 +54,7 @@ CREATE TABLE expenses (
     FOREIGN KEY (category_id) REFERENCES expense_categories(id)
 );
 
-CREATE TABLE IF NOT EXISTS expense_shares_detailed (
+CREATE TABLE IF NOT EXISTS expense_shares (
   id SERIAL PRIMARY KEY,
   expense_id INTEGER NOT NULL REFERENCES expenses(id) ON DELETE CASCADE,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
