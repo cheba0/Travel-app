@@ -44,11 +44,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     
     <script>
-        if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-    updateStatus('❌ Камера требует HTTPS. Используйте https://', 'error');
-    startBtn.disabled = true;
-    console.error('Камера требует HTTPS соединения');
-}
+
     const travelId = '<%= travelId %>';
     let scannerActive = false;
     let videoStream = null;
@@ -61,22 +57,80 @@
     const statusDiv = document.getElementById('status');
     
     function updateStatus(message, type = 'info') {
+        if (!statusDiv) return;
         statusDiv.textContent = message;
         statusDiv.className = `scan_status ${type}`;
     }
 
-    // ОПТИМИЗИРОВАННЫЙ ЗАПУСК КАМЕРЫ - МЕНЬШЕЕ РАЗРЕШЕНИЕ
+    // ФУНКЦИЯ ПРОВЕРКИ ПОДДЕРЖКИ КАМЕРЫ
+    async function checkCameraSupport() {
+        console.log('🔍 Проверка камеры...');
+        console.log('📍 Протокол:', location.protocol);
+        console.log('📍 Хост:', location.hostname);
+        
+        // 1. Проверка HTTPS (на глобальном сервере)
+         if (location.protocol !== 'https:' && location.hostname !== 'localhost' && !location.hostname.includes('192.168.')) {
+             updateStatus('❌ Камера требует HTTPS. Используйте https://', 'error');
+             if (startBtn) startBtn.disabled = true;
+             return false;
+         }
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && !location.hostname.includes('192.168.')) {
+        // Просто предупреждение, но не блокируем
+        console.warn('⚠️ Камера лучше работает через HTTPS');
+        // НЕ отключаем кнопку!
+}
+        // 2. Проверка API
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            updateStatus('❌ Ваш браузер не поддерживает камеру', 'error');
+            if (startBtn) startBtn.disabled = true;
+            return false;
+        }
+        
+        // 3. Проверка наличия камер
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(d => d.kind === 'videoinput');
+            console.log('📹 Найдено камер:', videoDevices.length);
+            
+            if (videoDevices.length === 0) {
+                updateStatus('❌ Камера не обнаружена', 'error');
+                if (startBtn) startBtn.disabled = true;
+                return false;
+            }
+            
+            updateStatus('✅ Камера готова. Нажмите "Запустить камеру"', 'info');
+            if (startBtn) startBtn.disabled = false;
+            return true;
+            
+        } catch (err) {
+            console.warn('⚠️ Не удалось получить список устройств');
+            return true;
+        }
+    }
+
+    // ЗАПУСК КАМЕРЫ С ПРОВЕРКОЙ РАЗРЕШЕНИЙ
     startBtn.addEventListener('click', async () => {
         try {
             updateStatus('Запрос доступа к камере...', 'info');
             
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { 
-                    facingMode: 'environment',
-                    width: { ideal: 640 },  // Уменьшили с 1280
-                    height: { ideal: 480 }   // Уменьшили с 720
-                }
-            });
+            // ПРОБУЕМ РАЗНЫЕ НАСТРОЙКИ
+            let stream;
+            try {
+                // Сначала пробуем с environment (задняя камера)
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        facingMode: { ideal: 'environment' },
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }
+                });
+            } catch (e) {
+                console.log('⚠️ Не удалось получить заднюю камеру, пробуем любую');
+                // Если не получается, пробуем без настроек
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true 
+                });
+            }
             
             video.srcObject = stream;
             videoStream = stream;
@@ -85,7 +139,12 @@
             video.setAttribute('autoplay', 'true');
             video.setAttribute('muted', 'true');
             
-            await video.play();
+            // Ждем готовности видео
+            await new Promise((resolve) => {
+                video.onloadedmetadata = () => {
+                    video.play().then(resolve);
+                };
+            });
             
             scannerActive = true;
             updateStatus('✅ Камера активна. Наведите на QR-код', 'success');
@@ -93,12 +152,23 @@
             startBtn.disabled = true;
             stopBtn.disabled = false;
             
-            // ЗАПУСКАЕМ ОПТИМИЗИРОВАННОЕ СКАНИРОВАНИЕ
             optimizedScan();
             
         } catch (error) {
-            console.error('Ошибка:', error);
-            updateStatus('❌ Ошибка доступа к камере', 'error');
+            console.error('❌ Ошибка камеры:', error);
+            
+            let errorMsg = '❌ Ошибка доступа к камере';
+            if (error.name === 'NotAllowedError' || error.message.includes('Permission')) {
+                errorMsg = '❌ Доступ запрещен. Разрешите камеру в настройках браузера.';
+            } else if (error.name === 'NotFoundError') {
+                errorMsg = '❌ Камера не найдена';
+            } else if (error.name === 'NotReadableError') {
+                errorMsg = '❌ Камера занята другим приложением';
+            } else if (error.name === 'OverconstrainedError') {
+                errorMsg = '❌ Камера не поддерживает требуемые параметры';
+            }
+            
+            updateStatus(errorMsg, 'error');
         }
     });
     
@@ -112,39 +182,31 @@
         startBtn.disabled = false;
         stopBtn.disabled = true;
         updateStatus('Камера остановлена', 'info');
-        resultDiv.style.display = 'none';
+        if (resultDiv) resultDiv.style.display = 'none';
     });
     
-    // ОПТИМИЗИРОВАННОЕ СКАНИРОВАНИЕ - БЫСТРЕЕ И ЧАЩЕ
+    // ОПТИМИЗИРОВАННОЕ СКАНИРОВАНИЕ
     function optimizedScan() {
         if (!scannerActive) return;
         
-        // СОЗДАЕМ CANVС ОДИН РАЗ
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         
         let scanCount = 0;
-        let lastScanTime = 0;
         
         function scan() {
             if (!scannerActive) return;
             
-            const now = Date.now();
-            
-            // СКАНИРУЕМ КАЖДЫЙ КАДР (убрали задержку)
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            if (video && video.readyState === video.HAVE_ENOUGH_DATA) {
                 try {
-                    // УМЕНЬШАЕМ РАЗМЕР КАДРА ДЛЯ СКОРОСТИ
-                    const targetWidth = 320;  // Еще меньше
+                    const targetWidth = 320;
                     const targetHeight = 240;
                     
                     canvas.width = targetWidth;
                     canvas.height = targetHeight;
                     
-                    // РИСУЕМ УМЕНЬШЕННЫЙ КАДР
                     ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
                     
-                    // БЕРЕМ КАЖДЫЙ 2-Й КАДР ДЛЯ ЭКОНОМИИ
                     scanCount++;
                     if (scanCount % 2 !== 0) {
                         requestAnimationFrame(scan);
@@ -153,19 +215,17 @@
                     
                     const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
                     
-                    // БЫСТРЫЙ ПОИСК QR
                     const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                        inversionAttempts: 'dontInvert', // Только один вариант для скорости
+                        inversionAttempts: 'dontInvert'
                     });
                     
                     if (code) {
-                        console.log('✅ QR НАЙДЕН!', code.data.substring(0, 30));
+                        console.log('✅ QR НАЙДЕН!');
                         if (navigator.vibrate) navigator.vibrate(100);
                         sendQRCode(code.data);
                         return;
                     }
                     
-                    // ПОКАЗЫВАЕМ СТАТУС РЕЖЕ
                     if (scanCount % 60 === 0) {
                         updateStatus('🔍 Сканирование...', 'info');
                     }
@@ -181,7 +241,7 @@
         scan();
     }
     
-    // БЫСТРАЯ ОТПРАВКА НА СЕРВЕР
+    // ОТПРАВКА НА СЕРВЕР
     async function sendQRCode(qrData) {
         updateStatus('⏳ Обработка...', 'info');
         
@@ -200,22 +260,22 @@
             if (result.success) {
                 updateStatus('✅ Готово!', 'success');
                 
-                // БЫСТРЫЙ ОТВЕТ
-                resultDiv.innerHTML = `
-                    <div style="background: #4CAF50; color: white; padding: 15px; border-radius: 8px;">
-                        <h3 style="margin: 0 0 10px 0;">✅ Добавлено!</h3>
-                        <p style="font-size: 24px; margin: 0;">${result.expense.amount} ₽</p>
-                        <button onclick="location.reload()" 
-                                style="background: white; color: #4CAF50; border: none; 
-                                       padding: 8px 16px; border-radius: 4px; margin-top: 10px;">
-                            Ещё
-                        </button>
-                    </div>
-                `;
-                resultDiv.style.display = 'block';
+                if (resultDiv) {
+                    resultDiv.innerHTML = `
+                        <div style="background: #4CAF50; color: white; padding: 15px; border-radius: 8px;">
+                            <h3 style="margin: 0 0 10px 0;">✅ Добавлено!</h3>
+                            <p style="font-size: 24px; margin: 0;">${result.expense.amount} ₽</p>
+                            <button onclick="location.reload()" 
+                                    style="background: white; color: #4CAF50; border: none; 
+                                           padding: 8px 16px; border-radius: 4px; margin-top: 10px;">
+                                Ещё
+                            </button>
+                        </div>
+                    `;
+                    resultDiv.style.display = 'block';
+                }
                 
-                // БЫСТРАЯ ОСТАНОВКА
-                setTimeout(() => stopBtn.click(), 1500);
+                setTimeout(() => stopBtn?.click(), 1500);
             } else {
                 throw new Error(result.message);
             }
@@ -227,15 +287,12 @@
     }
     
     // ТЕСТОВАЯ ФУНКЦИЯ
-    window.testQR = function() {
-        sendQRCode('t=20250212&s=1500.00&fn=test');
-    };
+ 
     
-    // ПРОВЕРКА КАМЕРЫ
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        updateStatus('❌ Камера не поддерживается', 'error');
-        startBtn.disabled = true;
-    }
+    // ЗАПУСК ПРОВЕРКИ ПРИ ЗАГРУЗКЕ
+    document.addEventListener('DOMContentLoaded', () => {
+        checkCameraSupport();
+    });
 </script>
 </body>
 </html>
