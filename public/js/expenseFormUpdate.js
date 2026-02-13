@@ -86,7 +86,7 @@ const expenseForm = {
 
     // Кнопка добавления участника
     html += `<button type="button" onclick="expenseForm.showParticipantSearch()" 
-                 style="width: 100%; padding: 10px; margin: 10px 0; background: #f5de4c; border: none; border-radius: 8px; cursor: pointer;">
+                 style="width: 100%; padding: 10px; margin: 10px 0; background: #f5de4c; border: none; color: #000; border-radius: 8px; cursor: pointer; font-size: 13px" >
                     + Добавить участника
                  </button>`;
 
