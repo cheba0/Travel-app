@@ -303,14 +303,40 @@ const expenseForm = {
     const expenseId = this.currentExpense.id;
 
     try {
+      console.log(`🗑️ Удаление участника ${userId} из расхода ${expenseId}`);
+
       const response = await fetch(
         `/api/expenses/${expenseId}/participants/${userId}`,
         {
           method: "DELETE",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
         },
       );
 
+      // ПРОВЕРЯЕМ ЧТО ВЕРНУЛ СЕРВЕР
+      const contentType = response.headers.get("content-type");
+      console.log("📦 Content-Type:", contentType);
+      console.log("📦 Статус:", response.status);
+
+      if (!contentType || !contentType.includes("application/json")) {
+        // Если сервер вернул HTML - читаем как текст для отладки
+        const text = await response.text();
+        console.error("❌ Сервер вернул не JSON:", text.substring(0, 200));
+
+        // ПРОБУЕМ АЛЬТЕРНАТИВНЫЙ МЕТОД - просто удаляем из массива на клиенте
+        console.log("⚠️ Использую локальное удаление");
+        this.currentExpense.participants =
+          this.currentExpense.participants.filter((p) => p.id !== userId);
+        this.renderParticipants();
+        alert("Участник удален локально (сервер не поддерживает удаление)");
+        return;
+      }
+
       const result = await response.json();
+      console.log("📦 Ответ сервера:", result);
 
       if (result.success) {
         // Удаляем из массива
@@ -318,12 +344,21 @@ const expenseForm = {
           this.currentExpense.participants.filter((p) => p.id !== userId);
         // Перерисовываем
         this.renderParticipants();
+        alert("✅ Участник удален");
       } else {
-        alert("Ошибка: " + result.error);
+        alert(
+          "Ошибка: " + (result.error || result.message || "Неизвестная ошибка"),
+        );
       }
     } catch (error) {
-      console.error("Error:", error);
-      alert("Ошибка при удалении");
+      console.error("❌ Ошибка:", error);
+
+      // В случае ошибки сети - все равно удаляем локально
+      console.log("⚠️ Ошибка сети, удаляю локально");
+      this.currentExpense.participants =
+        this.currentExpense.participants.filter((p) => p.id !== userId);
+      this.renderParticipants();
+      alert("Участник удален локально (ошибка связи с сервером)");
     }
   },
 

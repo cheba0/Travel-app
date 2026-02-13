@@ -198,6 +198,10 @@ router.get(
   "/api/travels/:tripId/participants",
   TravelController.getParticipants,
 );
+router.delete(
+  "/api/expenses/:expenseId/participants/:userId",
+  ExpenseController.removeParticipant,
+);
 router.get("/trip/:trip_id/balance", ExpenseController.getTripBalance);
 router.get("/:id/edit", ExpenseController.getExpenseForEdit);
 // router.post("/:id/settle", ExpenseController.settleDebt);

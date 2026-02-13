@@ -7,11 +7,11 @@ const pool = new Pool({
   // db
   // localhost
   // 26.96.80.103
-  host: "db",
+  host: "localhost",
 
   // postgres
   // travel_app
-  database: "travel_app",
+  database: "postgres",
 
   password: "postgres",
   port: 5432,
