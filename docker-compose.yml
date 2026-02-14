@@ -1,4 +1,3 @@
-# version: '3.8'
 
 # services:
 #   travel-app:
@@ -24,7 +23,6 @@
 # volumes:
 #   postgres_data:
 
-version: '3.8'
 
 services:
   travel-app:

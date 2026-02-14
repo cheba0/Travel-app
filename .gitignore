@@ -1,0 +1,49 @@
+# SSL certificates and Let's Encrypt files - NEVER COMMIT THESE!
+certbot/
+letsencrypt/
+*.crt
+*.key
+*.pem
+*.csr
+*.der
+*.pfx
+*.p12
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Docker data
+data/
+postgres_data/
+
+# Node.js
+node_modules/
+npm-debug.log
+package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Scripts
+get-docker.sh
