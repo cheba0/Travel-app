@@ -1,0 +1,18 @@
+2026-02-14 02:30:17,124:DEBUG:certbot._internal.main:certbot version: 5.3.1
+2026-02-14 02:30:17,125:DEBUG:certbot._internal.main:Location of certbot entry point: /usr/local/bin/certbot
+2026-02-14 02:30:17,125:DEBUG:certbot._internal.main:Arguments: []
+2026-02-14 02:30:17,125:DEBUG:certbot._internal.main:Discovered plugins: PluginsRegistry(PluginEntryPoint#manual,PluginEntryPoint#null,PluginEntryPoint#standalone,PluginEntryPoint#webroot)
+2026-02-14 02:30:17,139:DEBUG:certbot._internal.log:Root logging level set at 30
+2026-02-14 02:30:17,140:DEBUG:certbot._internal.display.obj:Notifying user: Processing /etc/letsencrypt/renewal/travelapp.space.conf
+2026-02-14 02:30:17,142:DEBUG:certbot._internal.plugins.selection:Requested authenticator None and installer None
+2026-02-14 02:30:17,154:DEBUG:certbot._internal.renewal:Skipped ACME Renewal Info check because ari_retry_after 2026-02-14T07:14:29 is in the future
+2026-02-14 02:30:17,161:INFO:certbot.ocsp:Cannot extract OCSP URI from /etc/letsencrypt/archive/travelapp.space/cert1.pem
+2026-02-14 02:30:17,162:DEBUG:certbot._internal.display.obj:Notifying user: Certificate not yet due for renewal
+2026-02-14 02:30:17,162:DEBUG:certbot._internal.plugins.selection:Requested authenticator webroot and installer None
+2026-02-14 02:30:17,162:DEBUG:certbot._internal.display.obj:Notifying user: 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+2026-02-14 02:30:17,163:DEBUG:certbot._internal.display.obj:Notifying user: The following certificates are not due for renewal yet:
+2026-02-14 02:30:17,163:DEBUG:certbot._internal.display.obj:Notifying user:   /etc/letsencrypt/live/travelapp.space/fullchain.pem expires on 2026-05-15 (skipped)
+2026-02-14 02:30:17,163:DEBUG:certbot._internal.display.obj:Notifying user: No renewals were attempted.
+2026-02-14 02:30:17,163:DEBUG:certbot._internal.display.obj:Notifying user: - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+2026-02-14 02:30:17,163:DEBUG:certbot._internal.renewal:no renewal failures

@@ -1,13 +1,46 @@
-version: '3.8'
+
+# services:
+#   travel-app:
+#     build: .
+#     ports:
+#       - "3000:3000"
+#     depends_on:
+#       - db
+#     restart: unless-stopped
+
+#   db:
+#     image: postgres:15-alpine
+#     environment:
+#       - POSTGRES_USER=postgres
+#       - POSTGRES_PASSWORD=postgres
+#       - POSTGRES_DB=travel_app
+#     ports:
+#       - "5432:5432"
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+# volumes:
+#   postgres_data:
+
 
 services:
   travel-app:
     build: .
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"  # меняем ports на expose - теперь приложение доступно только внутри Docker сети
     depends_on:
       - db
     restart: unless-stopped
+    networks:
+      - travel-network
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=travel_app
+      - DB_PORT=5432
 
   db:
     image: postgres:15-alpine
@@ -16,10 +49,45 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=travel_app
     ports:
-      - "5432:5432"
+      - "5432:5432"  # оставляем, если нужно подключаться к БД с хоста
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - travel-network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_ssl
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certbot/www:/var/www/certbot/:ro
+      - ./certbot/conf:/etc/letsencrypt/:ro
+    networks:
+      - travel-network
+    depends_on:
+      - travel-app
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot
+    restart: unless-stopped
+    volumes:
+      - ./certbot/www:/var/www/certbot/:rw
+      - ./certbot/conf:/etc/letsencrypt/:rw
+      - ./logs/letsencrypt:/var/log/letsencrypt/:rw  # Эту строку добавляем
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - travel-network
+
+networks:
+  travel-network:
+    driver: bridge
 
 volumes:
   postgres_data:
