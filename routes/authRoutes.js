@@ -584,103 +584,89 @@ router.post(
   },
 );
 // ===== МАРШРУТЫ ДЛЯ РЕДАКТИРОВАНИЯ/УДАЛЕНИЯ СООБЩЕНИЙ =====
-
-// ===== МАРШРУТЫ ДЛЯ РЕДАКТИРОВАНИЯ/УДАЛЕНИЯ СООБЩЕНИЙ =====
-
-// 🔹 Редактировать сообщение
+// ===== РЕДАКТИРОВАНИЕ СООБЩЕНИЯ =====
 router.put("/api/messages/:messageId/edit", async (req, res) => {
   try {
     const { messageId } = req.params;
     const { text } = req.body;
     const userId = req.session.userId;
 
-    console.log(
-      `✏️ Запрос на редактирование: messageId=${messageId}, userId=${userId}, text="${text}"`,
-    );
-
     if (!userId) {
       return res
         .status(401)
         .json({ success: false, error: "Требуется авторизация" });
     }
 
-    if (!text || !text.trim()) {
-      return res.status(400).json({
-        success: false,
-        error: "Текст сообщения не может быть пустым",
-      });
+    if (!text || text.trim() === "") {
+      return res
+        .status(400)
+        .json({ success: false, error: "Текст не может быть пустым" });
     }
 
-    // Проверяем, что сообщение существует и принадлежит пользователю
+    // Проверяем принадлежность
     const msgResult = await pool.query(
-      `SELECT m.*, t.user_id as trip_creator 
+      `SELECT m.id, m.user_id, m.created_at, t.user_id as trip_creator 
        FROM messages m 
        JOIN trips t ON m.trip_id = t.id 
-       WHERE m.id = $1 AND m.user_id = $2`,
-      [messageId, userId],
+       WHERE m.id = $1`,
+      [messageId],
     );
 
     if (msgResult.rows.length === 0) {
-      console.log(
-        `❌ Сообщение ${messageId} не найдено или не принадлежит пользователю ${userId}`,
-      );
-      return res.status(404).json({
-        success: false,
-        error: "Сообщение не найдено или у вас нет прав на его редактирование",
-      });
+      return res
+        .status(404)
+        .json({ success: false, error: "Сообщение не найдено" });
     }
 
     const message = msgResult.rows[0];
 
-    // Проверяем время (5 минут с момента отправки)
+    // Только автор может редактировать
+    if (message.user_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: "Можно редактировать только свои сообщения",
+      });
+    }
+
+    // Проверяем время (5 минут)
     const messageTime = new Date(message.created_at);
     const now = new Date();
     const minutesDiff = (now - messageTime) / (1000 * 60);
 
-    console.log(`⏱️ Прошло минут с отправки: ${minutesDiff.toFixed(1)}`);
-
     if (minutesDiff > 5) {
       return res.status(400).json({
         success: false,
-        error:
-          "Редактирование возможно только в течение 5 минут после отправки",
+        error: "Редактирование только в течение 5 минут",
       });
     }
 
-    // Обновляем в БД
-    const updateResult = await pool.query(
-      `UPDATE messages 
-       SET text = $1, updated_at = NOW() 
-       WHERE id = $2 
-       RETURNING *`,
-      [text.trim(), messageId],
-    );
+    // 🔹 Обновляем
+    await pool.query(`UPDATE messages SET text = $1 WHERE id = $2`, [
+      text.trim(),
+      messageId,
+    ]);
 
-    console.log(`✅ Сообщение ${messageId} обновлено`);
-
+    // 🔹 Возвращаем успешный ответ с текстом
     res.json({
       success: true,
       message: "Сообщение обновлено",
-      updatedText: updateResult.rows[0].text,
+      updatedMessage: {
+        id: messageId,
+        text: text.trim(),
+      },
     });
   } catch (error) {
-    console.error("❌ Ошибка редактирования сообщения:", error);
-    res.status(500).json({
-      success: false,
-      error: error.message || "Внутренняя ошибка сервера",
-    });
+    console.error("❌ Ошибка редактирования:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
-
-// 🔹 Удалить сообщение
+// ===== УДАЛЕНИЕ СООБЩЕНИЯ =====
 router.delete("/api/messages/:messageId", async (req, res) => {
   try {
     const { messageId } = req.params;
     const userId = req.session.userId;
 
-    console.log(
-      `🗑️ Запрос на удаление: messageId=${messageId}, userId=${userId}`,
-    );
+    console.log(`🗑️ Удаление: messageId=${messageId}, userId=${userId}`);
 
     if (!userId) {
       return res
@@ -690,20 +676,25 @@ router.delete("/api/messages/:messageId", async (req, res) => {
 
     // Проверяем, что сообщение существует и принадлежит пользователю
     const msgResult = await pool.query(
-      `SELECT m.*, t.user_id as trip_creator 
+      `SELECT m.id, m.user_id, m.trip_id 
        FROM messages m 
-       JOIN trips t ON m.trip_id = t.id 
-       WHERE m.id = $1 AND m.user_id = $2`,
-      [messageId, userId],
+       WHERE m.id = $1`,
+      [messageId],
     );
 
     if (msgResult.rows.length === 0) {
-      console.log(
-        `❌ Сообщение ${messageId} не найдено или не принадлежит пользователю ${userId}`,
-      );
-      return res.status(404).json({
+      return res
+        .status(404)
+        .json({ success: false, error: "Сообщение не найдено" });
+    }
+
+    const message = msgResult.rows[0];
+
+    // Только автор может удалить своё сообщение
+    if (message.user_id !== userId) {
+      return res.status(403).json({
         success: false,
-        error: "Сообщение не найдено или у вас нет прав на его удаление",
+        error: "Можно удалять только свои сообщения",
       });
     }
 
@@ -712,20 +703,21 @@ router.delete("/api/messages/:messageId", async (req, res) => {
 
     console.log(`✅ Сообщение ${messageId} удалено`);
 
-    res.json({ success: true, message: "Сообщение удалено" });
-  } catch (error) {
-    console.error("❌ Ошибка удаления сообщения:", error);
-    res.status(500).json({
-      success: false,
-      error: error.message || "Внутренняя ошибка сервера",
+    res.json({
+      success: true,
+      message: "Сообщение удалено",
+      deletedMessage: { id: messageId },
     });
+  } catch (error) {
+    console.error("❌ Ошибка удаления:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 // ===== ПОИСК ПО СООБЩЕНИЯМ =====
 router.get("/api/trips/:tripId/messages/search", async (req, res) => {
   try {
     const { tripId } = req.params;
-    const { q } = req.query; // Поисковый запрос
+    const { q } = req.query;
     const userId = req.session.userId;
 
     if (!q || q.trim().length < 1) {
@@ -741,21 +733,20 @@ router.get("/api/trips/:tripId/messages/search", async (req, res) => {
       return res.status(403).json({ success: false, error: "Доступ запрещён" });
     }
 
-    // Поиск (ILIKE для регистронезависимого поиска)
+    // 🔹 ТОЛЬКО существующие колонки
     const result = await pool.query(
-      `SELECT m.*, u.username as user_name 
-       FROM messages m
-       JOIN users u ON m.user_id = u.id
-       WHERE m.trip_id = $1 AND m.text ILIKE $2
-       ORDER BY m.created_at DESC
+      `SELECT id, trip_id, user_id, text, image_url, created_at 
+       FROM messages 
+       WHERE trip_id = $1 
+         AND text IS NOT NULL 
+         AND text != ''
+         AND text ILIKE $2
+       ORDER BY created_at DESC
        LIMIT 50`,
       [tripId, `%${q}%`],
     );
 
-    res.json({
-      success: true,
-      messages: result.rows,
-    });
+    res.json({ success: true, messages: result.rows });
   } catch (error) {
     console.error("❌ Ошибка поиска:", error);
     res.status(500).json({ success: false, error: error.message });

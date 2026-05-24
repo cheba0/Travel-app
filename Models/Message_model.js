@@ -17,11 +17,14 @@ class MessageModel {
   // Получить историю сообщений (всё ещё зашифрованные!)
   static async findByTripId(tripId, limit = 50) {
     const query = `
-      SELECT * FROM messages
-      WHERE trip_id = $1
-      ORDER BY created_at ASC
-      LIMIT $2
-    `;
+    SELECT m.id, m.trip_id, m.user_id, m.text, m.image_url, m.created_at, m.status,
+           u.username as user_name
+    FROM messages m
+    LEFT JOIN users u ON m.user_id = u.id
+    WHERE m.trip_id = $1
+    ORDER BY m.created_at ASC
+    LIMIT $2
+  `;
     const result = await pool.query(query, [tripId, limit]);
     return result.rows;
   }

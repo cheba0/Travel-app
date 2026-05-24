@@ -165,36 +165,33 @@ io.on("connection", (socket) => {
   });
 
   // 3. Отправка сообщения
+  // В index.js, внутри io.on('connection', (socket) => { ... })
+
   socket.on("send_message", async ({ tripId, userId, text, imageUrl }) => {
     try {
-      const { encrypt } = require("./config/encryption");
-      const encryptedText = text ? encrypt(text) : null;
+      if (!tripId || !userId) return;
 
-      // Сохраняем в БД
+      // Проверка участия
+      const check = await pool.query(
+        `SELECT 1 FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
+        [tripId, userId],
+      );
+      if (check.rows.length === 0) return;
+
+      // 🔹 Сохраняем ТОЛЬКО обычный текст (без шифрования)
       const result = await pool.query(
-        `INSERT INTO messages (trip_id, user_id, text, image_url, is_encrypted) 
-         VALUES ($1, $2, $3, $4, TRUE) RETURNING *`,
-        [tripId, userId, encryptedText, imageUrl || null],
+        `INSERT INTO messages (trip_id, user_id, text, image_url, status, created_at) 
+       VALUES ($1, $2, $3, $4, 'sent', NOW()) 
+       RETURNING id, trip_id, user_id, text, image_url, status, created_at`,
+        [tripId, userId, text, imageUrl || null],
       );
 
-      const msg = result.rows[0];
+      const newMsg = result.rows[0];
 
-      // Рассылаем всем в комнате (текст уже зашифрован)
-      io.to(`trip_${tripId}`).emit("new_message", {
-        id: msg.id,
-        tripId: msg.trip_id,
-        userId: msg.user_id,
-        text: msg.is_encrypted ? decrypt(msg.text) : msg.text, // ← расшифрованный!
-        imageUrl: msg.image_url,
-        created_at: msg.created_at,
-      });
-
-      console.log(
-        `💬 Сообщение #${msg.id} сохранено и отправлено в trip_${tripId}`,
-      );
-    } catch (error) {
-      console.error("❌ Ошибка отправки сообщения:", error);
-      socket.emit("error", { message: "Не удалось отправить сообщение" });
+      // 🔹 Рассылаем ВСЕМ в комнате обычный текст
+      io.to(`trip_${tripId}`).emit("new_message", newMsg);
+    } catch (err) {
+      console.error("❌ Ошибка отправки сообщения:", err);
     }
   });
 
@@ -310,4 +307,5 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Сервер запущен на порту ${PORT}`);
   console.log(`🔌 Socket.io готов к подключениям`);
+  console.log(`Server started: http://localhost:${PORT}`);
 });

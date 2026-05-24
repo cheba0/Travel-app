@@ -117,3 +117,8 @@ CREATE TABLE IF NOT EXISTS messages (
 CREATE INDEX IF NOT EXISTS idx_messages_trip_id ON messages(trip_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at DESC);
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP;
+-- Добавляем колонку status если нет
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'sent';
+
+-- Добавляем колонку updated_at если нет
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP;
