@@ -157,21 +157,6 @@ function addEventListeners() {
       window.location.href = "/add_expense/" + window.travelData.id;
     });
   }
-  // В файле для списка путешествий
-  // document.getElementById("add_expense").forEach((button) => {
-  //   button.addEventListener("click", function () {
-  //     const tripId = this.dataset.tripId;
-  //     localStorage.setItem("tripId", tripId);
-  //     window.location.href = `/travels/${tripId}/expenses/add`;
-  //   });
-  // });
-  // Кнопка Share
-  // const shareBtn = document.querySelector(".participants_share");
-  // if (shareBtn) {
-  //   shareBtn.addEventListener("click", function () {
-  //     alert("Функция Share будет доступна позже");
-  //   });
-  // }
 
   // Кнопка фильтра
   const filterBtn = document.querySelector(".filter_icon");

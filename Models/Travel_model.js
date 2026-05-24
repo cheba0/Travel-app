@@ -4,24 +4,42 @@ console.log("Travel model загружен");
 class Travel {
   // Создание путешествия
   static async create(travelData) {
-    const { trip_name, location, start_date, end_date, description, user_id } =
-      travelData;
+    // 🔧 1. Добавили photo в деструктуризацию
+    const {
+      trip_name,
+      location,
+      start_date,
+      end_date,
+      description,
+      photo,
+      user_id,
+    } = travelData;
 
     try {
       console.log("Создание путешествия для пользователя:", user_id);
 
+      // 🔧 2. Исправили плейсхолдеры: добавили $7, теперь их ровно 7
       const result = await pool.query(
-        `INSERT INTO trips (trip_name, location, start_date, end_date, description, user_id) 
-         VALUES ($1, $2, $3, $4, $5, $6) 
-         RETURNING id, trip_name, location, start_date, end_date, description, user_id, created_at`,
-        [trip_name, location, start_date, end_date, description, user_id],
+        `INSERT INTO trips (trip_name, location, start_date, end_date, description, photo, user_id) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) 
+       RETURNING id, trip_name, location, start_date, end_date, description, photo, user_id, created_at`,
+        [
+          trip_name,
+          location,
+          start_date,
+          end_date,
+          description,
+          photo,
+          user_id,
+        ],
       );
 
       const trip_id = result.rows[0].id;
 
+      // Добавляем создателя в участники
       await pool.query(
         `INSERT INTO trip_participants (trip_id, user_id) 
-         VALUES ($1, $2)`,
+       VALUES ($1, $2)`,
         [trip_id, user_id],
       );
 
@@ -54,7 +72,21 @@ class Travel {
       throw error;
     }
   }
-
+  // Удаление участника из путешествия
+  static async removeParticipant(tripId, userId) {
+    try {
+      const result = await pool.query(
+        `DELETE FROM trip_participants 
+       WHERE trip_id = $1 AND user_id = $2 
+       RETURNING *`,
+        [tripId, userId],
+      );
+      return result.rows[0];
+    } catch (error) {
+      console.error("Ошибка при удалении участника:", error);
+      throw error;
+    }
+  }
   // Получение путешествия по ID с проверкой доступа
   static async findById(id, userId = null) {
     try {

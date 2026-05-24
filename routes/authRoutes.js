@@ -1,11 +1,12 @@
 const express = require("express");
+const router = express.Router();
 const AuthController = require("../controllers/authController");
 const TravelController = require("../controllers/travelController");
 const ExpenseController = require("../controllers/expenseController");
 const qrController = require("../controllers/qrController");
-
+const MessageController = require("../controllers/messageController");
+const { upload, chatUpload } = require("../config/multer");
 const { pool } = require("../db");
-const router = express.Router();
 
 console.log("✅ AuthRoutes загружен");
 
@@ -180,14 +181,31 @@ router.get("/api/auth/logout", (req, res) => {
 router.get("/api/travelsbyuserId/:id", TravelController.getUserTravelsmob);
 router.get("/api/travelsbyuserId/:id", TravelController.getUserTravelsPublic);
 
-router.post("/api/travels", TravelController.create);
+// router.post("/api/travels", upload.single("image"), TravelController.create);
+router.post(
+  "/api/travels",
+  upload.single("image"),
+  (req, res, next) => {
+    console.log(
+      "🔍 Multer отработал. req.file =",
+      req.file ? req.file.filename : "UNDEFINED",
+    );
+    next();
+  },
+  TravelController.create,
+);
 router.get("/api/travels", TravelController.getUserTravels);
+router.delete(
+  "/api/trips/:tripId/participants/:userId",
+  TravelController.removeParticipant,
+);
 router.get("/api/travels/:id", TravelController.getTravelById);
 router.get("/api/travels/:id/edit", TravelController.showForm);
 router.get("/api/travels/:id/detail", TravelController.show);
 router.get("/", TravelController.list);
 router.put("/api/travels/:id", TravelController.update);
 router.delete("/api/travels/:id", TravelController.delete);
+router.get("/api/trips/:tripId/messages", MessageController.getHistory);
 
 router.post("/api/expenses", ExpenseController.create);
 router.get("/api/expenses/:id", ExpenseController.getById);
@@ -475,13 +493,14 @@ router.get("/travel/:id", async (req, res) => {
       id: travel.id,
       name: travel.trip_name,
       start_date: formatDate(travel.start_date),
-      end_date: formatDate(travel.end_date),
       date_range:
         formatDate(travel.start_date) +
         (travel.end_date ? " - " + formatDate(travel.end_date) : ""),
       location: travel.location || "",
       description: travel.description || "",
       currency: travel.currency || "RUB",
+      photo: travel.photo,
+      user_id: travel.user_id,
     };
 
     const participants = participantsResult.rows;
@@ -517,4 +536,229 @@ router.get("/travel/:id", async (req, res) => {
   }
 });
 
+// Маршрут для загрузки картинок чата (добавьте в блок API):
+router.post(
+  "/api/chat/upload-image",
+  chatUpload.single("chatImage"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Файл не загружен" });
+      }
+
+      // Проверка прав (опционально, но рекомендуется)
+      const tripId = req.body.tripId;
+      const userId = req.session.userId;
+
+      if (!tripId || !userId) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Неверные параметры" });
+      }
+
+      // Проверяем, что пользователь участник поездки
+      const check = await pool.query(
+        `SELECT 1 FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
+        [tripId, userId],
+      );
+
+      if (check.rows.length === 0) {
+        return res
+          .status(403)
+          .json({ success: false, error: "Доступ запрещён" });
+      }
+
+      // Возвращаем публичный путь к файлу
+      const imageUrl = "/uploads/chat/" + req.file.filename;
+
+      res.json({
+        success: true,
+        imageUrl,
+      });
+    } catch (error) {
+      console.error("❌ Ошибка загрузки изображения чата:", error);
+      res.status(500).json({ success: false, error: "Ошибка сервера" });
+    }
+  },
+);
+// ===== МАРШРУТЫ ДЛЯ РЕДАКТИРОВАНИЯ/УДАЛЕНИЯ СООБЩЕНИЙ =====
+
+// ===== МАРШРУТЫ ДЛЯ РЕДАКТИРОВАНИЯ/УДАЛЕНИЯ СООБЩЕНИЙ =====
+
+// 🔹 Редактировать сообщение
+router.put("/api/messages/:messageId/edit", async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { text } = req.body;
+    const userId = req.session.userId;
+
+    console.log(
+      `✏️ Запрос на редактирование: messageId=${messageId}, userId=${userId}, text="${text}"`,
+    );
+
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Требуется авторизация" });
+    }
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: "Текст сообщения не может быть пустым",
+      });
+    }
+
+    // Проверяем, что сообщение существует и принадлежит пользователю
+    const msgResult = await pool.query(
+      `SELECT m.*, t.user_id as trip_creator 
+       FROM messages m 
+       JOIN trips t ON m.trip_id = t.id 
+       WHERE m.id = $1 AND m.user_id = $2`,
+      [messageId, userId],
+    );
+
+    if (msgResult.rows.length === 0) {
+      console.log(
+        `❌ Сообщение ${messageId} не найдено или не принадлежит пользователю ${userId}`,
+      );
+      return res.status(404).json({
+        success: false,
+        error: "Сообщение не найдено или у вас нет прав на его редактирование",
+      });
+    }
+
+    const message = msgResult.rows[0];
+
+    // Проверяем время (5 минут с момента отправки)
+    const messageTime = new Date(message.created_at);
+    const now = new Date();
+    const minutesDiff = (now - messageTime) / (1000 * 60);
+
+    console.log(`⏱️ Прошло минут с отправки: ${minutesDiff.toFixed(1)}`);
+
+    if (minutesDiff > 5) {
+      return res.status(400).json({
+        success: false,
+        error:
+          "Редактирование возможно только в течение 5 минут после отправки",
+      });
+    }
+
+    // Обновляем в БД
+    const updateResult = await pool.query(
+      `UPDATE messages 
+       SET text = $1, updated_at = NOW() 
+       WHERE id = $2 
+       RETURNING *`,
+      [text.trim(), messageId],
+    );
+
+    console.log(`✅ Сообщение ${messageId} обновлено`);
+
+    res.json({
+      success: true,
+      message: "Сообщение обновлено",
+      updatedText: updateResult.rows[0].text,
+    });
+  } catch (error) {
+    console.error("❌ Ошибка редактирования сообщения:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Внутренняя ошибка сервера",
+    });
+  }
+});
+
+// 🔹 Удалить сообщение
+router.delete("/api/messages/:messageId", async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const userId = req.session.userId;
+
+    console.log(
+      `🗑️ Запрос на удаление: messageId=${messageId}, userId=${userId}`,
+    );
+
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Требуется авторизация" });
+    }
+
+    // Проверяем, что сообщение существует и принадлежит пользователю
+    const msgResult = await pool.query(
+      `SELECT m.*, t.user_id as trip_creator 
+       FROM messages m 
+       JOIN trips t ON m.trip_id = t.id 
+       WHERE m.id = $1 AND m.user_id = $2`,
+      [messageId, userId],
+    );
+
+    if (msgResult.rows.length === 0) {
+      console.log(
+        `❌ Сообщение ${messageId} не найдено или не принадлежит пользователю ${userId}`,
+      );
+      return res.status(404).json({
+        success: false,
+        error: "Сообщение не найдено или у вас нет прав на его удаление",
+      });
+    }
+
+    // Удаляем из БД
+    await pool.query(`DELETE FROM messages WHERE id = $1`, [messageId]);
+
+    console.log(`✅ Сообщение ${messageId} удалено`);
+
+    res.json({ success: true, message: "Сообщение удалено" });
+  } catch (error) {
+    console.error("❌ Ошибка удаления сообщения:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Внутренняя ошибка сервера",
+    });
+  }
+});
+// ===== ПОИСК ПО СООБЩЕНИЯМ =====
+router.get("/api/trips/:tripId/messages/search", async (req, res) => {
+  try {
+    const { tripId } = req.params;
+    const { q } = req.query; // Поисковый запрос
+    const userId = req.session.userId;
+
+    if (!q || q.trim().length < 1) {
+      return res.json({ success: true, messages: [] });
+    }
+
+    // Проверка доступа
+    const check = await pool.query(
+      `SELECT 1 FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
+      [tripId, userId],
+    );
+    if (check.rows.length === 0) {
+      return res.status(403).json({ success: false, error: "Доступ запрещён" });
+    }
+
+    // Поиск (ILIKE для регистронезависимого поиска)
+    const result = await pool.query(
+      `SELECT m.*, u.username as user_name 
+       FROM messages m
+       JOIN users u ON m.user_id = u.id
+       WHERE m.trip_id = $1 AND m.text ILIKE $2
+       ORDER BY m.created_at DESC
+       LIMIT 50`,
+      [tripId, `%${q}%`],
+    );
+
+    res.json({
+      success: true,
+      messages: result.rows,
+    });
+  } catch (error) {
+    console.error("❌ Ошибка поиска:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 module.exports = router;

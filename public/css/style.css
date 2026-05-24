@@ -1244,3 +1244,68 @@ body {
 .exp_part_add:active{
     background: #fab619;
 }
+/* ===== СТАТУСЫ СООБЩЕНИЙ ===== */
+.chat-status {
+  transition: color 0.3s;
+}
+
+.chat-status[data-status="delivered"] {
+  color: rgba(255,255,255,0.9);
+}
+
+.chat-status[data-status="read"] {
+  color: #4ade80; /* Зелёный для прочитанных */
+  font-weight: bold;
+}
+
+/* ===== МОБИЛЬНАЯ АДАПТАЦИЯ ЧАТА ===== */
+@media (max-width: 768px) {
+  /* Модальное окно на весь экран */
+  #chatModal {
+    padding: 0;
+  }
+  
+  #chatModal .chat-modal-content {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+  
+  /* Поле ввода фиксировано снизу */
+  .chat-input-area {
+    padding: 12px;
+    gap: 8px;
+  }
+  
+  #chatTextInput {
+    min-height: 44px; /* Удобно для пальца */
+    font-size: 16px; /* Предотвращает зум на iOS */
+  }
+  
+  /* Статусы сообщений чуть крупнее */
+  .chat-status {
+    font-size: 16px;
+    margin-left: 4px;
+  }
+  
+  /* Уведомления на мобильных */
+  #chatNotifications {
+    right: 10px;
+    left: 10px;
+    bottom: 80px; /* Над полем ввода */
+  }
+  
+  .chat-notification {
+    width: auto;
+    max-width: 100%;
+  }
+}
+
+/* iOS Safari фикс: предотвращаем зум при фокусе */
+@supports (-webkit-touch-callout: none) {
+  #chatTextInput {
+    font-size: 16px !important;
+  }
+}

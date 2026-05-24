@@ -1,123 +1,191 @@
 // public/js/creatingTravel.js
 console.log("✅ creatingTravel.js загружен");
 
+// Флаг защиты от повторной отправки
+let isSubmitting = false;
+
 document.addEventListener("DOMContentLoaded", function () {
   console.log("✅ DOM полностью загружен");
 
-  const travelForm = document.getElementById("addForm");
-  const messageDiv = document.getElementById("message");
+  initImagePreview();
+  initFormHandler();
+});
 
-  console.log("Найдена форма 'addForm':", !!travelForm);
-  console.log("Найден div 'message':", !!messageDiv);
+/**
+ * Инициализация превью изображения
+ * Работает с вашей структурой: скрытый input + иконка + img#preview
+ */
+function initImagePreview() {
+  const imageInput = document.getElementById("imageInput");
+  const preview = document.getElementById("preview");
+  const uploadIcon = document.getElementById("uploadIcon");
 
-  // Проверим все поля формы
-  if (travelForm) {
-    console.log("Поля формы:");
-    const inputs = travelForm.querySelectorAll("input, textarea, select");
-    inputs.forEach((input) => {
-      console.log(
-        `- ${input.name || input.id}: type="${input.type}", name="${
-          input.name
-        }"`
-      );
-    });
+  // Если элементов нет — выходим без ошибок
+  if (!imageInput || !preview || !uploadIcon) {
+    return;
   }
 
-  if (travelForm) {
-    travelForm.addEventListener("submit", async function (e) {
-      e.preventDefault();
-      console.log("✅ Форма отправляется через Travel.js");
+  // 🔹 Клик по иконке открывает скрытый input
+  uploadIcon.addEventListener("click", function () {
+    imageInput.click();
+  });
+  uploadIcon.style.cursor = "pointer";
 
-      if (messageDiv) {
-        messageDiv.style.color = "blue";
-        messageDiv.textContent = "Создание путешествия...";
-      }
+  // Обработка выбора файла
+  imageInput.addEventListener("change", function (e) {
+    const file = e.target.files[0];
 
-      // СПОСОБ 1: Используем FormData
-      const formData = new FormData(travelForm);
-
-      // Отладочный вывод всех данных формы
-      console.log("=== ВСЕ ДАННЫЕ ИЗ FORMDATA ===");
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
-      }
-
-      // Преобразуем в объект
-      const travelData = {
-        trip_name: formData.get("trip_name"),
-        location: formData.get("location"),
-        start_date: formData.get("start_date"),
-        end_date: formData.get("end_date") || null,
-        description: formData.get("description") || "",
-      };
-
-      console.log("✅ Данные для отправки:", travelData);
-
-      // Проверяем, есть ли обязательные данные
-      if (
-        !travelData.trip_name ||
-        !travelData.location ||
-        !travelData.start_date
-      ) {
-        console.error("❌ Отсутствуют обязательные поля:");
-        console.error("- trip_name:", travelData.trip_name);
-        console.error("- location:", travelData.location);
-        console.error("- start_date:", travelData.start_date);
-
-        if (messageDiv) {
-          messageDiv.style.color = "red";
-          messageDiv.textContent = "Заполните все обязательные поля!";
-        }
+    if (file) {
+      // Проверка типа файла
+      if (!file.type.startsWith("image/")) {
+        alert("❌ Пожалуйста, выберите изображение (jpg, png, gif, webp)");
+        this.value = "";
         return;
       }
 
-      try {
-        console.log("📤 Отправляю POST запрос на /api/travels...");
+      // Проверка размера (макс. 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert("❌ Файл слишком большой. Максимальный размер: 5MB");
+        this.value = "";
+        return;
+      }
 
-        const response = await fetch("/api/travels", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(travelData),
-        });
+      const reader = new FileReader();
 
-        console.log("📥 Статус ответа:", response.status);
-        console.log("📥 URL ответа:", response.url);
+      reader.onload = function (e) {
+        // 🔹 Показываем превью, скрываем иконку — БЕЗ изменения ваших стилей
+        preview.src = e.target.result;
+        preview.style.display = "block"; // ваш стиль .image_preview применится
+        uploadIcon.style.display = "none";
+      };
 
-        const result = await response.json();
-        console.log("📥 Полный ответ сервера:", result);
+      reader.onerror = function () {
+        alert("❌ Не удалось прочитать файл");
+        preview.style.display = "none";
+        uploadIcon.style.display = "block";
+      };
 
+      reader.readAsDataURL(file);
+    } else {
+      // Сброс при отмене выбора
+      preview.src = "";
+      preview.style.display = "none";
+      uploadIcon.style.display = "block";
+    }
+  });
+}
+
+/**
+ * Инициализация обработчика формы
+ */
+function initFormHandler() {
+  const form = document.getElementById("addForm");
+  const imageInput = document.getElementById("imageInput"); // 🔹 Получаем input отдельно
+  if (!form) return;
+
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    if (isSubmitting) return;
+
+    const createBtn = document.getElementById("createBtn");
+    const messageDiv = document.getElementById("message");
+
+    isSubmitting = true;
+    if (createBtn) {
+      createBtn.disabled = true;
+      createBtn.textContent = "Создание...";
+    }
+    if (messageDiv) messageDiv.innerHTML = "";
+
+    try {
+      // 🔹 Создаём FormData из формы
+      const formData = new FormData(form);
+
+      // 🔹 ВАЖНО: вручную добавляем файл, т.к. input вне формы
+      if (imageInput && imageInput.files && imageInput.files[0]) {
+        formData.append("image", imageInput.files[0]);
+        console.log("📎 Файл добавлен в FormData:", imageInput.files[0].name);
+      } else {
+        console.log("ℹ️ Файл не выбран (необязательно)");
+      }
+
+      // Отладка
+      console.log("📦 Итоговый FormData:");
+      for (let [key, value] of formData.entries()) {
+        console.log(
+          `  ${key}:`,
+          value instanceof File ? `File: ${value.name}` : value,
+        );
+      }
+
+      const response = await fetch("/api/travels", {
+        method: "POST",
+        body: formData,
+        // ❗ Не указываем Content-Type — браузер сам выставит multipart/form-data
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
         if (messageDiv) {
-          if (result.success) {
-            messageDiv.style.color = "green";
-            messageDiv.textContent = "Путешествие успешно создано!";
-
-            if (result.travel) {
-              messageDiv.textContent += ` (ID: ${result.travel.id})`;
-            }
-
-            setTimeout(() => {
-              window.location.href = `/`;
-            }, 1000);
-
-            travelForm.reset();
-          } else {
-            messageDiv.style.color = "red";
-            messageDiv.textContent =
-              "Ошибка: " + (result.error || "Неизвестная ошибка");
-          }
+          messageDiv.innerHTML =
+            '<div style="color: green; margin: 10px 0;">✅ Путешествие создано!</div>';
         }
-      } catch (error) {
-        console.error("❌ Ошибка при создании путешествия:", error);
+        setTimeout(() => {
+          window.location.href = "/travel/" + result.travel.id;
+        }, 1000);
+      } else {
         if (messageDiv) {
-          messageDiv.style.color = "red";
-          messageDiv.textContent =
-            "Сетевая ошибка: /last_travel" + error.message;
+          messageDiv.innerHTML =
+            '<div style="color: red; margin: 10px 0;">❌ ' +
+            result.error +
+            "</div>";
+        }
+        isSubmitting = false;
+        if (createBtn) {
+          createBtn.disabled = false;
+          createBtn.textContent = "Создать";
         }
       }
-    });
-  } else {
-    console.error("❌ Форма с id='addForm' не найдена!");
+    } catch (error) {
+      console.error("❌ Ошибка отправки:", error);
+      if (messageDiv) {
+        messageDiv.innerHTML =
+          '<div style="color: red; margin: 10px 0;">❌ Ошибка соединения</div>';
+      }
+      isSubmitting = false;
+      if (createBtn) {
+        createBtn.disabled = false;
+        createBtn.textContent = "Создать";
+      }
+    }
+  });
+}
+
+/**
+ * Сброс формы (опционально)
+ */
+function resetTravelForm() {
+  const form = document.getElementById("addForm");
+  if (form) form.reset();
+
+  const preview = document.getElementById("preview");
+  const uploadIcon = document.getElementById("uploadIcon");
+  if (preview) preview.style.display = "none";
+  if (uploadIcon) uploadIcon.style.display = "block";
+
+  isSubmitting = false;
+
+  const createBtn = document.getElementById("createBtn");
+  if (createBtn) {
+    createBtn.disabled = false;
+    createBtn.textContent = "Создать";
   }
-});
+
+  const messageDiv = document.getElementById("message");
+  if (messageDiv) messageDiv.innerHTML = "";
+}
+
+// Доступно глобально
+window.resetTravelForm = resetTravelForm;

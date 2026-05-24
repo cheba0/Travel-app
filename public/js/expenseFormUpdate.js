@@ -43,11 +43,25 @@ const expenseForm = {
   // Заполнение формы
   fillForm: function () {
     const e = this.currentExpense;
+    console.log("📅 Исходная дата:", e.date);
+    console.log("📅 После форматирования:", this.formatDateForInput(e.date));
     document.getElementById("expense_id").value = e.id;
     document.getElementById("expense_name").value = e.expense_name;
     document.getElementById("amount").value = e.amount;
-    document.getElementById("date").value = e.date;
+
+    // 🔧 Форматируем дату правильно
+    const formattedDate = this.formatDateForInput(e.date);
+    document.getElementById("date").value = formattedDate;
+
     document.getElementById("description").value = e.description || "";
+
+    // 🔧 Добавляем обработчик изменения суммы
+    const amountInput = document.getElementById("amount");
+    amountInput.replaceWith(amountInput.cloneNode(true));
+    const newAmountInput = document.getElementById("amount");
+    newAmountInput.addEventListener("input", () => {
+      this.updateTotalAmountDisplay();
+    });
   },
 
   // Отрисовка участников
@@ -391,6 +405,51 @@ const expenseForm = {
         spans[3].style.color =
           Math.abs(sharesTotal - totalAmount) < 0.01 ? "#28a745" : "#dc3545";
       }
+    }
+  },
+  // Форматирование даты для input type="date"
+  formatDateForInput: function (dateString) {
+    if (!dateString) return "";
+
+    // Если уже в нужном формате YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return dateString;
+
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+
+    // 🔧 Используем ЛОКАЛЬНЫЕ методы (getFullYear/getDate),
+    // чтобы учесть часовой пояс пользователя
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  },
+  updateTotalAmountDisplay: function () {
+    const totalAmount =
+      parseFloat(document.getElementById("amount").value) || 0;
+    const sharesTotal = this.calculateTotalShares();
+
+    // Находим блок с итогами
+    const container = document.getElementById("participantsContainer");
+    if (!container) return;
+
+    const totalDiv = container.querySelector(
+      'div[style*="background: #f5f5f5"]',
+    );
+    if (!totalDiv) return;
+
+    // Обновляем общую сумму
+    const spans = totalDiv.querySelectorAll("span");
+    if (spans.length >= 2) {
+      spans[1].textContent = `${totalAmount.toFixed(2)} ₽`;
+    }
+
+    // Обновляем сумму долей и цвет
+    if (spans.length >= 4) {
+      spans[3].textContent = `${sharesTotal.toFixed(2)} ₽`;
+      const isEqual = Math.abs(sharesTotal - totalAmount) < 0.01;
+      spans[3].style.color = isEqual ? "#28a745" : "#dc3545";
     }
   },
 

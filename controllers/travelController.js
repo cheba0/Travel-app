@@ -5,35 +5,47 @@ const { TravelValidator } = require("../services/authService");
 class TravelController {
   static async create(req, res) {
     try {
-      console.log("Create travel request:", req.body);
-      console.log("User ID from session:", req.session.userId);
+      console.log("📥 Create travel request:", req.body);
+      console.log("📸 Uploaded file:", req.file);
 
-      const { trip_name, location, start_date, end_date, description } =
-        req.body;
+      const { trip_name, location, start_date, description } = req.body;
       const userId = req.session.userId;
 
-      // Проверка авторизации
-      TravelValidator.validateUserAuthorization(userId);
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: "Пользователь не авторизован",
+        });
+      }
 
-      // Валидация данных путешествия
-      TravelValidator.validateTravelData({
-        trip_name,
-        location,
-        start_date,
-        end_date,
-      });
+      // Валидация обязательных полей (без end_date)
+      if (!trip_name || !location || !start_date) {
+        return res.status(400).json({
+          success: false,
+          error: "Заполните все обязательные поля: название, локация, даты",
+        });
+      }
 
-      // Создаем путешествие
+      // 🔹 Обработка фото
+      let photo = null;
+      if (req.file && req.file.filename) {
+        photo = "/uploads/trips/" + req.file.filename;
+        console.log("✅ Фото загружено:", photo);
+      } else {
+        console.log("ℹ️ Фото не загружено (необязательно)");
+      }
+
+      // Создаем путешествие (без end_date)
       const travel = await Travel.create({
         trip_name,
         location,
         start_date,
-        end_date,
-        description,
+        description: description || null,
+        photo,
         user_id: userId,
       });
 
-      console.log("Travel created:", travel);
+      console.log("✅ Путешествие создано:", travel.id);
 
       return res.json({
         success: true,
@@ -43,35 +55,25 @@ class TravelController {
           trip_name: travel.trip_name,
           location: travel.location,
           start_date: travel.start_date,
-          end_date: travel.end_date,
           description: travel.description,
+          photo: travel.photo,
           user_id: travel.user_id,
           created_at: travel.created_at,
         },
       });
     } catch (error) {
-      console.error("Create travel error:", error);
-      return res
-        .status(
-          error.message.includes("авторизованы")
-            ? 401
-            : error.message.includes("обязательные поля")
-              ? 400
-              : 500,
-        )
-        .json({
-          success: false,
-          error: error.message || "Внутренняя ошибка сервера",
-        });
+      console.error("❌ Ошибка создания путешествия:", error);
+      return res.status(500).json({
+        success: false,
+        error: error.message || "Внутренняя ошибка сервера",
+      });
     }
   }
 
   static async getUserTravels(req, res) {
     try {
       const userId = req.session.userId;
-
       TravelValidator.validateUserAuthorization(userId);
-
       const travels = await Travel.findByUserId(userId);
 
       return res.json({
@@ -88,14 +90,13 @@ class TravelController {
         });
     }
   }
+
   //=================================================================
 
   static async getUserTravelsmob(req, res) {
     try {
-      // Получаем ID пользователя из параметров маршрута
       const userId = req.params.id;
 
-      // Проверяем, передан ли ID
       if (!userId) {
         return res.status(400).json({
           success: false,
@@ -103,10 +104,7 @@ class TravelController {
         });
       }
 
-      // Проверяем валидность ID
       TravelValidator.validateUserAuthorization(userId);
-
-      // Получаем путешествия пользователя
       const travels = await Travel.findByUserId(userId);
 
       return res.json({
@@ -115,8 +113,6 @@ class TravelController {
       });
     } catch (error) {
       console.error("Get user travels error:", error);
-
-      // Определяем статус ошибки на основе типа ошибки
       let statusCode = 500;
       if (
         error.message.includes("авторизованы") ||
@@ -136,12 +132,12 @@ class TravelController {
       });
     }
   }
+
   static async getParticipants(req, res) {
     try {
       const { tripId } = req.params;
       const userId = req.session.userId;
 
-      // Проверяем доступ к путешествию
       const travel = await Travel.findById(tripId, userId);
       if (!travel) {
         return res.status(404).json({
@@ -164,9 +160,67 @@ class TravelController {
       });
     }
   }
+
+  static async removeParticipant(req, res) {
+    try {
+      const { tripId, userId: participantId } = req.params;
+      const currentUserId = req.session.userId;
+
+      if (!currentUserId) {
+        return res.status(401).json({
+          success: false,
+          error: "Требуется авторизация",
+        });
+      }
+
+      const travel = await Travel.findById(tripId, currentUserId);
+      if (!travel) {
+        return res.status(404).json({
+          success: false,
+          error: "Путешествие не найдено или доступ запрещен",
+        });
+      }
+
+      if (travel.user_id !== currentUserId) {
+        return res.status(403).json({
+          success: false,
+          error: "Только создатель путешествия может удалять участников",
+        });
+      }
+
+      if (parseInt(participantId) === travel.user_id) {
+        return res.status(400).json({
+          success: false,
+          error: "Создатель не может удалить себя через этот метод",
+        });
+      }
+
+      const removed = await Travel.removeParticipant(tripId, participantId);
+
+      if (!removed) {
+        return res.status(404).json({
+          success: false,
+          error: "Участник не найден в путешествии",
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: "Участник удален из путешествия",
+        participantId: participantId,
+      });
+    } catch (error) {
+      console.error("Remove participant error:", error);
+      return res.status(500).json({
+        success: false,
+        error: error.message,
+      });
+    }
+  }
+
   static async getUserTravelsPublic(req, res) {
     try {
-      const { id } = req.params; // ID пользователя из URL
+      const { id } = req.params;
 
       if (!id || isNaN(parseInt(id))) {
         return res.status(400).json({
@@ -197,8 +251,6 @@ class TravelController {
       const userId = req.session.userId;
 
       TravelValidator.validateUserAuthorization(userId);
-      // TravelValidator.validateTravelId(id);
-
       const travel = await Travel.findById(id, userId);
 
       if (!travel) {
@@ -230,10 +282,8 @@ class TravelController {
     try {
       let travel = null;
 
-      // Если редактируем существующее путешествие
       if (req.params.id) {
         TravelValidator.validateTravelId(req.params.id);
-
         travel = await Travel.findById(req.params.id, req.session.userId);
 
         if (!travel) {
@@ -245,13 +295,10 @@ class TravelController {
       }
 
       res.render("travelDetail", {
-        // travel: travel,
-        // user: req.session.user,
-        // title: travel ? "Редактировать" : "Создать",
         title: "Редактировать путешествие",
         travel: travel,
         user: { id: req.session.userId },
-        successMessage: null, // или req.flash('success') если используете flash
+        successMessage: null,
         error: null,
       });
     } catch (error) {
@@ -266,7 +313,6 @@ class TravelController {
   static async list(req, res) {
     try {
       TravelValidator.validateUserAuthorization(req.session.userId);
-
       const travels = await Travel.findByUserId(req.session.userId);
 
       res.render("travelList", {
@@ -314,20 +360,16 @@ class TravelController {
     try {
       const { id } = req.params;
       const userId = req.session.userId;
-      const { trip_name, location, start_date, end_date, description } =
-        req.body;
+      const { trip_name, location, start_date, description } = req.body;
 
       TravelValidator.validateUserAuthorization(userId);
       TravelValidator.validateTravelId(id);
+
+      // Валидация без end_date
       TravelValidator.validateTravelData(
-        {
-          trip_name,
-          location,
-          start_date,
-          end_date,
-        },
+        { trip_name, location, start_date },
         true,
-      ); // true - означает режим обновления
+      );
 
       const travel = await Travel.findById(id, userId);
 
@@ -338,11 +380,11 @@ class TravelController {
         });
       }
 
+      // Обновление без end_date
       const updatedTravel = await Travel.update(id, userId, {
         trip_name,
         location,
         start_date,
-        end_date,
         description,
       });
 
@@ -371,7 +413,6 @@ class TravelController {
       const userId = req.session.userId;
 
       TravelValidator.validateUserAuthorization(userId);
-      TravelValidator.validateTravelId(id);
 
       const deletedTravel = await Travel.delete(id, userId);
 
