@@ -4,9 +4,13 @@ const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
 const db = require("./db");
 require("dotenv").config();
+const http = require("http");
+const { Server } = require("socket.io");
+const { pool } = require("./db");
+const { decrypt } = require("./config/encryption");
 
 const app = express();
-
+app.use(express.static(path.join(__dirname, "public")));
 // ========== НАСТРОЙКА APP ДО MIDDLEWARE ==========
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -107,28 +111,201 @@ try {
   console.error(" Ошибка подключения authRoutes:", error.message);
 }
 
-// app.get("/", async (req, res) => {
-//   try {
-//     const usersResult = await db.query("SELECT * FROM users LIMIT 5");
-//     const tripsResult = await db.query("SELECT * FROM trips LIMIT 5");
-
-//     res.render("index", {
-//       users: usersResult.rows,
-//       trips: tripsResult.rows,
-//     });
-//   } catch (error) {
-//     console.error("Database error:", error);
-//     res.render("index", {
-//       users: [],
-//       trips: [],
-//       error: "Ошибка загрузки данных",
-//     });
-//   }
+// const PORT = 3000;
+// app.listen(PORT, () => {
+//   console.log(`Server started: http://localhost:${PORT}`); //85.208.86.134 //localhost
 // });
+// ===== НАСТРОЙКА SOCKET.IO =====
+const server = http.createServer(app);
 
-// В самый конец index.js, перед app.listen
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
+});
 
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Server started: http://85.208.86.134:${PORT}`); //85.208.86.134 //localhost
+// Хранилище подключённых пользователей (в памяти, для продакшена лучше Redis)
+const onlineUsers = new Map(); // Map<userId, socketId>
+
+// ===== ЛОГИКА ЧАТА SOCKET.IO =====
+io.on("connection", (socket) => {
+  console.log(`🔌 Подключён клиент: ${socket.id}`);
+
+  // 1. Аутентификация пользователя
+  socket.on("authenticate", (userId) => {
+    if (!userId) return socket.disconnect();
+    onlineUsers.set(userId, socket.id);
+    socket.emit("authenticated", { success: true });
+    console.log(`✅ Пользователь ${userId} аутентифицирован`);
+  });
+
+  // 2. Вход в комнату чата поездки
+  socket.on("join_trip_chat", async ({ tripId, userId }) => {
+    const roomName = `trip_${tripId}`;
+
+    // Проверяем, что пользователь действительно участник (базовая проверка)
+    try {
+      const check = await pool.query(
+        `SELECT 1 FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
+        [tripId, userId],
+      );
+      if (check.rows.length === 0) {
+        return socket.emit("error", {
+          message: "Вы не участник этого путешествия",
+        });
+      }
+    } catch (e) {
+      console.error("Ошибка проверки участника:", e);
+    }
+
+    socket.join(roomName);
+    console.log(`👥 Пользователь ${userId} вошёл в комнату ${roomName}`);
+    socket.emit("chat_joined", { tripId, roomName });
+  });
+
+  // 3. Отправка сообщения
+  // В index.js, внутри io.on('connection', (socket) => { ... })
+
+  socket.on("send_message", async ({ tripId, userId, text, imageUrl }) => {
+    try {
+      if (!tripId || !userId) return;
+
+      // Проверка участия
+      const check = await pool.query(
+        `SELECT 1 FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
+        [tripId, userId],
+      );
+      if (check.rows.length === 0) return;
+
+      // 🔹 Сохраняем ТОЛЬКО обычный текст (без шифрования)
+      const result = await pool.query(
+        `INSERT INTO messages (trip_id, user_id, text, image_url, status, created_at) 
+       VALUES ($1, $2, $3, $4, 'sent', NOW()) 
+       RETURNING id, trip_id, user_id, text, image_url, status, created_at`,
+        [tripId, userId, text, imageUrl || null],
+      );
+
+      const newMsg = result.rows[0];
+
+      // 🔹 Рассылаем ВСЕМ в комнате обычный текст
+      io.to(`trip_${tripId}`).emit("new_message", newMsg);
+    } catch (err) {
+      console.error("❌ Ошибка отправки сообщения:", err);
+    }
+  });
+
+  // 4. Отключение
+  socket.on("disconnect", () => {
+    for (let [uid, sid] of onlineUsers) {
+      if (sid === socket.id) {
+        onlineUsers.delete(uid);
+        break;
+      }
+    }
+  });
+  // 🔹 Обработка редактирования сообщения
+  socket.on("message_edited", async ({ tripId, messageId, newText }) => {
+    // Рассылаем всем в комнате (кроме отправителя)
+    socket.to(`trip_${tripId}`).emit("message_edited", {
+      messageId,
+      newText,
+    });
+  });
+
+  // 🔹 Обработка удаления сообщения
+  socket.on("message_deleted", async ({ tripId, messageId }) => {
+    // Рассылаем всем в комнате (кроме отправителя)
+    socket.to(`trip_${tripId}`).emit("message_deleted", {
+      messageId,
+    });
+  });
+  // Хранилище статусов "печатает" по комнатам
+  const typingStatus = new Map(); // Map<tripId, Map<userId, {username, lastUpdate}>>
+
+  // 🔹 Пользователь начал печатать
+  socket.on("typing_start", async ({ tripId, userId }) => {
+    if (!tripId || !userId) return;
+
+    // Получаем имя пользователя
+    try {
+      const userResult = await pool.query(
+        "SELECT username FROM users WHERE id = $1",
+        [userId],
+      );
+      const username = userResult.rows[0]?.username || "Пользователь";
+
+      // Сохраняем статус
+      if (!typingStatus.has(tripId)) {
+        typingStatus.set(tripId, new Map());
+      }
+      typingStatus
+        .get(tripId)
+        .set(userId, { username, lastUpdate: Date.now() });
+
+      // Рассылаем всем в комнате (кроме отправителя)
+      socket.to(`trip_${tripId}`).emit("typing_update", {
+        tripId,
+        userId,
+        username,
+        isTyping: true,
+      });
+    } catch (e) {
+      console.error("Ошибка получения имени пользователя:", e);
+    }
+  });
+
+  // 🔹 Пользователь перестал печатать
+  socket.on("typing_stop", ({ tripId, userId }) => {
+    if (!tripId || !userId) return;
+
+    // Удаляем статус
+    if (typingStatus.has(tripId)) {
+      typingStatus.get(tripId).delete(userId);
+    }
+
+    // Рассылаем всем в комнате
+    socket.to(`trip_${tripId}`).emit("typing_update", {
+      tripId,
+      userId,
+      isTyping: false,
+    });
+  });
+
+  // 🔹 Очистка при отключении
+  socket.on("disconnect", () => {
+    // Удаляем все статусы этого пользователя
+    for (let [tripId, users] of typingStatus) {
+      if (users.has(socket.userId)) {
+        users.delete(socket.userId);
+        io.to(`trip_${tripId}`).emit("typing_update", {
+          tripId,
+          userId: socket.userId,
+          isTyping: false,
+        });
+      }
+    }
+  });
+
+  socket.on("disconnect", () => {
+    // Удаляем все статусы этого пользователя
+    for (let [tripId, users] of typingStatus) {
+      if (users.has(socket.userId)) {
+        users.delete(socket.userId);
+        io.to(`trip_${tripId}`).emit("typing_update", {
+          tripId,
+          userId: socket.userId,
+          isTyping: false,
+        });
+      }
+    }
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, () => {
+  console.log(`🚀 Сервер запущен на порту ${PORT}`);
+  console.log(`🔌 Socket.io готов к подключениям`);
+  console.log(`Server started: http://localhost:${PORT}`);
 });

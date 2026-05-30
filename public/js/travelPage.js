@@ -95,27 +95,59 @@ function updateTotalAmount() {
     return;
   }
 
-  let total = 0;
+  const userId = window.currentUserId;
+  console.log("👤 Текущий пользователь:", userId);
+  console.log("📊 Все расходы:", window.travelData.expenses);
+
+  let myTotal = 0;
+  let myExpensesCount = 0;
+
   window.travelData.expenses.forEach((expense) => {
-    const amount = parseFloat(expense.amount);
-    if (!isNaN(amount)) {
-      total += amount;
+    // Получаем участников расхода
+    const participants = expense.participants || [];
+
+    // Ищем текущего пользователя среди участников
+    const myParticipant = participants.find((p) => p.id === userId);
+
+    if (myParticipant) {
+      // ✅ Берем НЕ весь расход, а только ДОЛЮ пользователя (amount_owed)
+      const myShare = parseFloat(myParticipant.amount_owed || 0);
+
+      if (!isNaN(myShare) && myShare > 0) {
+        myTotal += myShare;
+        myExpensesCount++;
+        console.log(
+          `✅ Расход #${expense.id}: моя доля ${myShare} ₽ из ${expense.amount} ₽`,
+        );
+      } else {
+        console.log(`⚠️ Расход #${expense.id}: доля 0 ₽`);
+      }
+    } else {
+      console.log(`❌ Расход #${expense.id}: я не участник`);
     }
   });
 
   const currency = window.travelData.currency || "RUB";
-  totalElement.textContent = `Мои траты: ${total.toFixed(2)} ${currency}`;
+  console.log(
+    `💰 Мои траты (доли): ${myExpensesCount} расходов на сумму ${myTotal} ${currency}`,
+  );
+
+  totalElement.textContent = `Мои траты: ${myTotal.toFixed(2)} ${currency}`;
 }
-if (window.travelData && window.travelData.expenses) {
-  window.travelData.expenses.forEach((exp) => {
-    // Если у вас в базе дата в формате "2024-01-15", добавляем её как date_raw
-    // Это нужно для поля <input type="date">
-    if (!exp.date_raw && exp.date) {
-      // Пытаемся извлечь дату из базы (если она там есть)
-      // В противном случае пользователь сам выберет дату
-    }
-  });
-}
+
+// Запускаем после загрузки DOM
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("🔄 Расчет моих долей...");
+  console.log("📊 Данные travelData:", window.travelData);
+  console.log("👤 currentUserId:", window.currentUserId);
+
+  updateTotalAmount();
+});
+
+// Обновляем при изменении данных (например, после добавления расхода)
+window.addEventListener("expensesUpdated", function () {
+  updateTotalAmount();
+});
 function addEventListeners() {
   // Кнопка "Добавить первый расход"
   const addFirstBtn = document.getElementById("add_expense");
@@ -125,21 +157,6 @@ function addEventListeners() {
       window.location.href = "/add_expense/" + window.travelData.id;
     });
   }
-  // В файле для списка путешествий
-  // document.getElementById("add_expense").forEach((button) => {
-  //   button.addEventListener("click", function () {
-  //     const tripId = this.dataset.tripId;
-  //     localStorage.setItem("tripId", tripId);
-  //     window.location.href = `/travels/${tripId}/expenses/add`;
-  //   });
-  // });
-  // Кнопка Share
-  // const shareBtn = document.querySelector(".participants_share");
-  // if (shareBtn) {
-  //   shareBtn.addEventListener("click", function () {
-  //     alert("Функция Share будет доступна позже");
-  //   });
-  // }
 
   // Кнопка фильтра
   const filterBtn = document.querySelector(".filter_icon");

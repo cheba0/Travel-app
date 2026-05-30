@@ -286,31 +286,89 @@ class ExpenseController {
   static async updateParticipantShare(req, res) {
     try {
       const { expenseId, userId: participantId } = req.params;
-      const { amount } = req.body;
+      // 🔧 ИСПРАВЛЕНО: используем amount_owed как на фронтенде
+      const { amount_owed } = req.body;
 
-      if (amount === undefined || amount === null) {
+      // 🔧 УЛУЧШЕННАЯ валидация
+      if (amount_owed === undefined || amount_owed === null) {
         return res.status(400).json({
           success: false,
-          error: "Необходимо указать новую сумму",
+          error: "Необходимо указать сумму доли (amount_owed)",
+          field: "amount_owed",
         });
       }
 
-      const updatedShare = await Expense.updateParticipantShare(
-        expenseId,
-        participantId,
-        parseFloat(amount),
+      const amount = parseFloat(amount_owed);
+
+      if (isNaN(amount)) {
+        return res.status(400).json({
+          success: false,
+          error: "Сумма должна быть числом",
+          field: "amount_owed",
+        });
+      }
+
+      if (amount < 0) {
+        return res.status(400).json({
+          success: false,
+          error: "Сумма не может быть отрицательной",
+          field: "amount_owed",
+        });
+      }
+
+      // 🔧 Валидация параметров маршрута
+      const expenseIdNum = parseInt(expenseId);
+      const participantIdNum = parseInt(participantId);
+
+      if (isNaN(expenseIdNum) || isNaN(participantIdNum)) {
+        return res.status(400).json({
+          success: false,
+          error: "Некорректный ID расхода или участника",
+        });
+      }
+
+      // 🔧 Вызов модели с валидированными данными
+      const updatedShare = await Expense_Model.updateParticipantShare(
+        expenseIdNum,
+        participantIdNum,
+        amount,
       );
+
+      // 🔧 Если модель не нашла запись — возвращаем 404
+      if (!updatedShare) {
+        return res.status(404).json({
+          success: false,
+          error: "Участник не найден в этом расходе",
+        });
+      }
 
       return res.json({
         success: true,
         message: "Сумма участника обновлена",
-        share: updatedShare,
+        data: {
+          participant_id: participantIdNum,
+          amount_owed: amount,
+          updated_at: new Date().toISOString(),
+        },
       });
     } catch (error) {
       console.error("Update participant share error:", error);
+
+      // 🔧 Различаем ошибки БД и сервера
+      if (error.code === "23503") {
+        // PostgreSQL foreign key violation
+        return res.status(400).json({
+          success: false,
+          error: "Невозможно обновить: расход или участник не существует",
+        });
+      }
+
       return res.status(500).json({
         success: false,
-        error: error.message,
+        error:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : "Внутренняя ошибка сервера",
       });
     }
   }

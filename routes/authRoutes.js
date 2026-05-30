@@ -1,11 +1,12 @@
 const express = require("express");
+const router = express.Router();
 const AuthController = require("../controllers/authController");
 const TravelController = require("../controllers/travelController");
 const ExpenseController = require("../controllers/expenseController");
 const qrController = require("../controllers/qrController");
-
+const MessageController = require("../controllers/messageController");
+const { upload, chatUpload } = require("../config/multer");
 const { pool } = require("../db");
-const router = express.Router();
 
 console.log("✅ AuthRoutes загружен");
 
@@ -180,14 +181,31 @@ router.get("/api/auth/logout", (req, res) => {
 router.get("/api/travelsbyuserId/:id", TravelController.getUserTravelsmob);
 router.get("/api/travelsbyuserId/:id", TravelController.getUserTravelsPublic);
 
-router.post("/api/travels", TravelController.create);
+// router.post("/api/travels", upload.single("image"), TravelController.create);
+router.post(
+  "/api/travels",
+  upload.single("image"),
+  (req, res, next) => {
+    console.log(
+      "🔍 Multer отработал. req.file =",
+      req.file ? req.file.filename : "UNDEFINED",
+    );
+    next();
+  },
+  TravelController.create,
+);
 router.get("/api/travels", TravelController.getUserTravels);
+router.delete(
+  "/api/trips/:tripId/participants/:userId",
+  TravelController.removeParticipant,
+);
 router.get("/api/travels/:id", TravelController.getTravelById);
 router.get("/api/travels/:id/edit", TravelController.showForm);
 router.get("/api/travels/:id/detail", TravelController.show);
 router.get("/", TravelController.list);
 router.put("/api/travels/:id", TravelController.update);
 router.delete("/api/travels/:id", TravelController.delete);
+router.get("/api/trips/:tripId/messages", MessageController.getHistory);
 
 router.post("/api/expenses", ExpenseController.create);
 router.get("/api/expenses/:id", ExpenseController.getById);
@@ -197,6 +215,10 @@ router.get("/api/expenses/trip/:tripId", ExpenseController.getByTripId);
 router.get(
   "/api/travels/:tripId/participants",
   TravelController.getParticipants,
+);
+router.delete(
+  "/api/expenses/:expenseId/participants/:userId",
+  ExpenseController.removeParticipant,
 );
 router.get("/trip/:trip_id/balance", ExpenseController.getTripBalance);
 router.get("/:id/edit", ExpenseController.getExpenseForEdit);
@@ -443,8 +465,21 @@ router.get("/travel/:id", async (req, res) => {
       [travelId],
     );
 
+    // ✅ ИСПРАВЛЕННЫЙ ЗАПРОС - добавляем участников каждого расхода
     const expensesResult = await pool.query(
-      `SELECT e.*, u.username as payer_name
+      `SELECT 
+          e.*, 
+          u.username as payer_name,
+          (
+            SELECT json_agg(json_build_object(
+              'id', u2.id,
+              'username', u2.username,
+              'amount_owed', es.amount_owed
+            ))
+            FROM expense_shares es
+            JOIN users u2 ON es.user_id = u2.id
+            WHERE es.expense_id = e.id
+          ) as participants
        FROM expenses e
        JOIN users u ON e.paid_by = u.id
        WHERE e.trip_id = $1
@@ -458,16 +493,19 @@ router.get("/travel/:id", async (req, res) => {
       id: travel.id,
       name: travel.trip_name,
       start_date: formatDate(travel.start_date),
-      end_date: formatDate(travel.end_date),
       date_range:
         formatDate(travel.start_date) +
         (travel.end_date ? " - " + formatDate(travel.end_date) : ""),
       location: travel.location || "",
       description: travel.description || "",
       currency: travel.currency || "RUB",
+      photo: travel.photo,
+      user_id: travel.user_id,
     };
 
     const participants = participantsResult.rows;
+
+    // ✅ ТЕПЕРЬ ВКЛЮЧАЕМ participants В КАЖДЫЙ РАСХОД
     const expenses = expensesResult.rows.map((exp) => ({
       id: exp.id,
       name: exp.expense_name || "Без названия",
@@ -475,9 +513,12 @@ router.get("/travel/:id", async (req, res) => {
       amount: exp.amount,
       payer: exp.payer_name,
       currency: travel.currency || "RUB",
+      participants: exp.participants || [], // ← ВАЖНО: добавляем участников
     }));
 
     const userId = req.session.userId;
+
+    console.log("📊 Пример первого расхода с participants:", expenses[0]);
 
     res.render("travelPage", {
       title: travel.trip_name,
@@ -495,4 +536,220 @@ router.get("/travel/:id", async (req, res) => {
   }
 });
 
+// Маршрут для загрузки картинок чата (добавьте в блок API):
+router.post(
+  "/api/chat/upload-image",
+  chatUpload.single("chatImage"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Файл не загружен" });
+      }
+
+      // Проверка прав (опционально, но рекомендуется)
+      const tripId = req.body.tripId;
+      const userId = req.session.userId;
+
+      if (!tripId || !userId) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Неверные параметры" });
+      }
+
+      // Проверяем, что пользователь участник поездки
+      const check = await pool.query(
+        `SELECT 1 FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
+        [tripId, userId],
+      );
+
+      if (check.rows.length === 0) {
+        return res
+          .status(403)
+          .json({ success: false, error: "Доступ запрещён" });
+      }
+
+      // Возвращаем публичный путь к файлу
+      const imageUrl = "/uploads/chat/" + req.file.filename;
+
+      res.json({
+        success: true,
+        imageUrl,
+      });
+    } catch (error) {
+      console.error("❌ Ошибка загрузки изображения чата:", error);
+      res.status(500).json({ success: false, error: "Ошибка сервера" });
+    }
+  },
+);
+// ===== МАРШРУТЫ ДЛЯ РЕДАКТИРОВАНИЯ/УДАЛЕНИЯ СООБЩЕНИЙ =====
+// ===== РЕДАКТИРОВАНИЕ СООБЩЕНИЯ =====
+router.put("/api/messages/:messageId/edit", async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { text } = req.body;
+    const userId = req.session.userId;
+
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Требуется авторизация" });
+    }
+
+    if (!text || text.trim() === "") {
+      return res
+        .status(400)
+        .json({ success: false, error: "Текст не может быть пустым" });
+    }
+
+    // Проверяем принадлежность
+    const msgResult = await pool.query(
+      `SELECT m.id, m.user_id, m.created_at, t.user_id as trip_creator 
+       FROM messages m 
+       JOIN trips t ON m.trip_id = t.id 
+       WHERE m.id = $1`,
+      [messageId],
+    );
+
+    if (msgResult.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Сообщение не найдено" });
+    }
+
+    const message = msgResult.rows[0];
+
+    // Только автор может редактировать
+    if (message.user_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: "Можно редактировать только свои сообщения",
+      });
+    }
+
+    // Проверяем время (5 минут)
+    const messageTime = new Date(message.created_at);
+    const now = new Date();
+    const minutesDiff = (now - messageTime) / (1000 * 60);
+
+    if (minutesDiff > 5) {
+      return res.status(400).json({
+        success: false,
+        error: "Редактирование только в течение 5 минут",
+      });
+    }
+
+    // 🔹 Обновляем
+    await pool.query(`UPDATE messages SET text = $1 WHERE id = $2`, [
+      text.trim(),
+      messageId,
+    ]);
+
+    // 🔹 Возвращаем успешный ответ с текстом
+    res.json({
+      success: true,
+      message: "Сообщение обновлено",
+      updatedMessage: {
+        id: messageId,
+        text: text.trim(),
+      },
+    });
+  } catch (error) {
+    console.error("❌ Ошибка редактирования:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+// ===== УДАЛЕНИЕ СООБЩЕНИЯ =====
+router.delete("/api/messages/:messageId", async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const userId = req.session.userId;
+
+    console.log(`🗑️ Удаление: messageId=${messageId}, userId=${userId}`);
+
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Требуется авторизация" });
+    }
+
+    // Проверяем, что сообщение существует и принадлежит пользователю
+    const msgResult = await pool.query(
+      `SELECT m.id, m.user_id, m.trip_id 
+       FROM messages m 
+       WHERE m.id = $1`,
+      [messageId],
+    );
+
+    if (msgResult.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Сообщение не найдено" });
+    }
+
+    const message = msgResult.rows[0];
+
+    // Только автор может удалить своё сообщение
+    if (message.user_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: "Можно удалять только свои сообщения",
+      });
+    }
+
+    // Удаляем из БД
+    await pool.query(`DELETE FROM messages WHERE id = $1`, [messageId]);
+
+    console.log(`✅ Сообщение ${messageId} удалено`);
+
+    res.json({
+      success: true,
+      message: "Сообщение удалено",
+      deletedMessage: { id: messageId },
+    });
+  } catch (error) {
+    console.error("❌ Ошибка удаления:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+// ===== ПОИСК ПО СООБЩЕНИЯМ =====
+router.get("/api/trips/:tripId/messages/search", async (req, res) => {
+  try {
+    const { tripId } = req.params;
+    const { q } = req.query;
+    const userId = req.session.userId;
+
+    if (!q || q.trim().length < 1) {
+      return res.json({ success: true, messages: [] });
+    }
+
+    // Проверка доступа
+    const check = await pool.query(
+      `SELECT 1 FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
+      [tripId, userId],
+    );
+    if (check.rows.length === 0) {
+      return res.status(403).json({ success: false, error: "Доступ запрещён" });
+    }
+
+    // 🔹 ТОЛЬКО существующие колонки
+    const result = await pool.query(
+      `SELECT id, trip_id, user_id, text, image_url, created_at 
+       FROM messages 
+       WHERE trip_id = $1 
+         AND text IS NOT NULL 
+         AND text != ''
+         AND text ILIKE $2
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [tripId, `%${q}%`],
+    );
+
+    res.json({ success: true, messages: result.rows });
+  } catch (error) {
+    console.error("❌ Ошибка поиска:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 module.exports = router;
