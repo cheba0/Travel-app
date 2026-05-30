@@ -112,18 +112,23 @@ body {
     font-size: 15px;
     white-space: nowrap;
 }
-
+.nav svg,
+.nav_active svg {
+    fill: #000000;
+    
+}
 .bottom_navigation {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: #ffffff;
-    border-bottom: none;
-    border-top: 1px solid #e5e5ea;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
     display: flex;
     justify-content: space-around;
-    padding: 12px 0;
+    align-items: center;
+    padding: 10px 16px 20px 16px;
     max-width: 390px;
     margin: 0 auto;
 }
@@ -131,21 +136,36 @@ body {
 .bottom_navigation button {
     background: none;
     border: none;
-    padding: 0;
+    padding: 8px 20px;
     margin: 0;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    border-radius: 30px;
+    transition: all 0.2s ease;
 }
 
-.nav svg,
-.nav_active svg {
+.bottom_navigation button:active {
+    transform: scale(0.92);
+}
+
+/* Активная кнопка */
+.bottom_navigation button.nav_active {
+    background-color: #f3f3f370;
+    padding: 8px 20px;
+    box-shadow: 0 2px 4px #c9c9c9;
+}
+
+.bottom_navigation button.nav_active svg {
     fill: #000000;
 }
 
-.nav_active {
-    color: #007aff;
-}
-
-.nav_active svg {
-    fill: #007aff;
+/* Неактивные кнопки */
+.bottom_navigation button.nav svg {
+    fill: #000000;
+    opacity: 0.7;
 }
 
 .hero {
@@ -763,3 +783,14 @@ body {
     display: inline-block;
     font-weight: 500;
 }
+
+
+
+
+
+
+
+
+
+
+
