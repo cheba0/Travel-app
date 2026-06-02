@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Поиск билетов</title>
+    <style>
+        .hidden { display: none; }
+        .result-item {
+            border-bottom: 1px solid #ccc;
+            padding: 10px;
+            margin: 5px 0;
+            font-family: monospace;
+        }
+        .error { color: red; }
+        .success { color: green; }
+        button {
+            cursor: pointer;
+            padding: 5px 10px;
+            margin: 5px;
+        }
+        input, select {
+            padding: 5px;
+            margin: 5px;
+            width: 200px;
+        }
+        .checkbox-group {
+            margin: 10px 0;
+        }
+        .checkbox-group label {
+            margin-left: 5px;
+        }
+        .return-date {
+            margin-left: 25px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎫 Поиск билетов</h1>
+    
+    <!-- Меню подразделов -->
+    <div style="margin: 20px 0;">
+        <button onclick="showSubsection('flights')">✈️ Авиабилеты</button>
+        <button onclick="showSubsection('trains')">🚆 ЖД билеты</button>
+        <button onclick="showSubsection('buses')">🚌 Автобусы</button>
+    </div>
+    
+    <!-- === АВИАБИЛЕТЫ === -->
+    <div id="flightsSubsection">
+    <h2>✈️ Поиск авиабилетов</h2>
+    <form id="flightForm">
+        <div>
+            <label>Откуда:</label>
+            <input type="text" id="flightFrom" placeholder="Например: Москва" required>
+        </div>
+        <div>
+            <label>Куда:</label>
+            <input type="text" id="flightTo" placeholder="Например: Барселона" required>
+        </div>
+        <div class="checkbox-group">
+            <input type="checkbox" id="roundTrip">
+            <label>Билет туда-обратно</label>
+        </div>
+        <div>
+            <label>Дата вылета:</label>
+            <input type="date" id="flightDate" required>
+        </div>
+        <div id="returnDateDiv" style="display: none;">
+            <label>Дата возвращения:</label>
+            <input type="date" id="returnDate">
+        </div>
+        <button type="submit">Найти билеты</button>
+    </form>
+    <div id="flightsResults">
+        <h3>Результаты:</h3>
+        <div id="flightsList"></div>
+    </div>
+</div>
+    
+    <!-- === ЖД БИЛЕТЫ === -->
+    <div id="trainsSubsection" class="hidden">
+        <h2>🚆 Поиск ЖД билетов</h2>
+        <form id="trainForm">
+            <div>
+                <label>Откуда:</label>
+                <input type="text" id="trainFrom" placeholder="Например: Москва" required>
+            </div>
+            <div>
+                <label>Куда:</label>
+                <input type="text" id="trainTo" placeholder="Например: Санкт-Петербург" required>
+            </div>
+            <div>
+                <label>Дата:</label>
+                <input type="date" id="trainDate">
+            </div>
+            <button type="submit">Найти поезда</button>
+        </form>
+        <div id="trainsResults">
+            <h3>Результаты:</h3>
+            <div id="trainsList"></div>
+        </div>
+    </div>
+    
+    <!-- === АВТОБУСЫ === -->
+    <div id="busesSubsection" class="hidden">
+        <h2>🚌 Поиск автобусов</h2>
+        <form id="busForm">
+            <div>
+                <label>Откуда:</label>
+                <input type="text" id="busFrom" placeholder="Например: Москва" required>
+            </div>
+            <div>
+                <label>Куда:</label>
+                <input type="text" id="busTo" placeholder="Например: Владимир" required>
+            </div>
+            <div>
+                <label>Дата:</label>
+                <input type="date" id="busDate">
+            </div>
+            <button type="submit">Найти автобусы</button>
+        </form>
+        <div id="busesResults">
+            <h3>Результаты:</h3>
+            <div id="busesList"></div>
+        </div>
+    </div>
+
+    <script src="/js/tickets.js"></script>
+</body>
+</html>
