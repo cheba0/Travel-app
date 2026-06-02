@@ -118,17 +118,23 @@ body {
     white-space: nowrap;
 }
 
+.nav svg,
+.nav_active svg {
+    fill: #000000;
+    
+}
 .bottom_navigation {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: #ffffff;
-    border-bottom: none;
-    border-top: 1px solid #e5e5ea;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
     display: flex;
     justify-content: space-around;
-    padding: 12px 0;
+    align-items: center;
+    padding: 10px 16px 20px 16px;
     max-width: 390px;
     margin: 0 auto;
 }
@@ -136,40 +142,36 @@ body {
 .bottom_navigation button {
     background: none;
     border: none;
+    padding: 8px 20px;
+    margin: 0;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    border-radius: 30px;
+    transition: all 0.2s ease;
 }
 
-.nav svg,
-.nav_active svg {
+.bottom_navigation button:active {
+    transform: scale(0.92);
+}
+
+/* Активная кнопка */
+.bottom_navigation button.nav_active {
+    background-color: #f3f3f370;
+    padding: 8px 20px;
+    box-shadow: 0 2px 4px #c9c9c9;
+}
+
+.bottom_navigation button.nav_active svg {
     fill: #000000;
-    
 }
 
-.nav{
-    background: none;
-    border: none;
-    padding: 4px;
-}
-
-.nav:hover{
-    background-color:#eeeeee;
-    border: none;
-    border-radius: 6px;
-    padding: 4px;
-}
-
-.nav:active{
-    background-color:#d1d1d1;
-    border: none;
-    border-radius: 6px;
-    padding: 4px;
-}
-
-.nav_active {
-    color: #007aff;
-}
-
-.nav_active svg {
-    fill: #007aff;
+/* Неактивные кнопки */
+.bottom_navigation button.nav svg {
+    fill: #000000;
+    opacity: 0.7;
 }
 
 .hero {
@@ -218,30 +220,33 @@ body {
 
 .expenses {
     padding: 0 16px;
+    margin-bottom: 20px;
 }
 
 .expenses_header {
-    margin-top: 10px;
     display: flex;
     justify-content: space-between;
+    margin-top: 30px;
 }
 
 .expenses_title {
-    margin-top: 4px;
-    text-align: left;
-    font-size: 21px;
-    font-weight: 500;
+    font-size: 22px;
+    font-weight: 650;
     color: #000000;
+    letter-spacing: -0.3px;
 }
 
 .filter_icon {
-    margin-top: 6px;
-    padding-top: 4px;
-    padding-left: 4px;
-    padding-right: 4px;
-    background-color: #ffffff;
+    background: #f8f8fa;
     border: none;
-    border-radius: 12px;
+    width: 40px;
+    height: 40px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .filter_icon:hover {
@@ -250,21 +255,35 @@ body {
 
 .filter_icon:active {
     background: #e5e5e5;
+     transform: scale(0.94);
+}
+.expenses_filters::-webkit-scrollbar {
+    display: none;
 }
 
 .expenses_filters {
     display: flex;
-    gap: 6px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid #000000;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
 }
 
 .filter_item {
     border: none;
-    background: #ffffff;
-    padding: 4px;
-    border-radius: 12px;
-    transition: 0.2s;
+    padding: 0 4px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #1c1c1e;
+    white-space: nowrap;
 }
 
 .filter_item:hover {
@@ -272,42 +291,63 @@ body {
 }
 
 .filter_item.active {
-    background: #e5e5e5;
+    background: #f5de4c;
+    color: #000000;
+    font-weight: 600;
+}
+
+.expenses_list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 30px;
 }
 
 .expense_item {
-    margin-bottom: 4px;
-    border-radius: 8px;
-    border: 1px solid #e4e4e4;
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid #efeff4;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+.expense_item:active {
+    transform: scale(0.98);
+    background: #fefefe;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .expense_item_main {
     display: flex;
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-top: 8px;
+    padding: 14px 16px 8px 16px;
     justify-content: space-between;
+    align-items: center;
 }
 
 .expense_item_header{
-    align-items: center;
-    gap: 6px;
-    min-width: 0; 
-    flex: 1;
     display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
 }
 
 .expenses_item_number {
-    font-size: 17px;
-    font-weight: 500;
-    min-width: 16px;
+   font-size: 18px;
+    font-weight: 600;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
 }
 
 .expense_item_name {
     font-size: 17px;
-    font-weight: 500;
-    flex: 1;     
+    font-weight: 590;
+    color: #000000;
+    flex: 1;
     min-width: 0;
     overflow: hidden;
     white-space: nowrap;
@@ -315,37 +355,41 @@ body {
 }
 
 .expense_item_date {
-    font-size: 14px;
-    color: #525252;
-    font-weight: 400;
+    font-size: 13px;
+    font-weight: 450;
+    color: #8e8e93;
+    background: #f5f5f7;
+    padding: 4px 12px;
+    border-radius: 10px;
 }
 
 .expense_item_cost {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding-bottom: 8px;
-    padding-top: 6px;
-    padding-left: 10px;
-    padding-right: 10px;
+    align-items: baseline;
+    padding: 4px 12px 12px 16px;
+
 }
 
 .expense_item_amount {
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 650;
     color: #4a4a4a;
+    
 
 }
 
 .expense_item_receipt {
+     background: transparent;
+    border: none;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: 4px;
-    border: none;
-    background-color: #ffffff;
-    cursor: pointer;
-    flex-shrink: 0;
+    padding: 6px;
+    border-radius: 10px;
+    transition: all 0.15s;
+    margin-right: 8px;
 }
 
 .expenses_nav {
@@ -368,17 +412,20 @@ body {
     align-items: center;
     gap: 8px;
     background: #f5de4c;
-    padding: 8px 20px;
+    padding: 10px 24px;
     color: #000000;
     font-weight: 600;
-    font-size: 1rem;
-    border-radius: 12px;
+    font-size: 15px;
+    border-radius: 40px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
 }
 
 .profile_header {
     display: flex;
     align-items: center;
-    padding: 30px 16px;
+    padding: 8px 16px;
     background-color: white;
     border-bottom: 2px solid #ddd;
     position: relative;
@@ -447,19 +494,22 @@ body {
 
 
 .input_field {
-    padding: 0 16px;
-    width: 100%;
-    margin-bottom: 16px;
+    margin-left: 8px;
+    margin-right: 8px;
+    margin-bottom: 18px;
+  
 }
 
 .input_field input {
     width: 100%;
-    padding: 14px;
+    padding: 14px 0 14px 0;
     border: none;
-    border-bottom: 2px solid #878787;
-    font-size: 14px;
+    border-bottom: 1.5px solid #d0d0d0;
+    font-size: 16px;
     outline: none;
-}
+    background: transparent;
+    transition: border-color 0.2s;
+    font-family: inherit;}
 
 .add_exp_title {
     position: absolute;
@@ -562,27 +612,36 @@ body {
 .create_travel_container {
     padding: 20px 16px;
     min-height: 100vh;
+    padding-bottom: 90px;
 }
 
 .create_travel_title {
-    text-align: center;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
-    padding: 20px 0;
+    text-align: center;
+    width: 80%;
+    letter-spacing: -0.3px;
+    color: #000;
 }
-
 .image_upload_block {
-    margin: 15px;
-    width: 360px;
-    height: 160px;
-    background: #c7c7c7;
-    border-radius: 10px;
     display: flex;
-    justify-content: center;
+    margin: 0px 0 16px 0;
+    width: 100%;
+    height: 180px;
+    background: #f8f8fc;
+    border-radius: 24px;
     align-items: center;
+    justify-content: center;
     overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1.5px solid #d9d9df;
+    position: relative;
 }
-
+.image_upload_block:active {
+    transform: scale(0.98);
+    background: #f0f0f5;
+}
 .image_preview {
     width: 100%;
     height: 100%;
@@ -591,16 +650,18 @@ body {
 
 .create_button {
     color: #000000;
-    margin: 15px;
-    width: 360px;
+    width: 100%;
     background-color: #f5de4c;
-    padding: 12px;
-    border-radius: 10px;
+    padding: 16px;
+    border-radius: 18px;
     text-align: center;
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 500;
-    margin-top: 12px;
+    margin-top: 14px;
     border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .create_button:hover{
@@ -612,17 +673,26 @@ body {
 }
 
 .description_block textarea {
-    width: 360px;
-    height: 100px;
-    margin-left: 15px;
-    margin-right: 15px;
+    width: 100%;
+    height: 110px;
+    padding: 14px;
+    border: 1.5px solid #e5e5ea;
+    border-radius: 14px;
+    font-size: 15px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+    background: #fafafc;
 }
 
 .create_travel_header {
+    display: flex;
     align-items: center;
-    padding: 0 16px;
-    border-bottom: 2px solid #ddd;
+    padding: 6px 0 16px 0;
+    background-color: white;
     position: relative;
+    margin-bottom: 4px;
 }
 
 .hello_conteiner {
@@ -701,9 +771,10 @@ body {
     margin-left: 10px;
     margin-right: 10px;
     border-radius: 16px;
-    border: 2px solid #dddddd;
+    border: 1px solid #dddddd;
     text-decoration: none;
     color: #000;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .participants_left {
@@ -1309,3 +1380,183 @@ body {
     font-size: 16px !important;
   }
 }
+
+
+
+
+
+
+
+
+/* ===== ЛИПКИЕ БЛОКИ (ВСЕГДА НА МЕСТЕ) ===== */
+
+/* Хедер - фиксированный */
+.header {
+    position: fixed !important;
+    top: 0 !important;
+    background: white !important;
+    z-index: 1000 !important;
+}
+
+/* Hero блок (название путешествия) - липкий, всегда под хедером */
+.hero {
+    position: sticky !important;
+    top: 58px !important;  /* Высота хедера */
+    z-index: 99 !important;
+    background: white !important;
+    margin-top: 0 !important;
+}
+
+/* Блок участников - липкий, всегда под hero */
+.participants_block {
+    /* position: sticky !important; */
+position: relative !important;
+    top: 54px !important;  /* 58px (хедер) + высота hero (~200px) */
+    z-index: 98 !important;
+    background: white !important;
+    margin-bottom: 0 !important;
+}
+
+/* ВСЁ, ЧТО НИЖЕ - НЕ ЛИПКОЕ, ПРОКРУЧИВАЕТСЯ */
+/* Категории трат - НЕ липкие! */
+.expenses_header {
+    position: relative !important;  /* Убираем sticky */
+    margin-top: 64px !important;    /* Отступ сверху */
+    background: white !important;
+}
+
+/* Фильтры - НЕ липкие */
+.expenses_filters {
+    position: relative !important;  /* Убираем sticky */
+    background: white !important;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* ===== МЕНЮ С ТРЕМЯ ТОЧКАМИ ===== */
+
+.menu-btn {
+    background: none !important;
+    border: none !important;
+    cursor: pointer !important;
+    padding: 8px !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.menu-btn:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Модальное окно меню */
+.menu-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.menu-modal-content {
+    background: white;
+    width: 280px;
+    max-width: 85%;
+    border-radius: 16px;
+    overflow: hidden;
+    animation: menuSlideIn 0.2s ease-out;
+}
+
+@keyframes menuSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.menu-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.close-menu {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #999;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.close-menu:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.menu-items {
+    padding: 8px 0;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 20px;
+    border: none;
+    background: none;
+    text-align: left;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: #333;
+}
+
+.menu-item span:first-child {
+    font-size: 20px;
+    width: 24px;
+}
+
+.menu-item:hover {
+    background: #f5f5f5;
+}
+
+.menu-item:active {
+    background: #e5e5e5;
+}
+
+

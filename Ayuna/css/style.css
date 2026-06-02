@@ -251,7 +251,6 @@ body {
 .expenses_filters {
     display: flex;
     gap: 6px;
-    padding-bottom: 4px;
     border-bottom: 1px solid #000000;
 }
 
@@ -794,3 +793,376 @@ body {
 
 
 
+/* marketplace.css — стили для мобильного маркетплейса путешествий */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #ffffff;
+    max-width: 390px;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    padding-bottom: 80px;
+}
+
+/* ============================================ */
+/* ФИКСИРОВАННЫЙ ХЕДЕР С КАТАЛОГОМ (горизонтальный скролл) */
+/* ============================================ */
+.market-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: white;
+    max-width: 390px;
+    margin: 0 auto;
+    border-bottom: 1px solid #efefef;
+    padding: 12px 16px 6px 16px;
+}
+
+/* Контейнер категорий с горизонтальным скроллом */
+.categories {
+    display: flex;
+    gap: 28px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;          /* Firefox — тонкая полоса */
+    scrollbar-color: #c6c6c8 #f0f0f0;
+    white-space: nowrap;
+    padding: 6px 0 14px 0;
+    -webkit-overflow-scrolling: touch;  /* плавный скролл на iOS */
+    scroll-behavior: smooth;            /* плавная прокрутка */
+}
+
+/* Стилизация скроллбара для Webkit (Chrome, Safari, Edge) */
+.categories::-webkit-scrollbar {
+    height: 3px;
+}
+
+.categories::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 10px;
+}
+
+.categories::-webkit-scrollbar-thumb {
+    background: #c6c6c8;
+    border-radius: 10px;
+}
+
+.categories::-webkit-scrollbar-thumb:hover {
+    background: #a8a8aa;
+}
+
+/* Элемент категории */
+.cat-item {
+    font-size: 17px;
+    font-weight: 500;
+    color: #8e8e93;
+    padding: 6px 2px 8px 2px;
+    border-bottom: 2.5px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    flex-shrink: 0;          /* запрещаем сжатие — каждый пункт сохраняет ширину */
+    white-space: nowrap;
+}
+
+.cat-item.active {
+    color: #000000;
+    border-bottom: 2.5px solid #f5de4c;
+}
+
+/* ============================================ */
+/* ОСНОВНОЙ КОНТЕЙНЕР (отступ под фикс. хедер) */
+/* ============================================ */
+.market-container {
+    margin-top: 94px;
+    padding: 16px;
+}
+
+/* ============================================ */
+/* КАРТОЧКА ПОИСКА (поля, даты, кнопка) */
+/* ============================================ */
+.search-card {
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.05);
+    padding: 20px 16px;
+    margin-bottom: 28px;
+    border: 1px solid #f2f2f2;
+}
+
+.search-field {
+    margin-bottom: 14px;
+}
+
+.search-field label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #6c6c6e;
+    display: block;
+    margin-bottom: 6px;
+    letter-spacing: -0.2px;
+}
+
+.search-field input,
+.search-field .date-input {
+    width: 100%;
+    padding: 14px 14px;
+    border: 1px solid #e5e5ea;
+    border-radius: 16px;
+    font-size: 16px;
+    background-color: #fbfbfd;
+    font-family: inherit;
+    transition: 0.2s;
+}
+
+.search-field input:focus {
+    outline: none;
+    border-color: #f5de4c;
+    background-color: #ffffff;
+}
+
+.twin-fields {
+    display: flex;
+    gap: 12px;
+}
+
+.twin-fields .search-field {
+    flex: 1;
+}
+
+/* Кнопка поиска */
+.search-btn {
+    background-color: #f5de4c;
+    border: none;
+    width: 100%;
+    padding: 15px;
+    border-radius: 40px;
+    font-weight: 500;
+    font-size: 17px;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: 0.15s;
+    color: #000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.search-btn:active {
+    background-color: #e2ce3c;
+    transform: scale(0.97);
+}
+
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin: 12px 0 14px 0;
+}
+
+.results-header h3 {
+    font-size: 20px;
+    font-weight: 670;
+    color: #000;
+}
+
+.results-count {
+    font-size: 14px;
+    color: #8e8e93;
+    background: #f5f5f7;
+    padding: 4px 12px;
+    border-radius: 30px;
+}
+
+
+.ticket-list {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-bottom: 30px;
+}
+
+
+.ticket-card {
+    background: #ffffff;
+    border-radius: 28px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid #efeff4;
+    overflow: hidden;
+    transition: all 0.2s;
+}
+
+.ticket-card:active {
+    transform: scale(0.98);
+    background: #fefefe;
+}
+
+/* Верхняя секция: авиакомпания + номер рейса */
+.ticket-airline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 18px 8px 18px;
+    border-bottom: 1px dashed #f0f0f0;
+}
+
+.airline-name {
+    font-weight: 620;
+    font-size: 16px;
+    background: #f5f5f7;
+    padding: 5px 14px;
+    border-radius: 40px;
+    color: #1c1c1e;
+    letter-spacing: -0.2px;
+}
+
+.flight-number {
+    font-size: 13px;
+    color: #8e8e93;
+    font-weight: 500;
+}
+
+/* Блок маршрута: города, время, длительность, пересадки */
+.route-main {
+    padding: 16px 18px 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.city-block {
+    text-align: center;
+    flex: 1;
+}
+
+.city-code {
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+    color: #000;
+}
+
+.city-name {
+    font-size: 14px;
+    color: #5f5f63;
+    margin-top: 4px;
+    font-weight: 450;
+}
+
+.time {
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 6px;
+    color: #3a3a3c;
+}
+
+.flight-duration {
+    flex: 1.2;
+    text-align: center;
+    font-size: 12px;
+    color: #8e8e93;
+    border-top: 1px solid #e9e9ef;
+    border-bottom: 1px solid #e9e9ef;
+    padding: 6px 4px;
+    margin: 0 4px;
+    font-weight: 500;
+}
+
+.stops-badge {
+    font-size: 11px;
+    background: #f2f2f6;
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 40px;
+    margin-top: 6px;
+    font-weight: 500;
+    color: #3a3a3c;
+}
+
+/* Нижняя часть: цена + багаж / питание */
+.ticket-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px 18px 18px;
+    border-top: 1px solid #f5f5f8;
+    background: #fefefc;
+}
+
+.price-tag {
+    font-size: 24px;
+    font-weight: 750;
+    color: #000;
+}
+
+.price-tag small {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6c6c6e;
+}
+
+.luggage-badge {
+    display: flex;
+    gap: 12px;
+    font-size: 13px;
+    color: #5f5f63;
+    background: #ffffff;
+    padding: 6px 12px;
+    border-radius: 40px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+/* ============================================ */
+/* НИЖНЯЯ НАВИГАЦИЯ (фиксированная) */
+/* ============================================ */
+.bottom-nav-market {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 8px 20px 18px 20px;
+    max-width: 390px;
+    margin: 0 auto;
+}
+
+.nav-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #8e8e93;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: 0.1s;
+}
+
+.nav-icon.active {
+    color: #000000;
+    font-weight: 500;
+}
+
+.nav-icon span:first-child {
+    font-size: 22px;
+}
+
+.nav-icon:active {
+    transform: scale(0.94);
+}
