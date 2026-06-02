@@ -1,5 +1,5 @@
 // controllers/messageController.js
-const MessageModel = require("../Models/message_model");
+const MessageModel = require("../Models/Message_model");
 const { pool } = require("../db");
 
 class MessageController {
@@ -17,12 +17,10 @@ class MessageController {
       );
 
       if (check.rows.length === 0) {
-        return res
-          .status(403)
-          .json({
-            success: false,
-            error: "Доступ запрещён. Вы не участник этого путешествия.",
-          });
+        return res.status(403).json({
+          success: false,
+          error: "Доступ запрещён. Вы не участник этого путешествия.",
+        });
       }
 
       // 2. Получение данных
