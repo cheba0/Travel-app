@@ -13,7 +13,7 @@
         <a href="/" class="nav"><svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="30px" fill="#e3e3e3">
             <path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/>
         </svg></a>
-        <div class="nav"><svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="30px" fill="#e3e3e3"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></div>
+        <button id="menuBtn" class="nav menu-btn" style="background: none; border: none; cursor: pointer;"><svg xmlns="http://www.w3.org/2000/svg" height="28px" viewBox="0 -960 960 960" width="28px" fill="#000000"><path d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z"/></svg></button>
     </div>
 
     <div class="hero">
@@ -57,7 +57,7 @@
             <button id="inviteParticipantsBtn" style="padding: 8px 16px; background: #f5de4c; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
                 Share
             </button>
-            <button id="openChatBtn" style="padding: 8px 16px; background: #f5de4c; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+            <button id="openChatBtn" style="padding: 8px 16px; background: #f5de4c; color: rgb(17, 17, 17); border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
                 💬 Чат
             </button>
         </div>
@@ -104,7 +104,7 @@
 
     <div class="expenses_nav">
         <a class="my_expenses"><span id="totalAmount"></span></a>
-        <button class="nav" id="add_expense"><svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="30px" fill="#e3e3e3"><path d="M440-280h80v-160h160v-80H520v-160h-80v160H280v80h160v160Zm40 200q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg></button>
+        <button class="nav" id="add_expense" style="background: none; border: none; cursor: pointer; padding: 12px; border-radius: 30px; display: flex; align-items: center; justify-content: center;" ><svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="30px" fill="#e3e3e3"><path d="M440-280h80v-160h160v-80H520v-160h-80v160H280v80h160v160Zm40 200q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg></button>
     </div>
 
     <!-- Модальное окно для приглашения участников -->
@@ -124,58 +124,30 @@
     </div>
 
     <!-- Модальное окно чата -->
-    <div id="chatModal" class="chat-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-        <div class="chat-modal-content" style="background: white; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+    <div id="chatModal" class="chat-modal" style="display: none;">
+        <div class="chat-modal-content" >
             <!-- Обновленная шапка чата с поиском -->
-<div class="chat-header" style="
-    padding: 15px 20px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-">
+<div class="chat-header" style="padding: 15px 20px;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="margin: 0;">💬 Чат путешествия</h3>
-        <button onclick="closeChatModal()" style="
-            background: none; border: none;
-            font-size: 24px; cursor: pointer; color: #666;
-        ">&times;</button>
+        <h3 style="margin: 0;">Чат путешествия</h3>
+        <button onclick="closeChatModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; ">&times;</button>
     </div>
     
     <!-- 🔹 Поле поиска -->
-    <div style="position: relative;">
+    <div style="margin-top: 10px;">
         <input type="text" id="chatSearchInput" 
-               placeholder="🔍 Поиск по сообщениям..." 
-               style="
-                   width: 100%;
-                   padding: 8px 12px;
-                   border: 1px solid #ddd;
-                   border-radius: 20px;
-                   font-size: 14px;
-                   outline: none;
-                   transition: border-color 0.2s;
+               placeholder="🔍︎ Поиск по сообщениям..." 
+               style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 20px; font-size: 14px; outline: none;
                "
-               onfocus="this.style.borderColor='#007bff'"
+               onfocus="this.style.borderColor='#3e9afc'"
                onblur="this.style.borderColor='#ddd'">
     </div>
 </div>
-            <div id="chatMessages" class="chat-messages" style="flex: 1; overflow-y: auto; padding: 15px 20px; display: flex; flex-direction: column; gap: 12px;">
+            <div id="chatMessages" class="chat-messages" style="flex: 1; overflow-y: auto; padding: 15px 20px; ">
                 <div style="text-align: center; color: #999; padding: 20px;">Загрузка сообщений...</div>
             </div>
            
-        <div id="typingIndicator" style="
-            position: absolute;
-            bottom: 60px;
-            left: 20px;
-            font-size: 13px;
-            color: #666;
-            font-style: italic;
-            display: none;
-            background: rgba(255,255,255,0.9);
-            padding: 4px 12px;
-            border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        ">
+        <div id="typingIndicator" style="position: absolute; bottom: 80px; left: 20px; font-size: 13px; color: #666; font-style: italic; display: none; background: rgba(255,255,255,0.9); padding: 4px 12px; border-radius: 16px;">
             <span id="typingText">Пользователь печатает</span>
             <span class="typing-dots" style="margin-left: 4px;">
                 <span style="animation: blink 1.4s infinite both">.</span>
@@ -183,16 +155,16 @@
                 <span style="animation: blink 1.4s infinite both 0.4s">.</span>
             </span>
         </div>
-            <div class="chat-input-area" style="padding: 15px 20px; border-top: 1px solid #eee; display: flex; gap: 10px; align-items: flex-end;">
-                <label for="chatImageInput" style="cursor: pointer; padding: 10px; border-radius: 8px; background: #f5f5f5; display: flex; align-items: center;">
-                    📷
+            <div class="chat-input-area" style="padding: 12px 16px; display: flex; gap: 8px;">
+                <label for="chatImageInput" style="cursor: pointer; padding: 8px; background: #f0f0f0; border-radius: 8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#1b1b1b"><path d="M720-330q0 104-73 177T470-80q-104 0-177-73t-73-177v-370q0-75 52.5-127.5T400-880q75 0 127.5 52.5T580-700v350q0 46-32 78t-78 32q-46 0-78-32t-32-78v-370h80v370q0 13 8.5 21.5T470-320q13 0 21.5-8.5T500-350v-350q-1-42-29.5-71T400-800q-42 0-71 29t-29 71v370q-1 71 49 120.5T470-160q70 0 119-49.5T640-330v-390h80v390Z"/></svg>
                     <input type="file" id="chatImageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
                 </label>
-                <div id="chatImagePreview" style="display: none; max-width: 80px; max-height: 80px; border-radius: 8px; overflow: hidden;">
-                    <img id="chatPreviewImg" style="width: 100%; height: 100%; object-fit: cover;">
+                <div id="chatImagePreview" style="display: none; max-width: 50px;">
+                    <img id="chatPreviewImg" style="width: 100%; border-radius: 8px;">
                 </div>
-                <textarea id="chatTextInput" placeholder="Напишите сообщение..." rows="1" style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; resize: none; font-size: 14px;" onkeydown="handleChatKeydown(event)"></textarea>
-                <button onclick="sendChatMessage()" style="padding: 12px 20px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">➤</button>
+                <textarea id="chatTextInput" placeholder="Напишите сообщение..." rows="1" style="flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 20px; resize: none;" onkeydown="handleChatKeydown(event)"></textarea>
+                <button onclick="sendChatMessage()" style="padding: 8px 16px; background: #3e9afc; color: white; border: none; border-radius: 20px;">➤</button>
             </div>
         </div>
     </div>
@@ -301,7 +273,143 @@
     .chat-message.mine {
     cursor: context-menu; /* Показывает, что можно кликнуть ПКМ */
     }
+
+
+
+
+#chatModal .chat-modal-content {
+    width: 500px !important;
+    max-width: 90vw !important;
+    height: 700px !important;
+    max-height: 85vh !important;
+    min-height: 700px !important;
+    background: white;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+/* Контейнер модального окна */
+#chatModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+
+#chatModal .chat-modal-content {
+    width: 390px !important; 
+    max-width: 90% !important;
+    height: 600px !important; 
+    max-height: 80vh !important;
+    min-height: 500px !important;
+    background: white;
+    border-radius: 16px !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+/* Контейнер сообщений - прокручивается, НЕ растягивает окно */
+#chatMessages {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 15px 20px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+}
+
+.chat-message {
+    animation: slideInUp 0.2s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#chatModal .chat-header {
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+    background: white;
+    border-bottom: 1px solid #eee;
+}
+
+/* Область ввода - фиксированная */
+#chatModal .chat-input-area {
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+    background: white;
+    border-top: 1px solid #eee;
+}
+
+#chatMessages::-webkit-scrollbar {
+    width: 4px;
+}
+
+#chatMessages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+}
+
+#chatMessages::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 2px;
+}
+
+.chat-message.mine .chat-bubble {
+    background: #3e9afc !important;
+    color: white !important;
+}
+
+.chat-message.other .chat-bubble {
+    background: #e9ecef !important;
+    color: #333 !important;
+}
+
+.chat-message.mine .chat-avatar {
+    background: #3e9afc !important;
+    color: white !important;
+}
+
+.chat-message.other .chat-avatar {
+    background: #6c757d !important;
+    color: white !important;
+}
+
+#chatTextInput {
+    resize: none !important;
+}
+
+#chatMessages {
+    scroll-behavior: smooth;
+}
     </style>
+
+
+
     <!-- Передача данных сервера в JavaScript -->
 <script>
     window.travelData = {
@@ -501,7 +609,7 @@
                 width: 32px;
                 height: 32px;
                 border-radius: 50%;
-                background: #007bff;
+                background: #3e9afc;
                 color: white;
                 text-align: center;
                 line-height: 32px;
@@ -542,5 +650,75 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="/js/chat.js" ></script>
     <script src="/js/chat-test.js" defer></script>
+
+
+
+
+
+
+
+<!-- Модальное окно меню (три точки) -->
+<div id="menuModal" class="menu-modal" style="display: none;">
+    <div class="menu-modal-content">
+        <div class="menu-header">
+            <h3>Меню</h3>
+            <button onclick="closeMenuModal()" class="close-menu">&times;</button>
+        </div>
+        <div class="menu-items">
+            <button onclick="editTravel()" class="menu-item">
+                <span><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M216-216h51l375-375-51-51-375 375v51Zm-72 72v-153l498-498q11-11 23.84-16 12.83-5 27-5 14.16 0 27.16 5t24 16l51 51q11 11 16 24t5 26.54q0 14.45-5.02 27.54T795-642L297-144H144Zm600-549-51-51 51 51Zm-127.95 76.95L591-642l51 51-25.95-25.05Z"/></svg></span> Редактировать путешествие
+            </button>
+            <button onclick="downloadTravel()" class="menu-item">
+                <span><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></span> Скачать
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>// Открыть меню
+function openMenuModal() {
+    const modal = document.getElementById('menuModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+// Закрыть меню
+function closeMenuModal() {
+    const modal = document.getElementById('menuModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Редактировать путешествие - переход на другую страницу
+function editTravel() {
+    closeMenuModal();
+    window.location.href = `/travel/${window.travelData.id}/edit`;
+}
+
+// Скачать - пока без функции
+function downloadTravel() {
+    closeMenuModal();
+    alert('Функция скачивания будет добавлена позже');
+}
+
+// Назначаем обработчик при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    const menuBtn = document.getElementById('menuBtn');
+    if (menuBtn) {
+        menuBtn.addEventListener('click', openMenuModal);
+    }
+    
+    // Закрытие по клику вне меню
+    const menuModal = document.getElementById('menuModal');
+    if (menuModal) {
+        menuModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeMenuModal();
+            }
+        });
+    }
+});</script>
 </body>
 </html>

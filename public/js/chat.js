@@ -438,10 +438,10 @@ function showContextMenu(x, y, messageId, createdAt) {
   menu.style.cssText = `position:fixed;background:white;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.25);min-width:220px;z-index:100000;overflow:hidden;animation:fadeIn 0.15s;`;
   menu.innerHTML = `
     <button class="edit-btn" ${!canEdit ? "disabled" : ""} style="display:block;width:100%;padding:14px 18px;border:none;background:none;text-align:left;cursor:${canEdit ? "pointer" : "not-allowed"};color:${canEdit ? "#333" : "#999"}">
-      ${canEdit ? "✏️ Редактировать" : "⏱️ Время вышло"}
+      ${canEdit ? "✎ Редактировать" : "◴ Время вышло"}
     </button>
     <div style="height:1px;background:#eee"></div>
-    <button class="delete-btn" style="display:block;width:100%;padding:14px 18px;border:none;background:none;text-align:left;cursor:pointer;color:#ff4444">🗑️ Удалить</button>`;
+    <button class="delete-btn" style="display:block;width:100%;padding:14px 18px;border:none;background:none;text-align:left;cursor:pointer;color:#ff4444">🗑 Удалить</button>`;
 
   menu.style.top = y + "px";
   menu.style.left = x + "px";
@@ -716,3 +716,41 @@ function initChatScripts() {
 if (document.readyState === "loading")
   document.addEventListener("DOMContentLoaded", initChatScripts);
 else initChatScripts();
+
+
+
+
+
+
+function lockChatSize() {
+    const modal = document.querySelector('#chatModal .chat-modal-content');
+    if (!modal) return;
+    
+    // Сохраняем исходные размеры
+    const originalWidth = window.getComputedStyle(modal).width;
+    const originalHeight = window.getComputedStyle(modal).height;
+    
+    // Наблюдатель за изменениями размера
+    const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+            const target = entry.target;
+            if (target.style.width !== originalWidth || target.style.height !== originalHeight) {
+                // Возвращаем исходные размеры
+                target.style.width = '500px';
+                target.style.maxWidth = '90vw';
+                target.style.height = '700px';
+                target.style.maxHeight = '85vh';
+                target.style.minHeight = '700px';
+            }
+        }
+    });
+    
+    resizeObserver.observe(modal);
+}
+
+// Запускаем при открытии чата
+const originalOpenChatModal = window.openChatModal;
+window.openChatModal = function () {
+    originalOpenChatModal();
+    setTimeout(lockChatSize, 50);
+};
