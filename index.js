@@ -113,14 +113,14 @@ try {
 
 // const PORT = 3000;
 // app.listen(PORT, () => {
-//   console.log(`Server started: http://localhost:${PORT}`); //85.208.86.134 //localhost
+//   console.log(`Server started: http://localhost:${PORT}`); //176.123.163.235 //localhost
 // });
 // ===== НАСТРОЙКА SOCKET.IO =====
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: process.env.FRONTEND_URL || "http://176.123.163.235:3000",
     methods: ["GET", "POST"],
   },
 });
@@ -307,5 +307,5 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Сервер запущен на порту ${PORT}`);
   console.log(`🔌 Socket.io готов к подключениям`);
-  console.log(`Server started: http://localhost:${PORT}`);
+  console.log(`Server started: http://176.123.163.235:${PORT}`); //176.123.163.235 //localhost
 });
