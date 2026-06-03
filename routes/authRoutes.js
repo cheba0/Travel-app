@@ -5,6 +5,8 @@ const TravelController = require("../controllers/travelController");
 const ExpenseController = require("../controllers/expenseController");
 const qrController = require("../controllers/qrController");
 const MessageController = require("../controllers/messageController");
+const ticketService = require("../services/ticketService");
+const tutuService = require("../services/tutuService");
 const { upload, chatUpload } = require("../config/multer");
 const { pool } = require("../db");
 const multer = require("multer");
@@ -820,6 +822,76 @@ router.get("/api/trips/:tripId/messages/search", async (req, res) => {
     console.error("❌ Ошибка поиска:", error);
     res.status(500).json({ success: false, error: error.message });
   }
+});
+
+// Страница тестирования авиабилетов
+router.get("/store", (req, res) => {
+  console.log("✈️ GET /store - страница поиска билетов");
+  res.render("store", {
+    title: "Поиск авиабилетов",
+  });
+});
+
+router.get("/api/flights/search", async (req, res) => {
+  console.log("✈️ API: поиск авиабилетов", req.query);
+
+  const { from, to, departure_date, return_date } = req.query;
+
+  if (!from || !to || !departure_date) {
+    return res.status(400).json({
+      success: false,
+      message: "Необходимо указать from, to, departure_date",
+    });
+  }
+
+  const result = await ticketService.searchFlights(
+    from,
+    to,
+    departure_date,
+    return_date || null,
+  );
+  res.json(result);
+});
+
+// 2. Поиск ЖД билетов
+router.get("/api/trains/search", async (req, res) => {
+  console.log("🚂 API: поиск ЖД билетов (Tutu)", req.query);
+
+  const { from, to, date } = req.query;
+
+  if (!from || !to) {
+    return res.status(400).json({
+      success: false,
+      message: "Необходимо указать from и to",
+    });
+  }
+
+  const result = await tutuService.searchTrains(from, to, date);
+  if (result.success && result.trains && result.trains.length > 0) {
+    console.log(
+      "🔍 Первый поезд в ответе сервера:",
+      JSON.stringify(result.trains[0], null, 2),
+    );
+  }
+
+  res.json(result);
+});
+
+// 3. Поиск автобусов
+router.get("/api/buses/search", async (req, res) => {
+  console.log("🚌 API: поиск автобусов (Яндекс)", req.query);
+
+  const { from, to, date } = req.query;
+
+  if (!from || !to) {
+    return res.status(400).json({
+      success: false,
+      message: "Необходимо указать from и to",
+    });
+  }
+
+  const result = await ticketService.searchBuses(from, to, date);
+  res.json(result);
 });
 
 module.exports = router;

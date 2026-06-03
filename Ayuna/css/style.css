@@ -793,22 +793,6 @@ body {
 
 
 
-/* marketplace.css — стили для мобильного маркетплейса путешествий */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background-color: #ffffff;
-    max-width: 390px;
-    margin: 0 auto;
-    min-height: 100vh;
-    position: relative;
-    padding-bottom: 80px;
-}
 
 /* ============================================ */
 /* ФИКСИРОВАННЫЙ ХЕДЕР С КАТАЛОГОМ (горизонтальный скролл) */
@@ -826,63 +810,55 @@ body {
     padding: 12px 16px 6px 16px;
 }
 
-/* Контейнер категорий с горизонтальным скроллом */
 .categories {
     display: flex;
-    gap: 28px;
+    justify-content: space-around;
+    align-items: center;
+    gap: 0;
     overflow-x: auto;
     overflow-y: hidden;
-    scrollbar-width: thin;          /* Firefox — тонкая полоса */
+    scrollbar-width: thin;
     scrollbar-color: #c6c6c8 #f0f0f0;
     white-space: nowrap;
     padding: 6px 0 14px 0;
-    -webkit-overflow-scrolling: touch;  /* плавный скролл на iOS */
-    scroll-behavior: smooth;            /* плавная прокрутка */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
 }
 
-/* Стилизация скроллбара для Webkit (Chrome, Safari, Edge) */
-.categories::-webkit-scrollbar {
-    height: 3px;
+/* Для случаев, когда категорий 3 — они равномерно распределяются */
+.categories {
+    justify-content: space-evenly;
 }
 
-.categories::-webkit-scrollbar-track {
-    background: #f0f0f0;
-    border-radius: 10px;
+/* Если категорий меньше, они всё равно распределяются по центру */
+.categories:has(.cat-item:first-child:last-child) {
+    justify-content: center;
 }
 
-.categories::-webkit-scrollbar-thumb {
-    background: #c6c6c8;
-    border-radius: 10px;
-}
-
-.categories::-webkit-scrollbar-thumb:hover {
-    background: #a8a8aa;
-}
-
-/* Элемент категории */
+/* Элемент категории — гибкая ширина для равномерного распределения */
 .cat-item {
     font-size: 17px;
     font-weight: 500;
     color: #8e8e93;
-    padding: 6px 2px 8px 2px;
+    padding: 6px 0 8px 0;
     border-bottom: 2.5px solid transparent;
     transition: all 0.2s ease;
     cursor: pointer;
-    flex-shrink: 0;          /* запрещаем сжатие — каждый пункт сохраняет ширину */
+    flex: 1;
+    flex-shrink: 0;
     white-space: nowrap;
+    text-decoration: none;
+    display: inline-block;
+    background: none;
+    border: none;
+    text-align: center;
+    min-width: 80px;
 }
 
+/* Активная категория */
 .cat-item.active {
     color: #000000;
     border-bottom: 2.5px solid #f5de4c;
-}
-
-/* ============================================ */
-/* ОСНОВНОЙ КОНТЕЙНЕР (отступ под фикс. хедер) */
-/* ============================================ */
-.market-container {
-    margin-top: 94px;
-    padding: 16px;
 }
 
 /* ============================================ */
@@ -893,7 +869,7 @@ body {
     border-radius: 24px;
     box-shadow: 0 8px 22px rgba(0, 0, 0, 0.05);
     padding: 20px 16px;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
     border: 1px solid #f2f2f2;
 }
 
@@ -1122,50 +1098,6 @@ body {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
-/* ============================================ */
-/* НИЖНЯЯ НАВИГАЦИЯ (фиксированная) */
-/* ============================================ */
-.bottom-nav-market {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding: 8px 20px 18px 20px;
-    max-width: 390px;
-    margin: 0 auto;
-}
-
-.nav-icon {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-    color: #8e8e93;
-    background: none;
-    border: none;
-    cursor: pointer;
-    transition: 0.1s;
-}
-
-.nav-icon.active {
-    color: #000000;
-    font-weight: 500;
-}
-
-.nav-icon span:first-child {
-    font-size: 22px;
-}
-
-.nav-icon:active {
-    transform: scale(0.94);
-}
 
 
 
@@ -1176,51 +1108,6 @@ body {
 
 
 
-        /* ============================================ */
-        /* СТИЛИ ДЛЯ СТРАНИЦЫ ТУРОВ */
-        /* ============================================ */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #ffffff;
-            max-width: 390px;
-            margin: 0 auto;
-            min-height: 100vh;
-            position: relative;
-            padding-bottom: 80px;
-        }
-
-        /* ========== ХЕДЕР С КАТАЛОГОМ ========== */
-        .market-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            background: white;
-            max-width: 390px;
-            margin: 0 auto;
-            border-bottom: 1px solid #efefef;
-            padding: 12px 16px 6px 16px;
-        }
-
-        .categories {
-            display: flex;
-            gap: 28px;
-            overflow-x: auto;
-            overflow-y: hidden;
-            scrollbar-width: thin;
-            scrollbar-color: #c6c6c8 #f0f0f0;
-            white-space: nowrap;
-            padding: 6px 0 14px 0;
-            -webkit-overflow-scrolling: touch;
-            scroll-behavior: smooth;
-        }
 
         .categories::-webkit-scrollbar {
             height: 3px;
@@ -1259,60 +1146,11 @@ body {
 
         /* ========== ОСНОВНОЙ КОНТЕЙНЕР ========== */
         .market-container {
-            margin-top: 94px;
+            margin-top: 70px;
             padding: 16px;
         }
 
-        /* ========== ПОИСКОВАЯ КАРТОЧКА ДЛЯ ТУРОВ ========== */
-        .search-card {
-            background: #ffffff;
-            border-radius: 24px;
-            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.05);
-            padding: 20px 16px;
-            margin-bottom: 28px;
-            border: 1px solid #f2f2f2;
-        }
-
-        .search-field {
-            margin-bottom: 14px;
-        }
-
-        .search-field label {
-            font-size: 13px;
-            font-weight: 500;
-            color: #6c6c6e;
-            display: block;
-            margin-bottom: 6px;
-            letter-spacing: -0.2px;
-        }
-
-        .search-field input,
-        .search-field .date-input {
-            width: 100%;
-            padding: 14px 14px;
-            border: 1px solid #e5e5ea;
-            border-radius: 16px;
-            font-size: 16px;
-            background-color: #fbfbfd;
-            font-family: inherit;
-            transition: 0.2s;
-        }
-
-        .search-field input:focus {
-            outline: none;
-            border-color: #f5de4c;
-            background-color: #ffffff;
-        }
-
-        .twin-fields {
-            display: flex;
-            gap: 12px;
-        }
-
-        .twin-fields .search-field {
-            flex: 1;
-        }
-
+        
         /* ========== ЗАГОЛОВОК РЕЗУЛЬТАТОВ ========== */
         .results-header {
             display: flex;
@@ -1440,63 +1278,126 @@ body {
 
         .book-badge {
             background: #f5de4c;
-            padding: 6px 14px;
+            padding: 8px 14px;
             border-radius: 30px;
             font-size: 13px;
             font-weight: 500;
             color: #000;
         }
 
-        /* ========== НИЖНЯЯ НАВИГАЦИЯ ========== */
-        .bottom-nav-market {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255, 255, 255, 0.96);
-            backdrop-filter: blur(12px);
-            border-top: 1px solid rgba(0, 0, 0, 0.05);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 8px 20px 18px 20px;
-            max-width: 390px;
-            margin: 0 auto;
-        }
 
-        .nav-icon {
+
+
+
+
+        
+
+
+
+
+
+
+
+
+
+        /* ========== КАРТОЧКИ ЖИЛЬЯ ========== */
+        .hotels-list {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            font-size: 12px;
-            color: #8e8e93;
-            background: none;
-            border: none;
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+
+        .hotel-card {
+            background: #ffffff;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+            border: 1px solid #efeff4;
+            transition: all 0.2s ease;
             cursor: pointer;
-            transition: 0.1s;
-            text-decoration: none;
         }
 
-        .nav-icon.active {
-            color: #000000;
-            font-weight: 500;
+        .hotel-card:active {
+            transform: scale(0.98);
+            background: #fefefe;
         }
 
-        .nav-icon span:first-child {
-            font-size: 22px;
+        .hotel-image {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 56px;
         }
 
-        .nav-icon:active {
-            transform: scale(0.94);
+        .hotel-info {
+            padding: 16px;
         }
 
-        /* Пустое состояние */
-        .empty-state {
-            text-align: center;
-            padding: 48px 24px;
-            background: #fafafc;
-            border-radius: 32px;
+        .hotel-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #000;
+        }
+
+        .hotel-location {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: #6c6c6e;
+            margin-bottom: 8px;
+        }
+
+        .hotel-rating {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .stars {
+            display: flex;
+            gap: 2px;
+        }
+
+        .star-filled {
+            color: #f5de4c;
+            font-size: 14px;
+        }
+
+        .star-empty {
+            color: #e5e5ea;
+            font-size: 14px;
+        }
+
+        .rating-text {
+            font-size: 13px;
             color: #8e8e93;
-            font-size: 15px;
+        }
+
+        .hotel-price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 12px;
+            margin-top: 4px;
+        }
+
+        .hotel-price {
+            font-size: 24px;
+            font-weight: 700;
+            color: #000;
+        }
+
+        .hotel-price small {
+            font-size: 14px;
+            font-weight: 500;
+            color: #8e8e93;
         }
