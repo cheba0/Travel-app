@@ -815,9 +815,9 @@ router.get("/api/trips/:tripId/messages/search", async (req, res) => {
 });
 
 // Страница тестирования авиабилетов
-router.get("/tickets", (req, res) => {
-  console.log("✈️ GET /tickets - страница поиска билетов");
-  res.render("tickets", {
+router.get("/store", (req, res) => {
+  console.log("✈️ GET /store - страница поиска билетов");
+  res.render("store", {
     title: "Поиск авиабилетов",
   });
 });
