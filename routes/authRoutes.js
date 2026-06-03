@@ -5,48 +5,35 @@ const TravelController = require("../controllers/travelController");
 const ExpenseController = require("../controllers/expenseController");
 const qrController = require("../controllers/qrController");
 const MessageController = require("../controllers/messageController");
-const ticketService = require("../services/ticketService");
-const tutuService = require("../services/tutuService");
 const { upload, chatUpload } = require("../config/multer");
 const { pool } = require("../db");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 console.log("✅ AuthRoutes загружен");
 
 // ========== СТРАНИЦЫ ==========
 router.get("/", (req, res) => {
   console.log(" GET / - главная страница");
-  res.render("index", {
-    title: "Главная",
-  });
+  res.render("index", { title: "Главная" });
 });
 
 router.get("/last_travel", (req, res) => {
   console.log(" GET /last_travel - страница путешествий");
-  res.render("last_travel", {
-    title: "Путешествия",
-  });
+  res.render("last_travel", { title: "Путешествия" });
 });
 
 router.get("/add", (req, res) => {
   console.log(" GET /add - страница добавить путешествия");
-  res.render("add", {
-    title: "Добавить путешествия",
-  });
+  res.render("add", { title: "Добавить путешествия" });
 });
 
 router.get("/profile", (req, res) => {
   console.log(" GET /profile - страница профиль");
-  res.render("profile", {
-    title: "Профиль",
-  });
+  res.render("profile", { title: "Профиль" });
 });
 
-// router.get("/add_expense", (req, res) => {
-//   console.log(" GET /add_expense - страница add_expense");
-//   res.render("add_expense", {
-//     title: "Добавить траты",
-//   });
-// });
 router.get("/add_expense/:travelId", async (req, res) => {
   try {
     const travelId = req.params.travelId;
@@ -54,17 +41,13 @@ router.get("/add_expense/:travelId", async (req, res) => {
       `📱 Загрузка страницы добавления траты для путешествия ID: ${travelId}`,
     );
 
-    // Проверяем авторизацию
     if (!req.session.userId) {
       console.log("❌ Пользователь не авторизован");
       return res.redirect("/login");
     }
 
-    // Получаем данные путешествия из БД
     const result = await pool.query(
-      `SELECT id, trip_name, currency 
-       FROM trips 
-       WHERE id = $1`,
+      `SELECT id, trip_name, currency FROM trips WHERE id = $1`,
       [travelId],
     );
 
@@ -74,52 +57,30 @@ router.get("/add_expense/:travelId", async (req, res) => {
     }
 
     const travel = result.rows[0];
-
     console.log(`✅ Путешествие найдено: ${travel.trip_name}`);
 
-    // Рендерим страницу и передаем travel объект
     res.render("add_expense", {
       title: "Добавить трату",
-      travel: {
-        id: travel.id,
-        name: travel.trip_name,
-      },
-      user: {
-        id: req.session.userId,
-      },
+      travel: { id: travel.id, name: travel.trip_name },
+      user: { id: req.session.userId },
     });
   } catch (error) {
     console.error("❌ Ошибка при загрузке страницы добавления траты:", error);
     res.status(500).send("Ошибка сервера");
   }
 });
-// router.get("/add_expense/:travelId", async (req, res) => {
-//   try {
-//     const travel = await Travel.findById(req.params.travelId);
-//     res.render("add_expense", {
-//       // travel: travel,
-//       // user: req.user,
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res.redirect("/travels");
-//   }
-// });
+
 router.get("/travellist", TravelController.list);
 router.get("/travelDetail", TravelController.showForm);
 
 router.get("/registration", (req, res) => {
   console.log(" GET /registration - страница регистрации");
-  res.render("registration", {
-    title: "Регистрация",
-  });
+  res.render("registration", { title: "Регистрация" });
 });
 
 router.get("/login", (req, res) => {
   console.log(" GET /login - страница входа");
-  res.render("login", {
-    title: "Вход в систему",
-  });
+  res.render("login", { title: "Вход в систему" });
 });
 
 // ========== API ==========
@@ -183,7 +144,6 @@ router.get("/api/auth/logout", (req, res) => {
 router.get("/api/travelsbyuserId/:id", TravelController.getUserTravelsmob);
 router.get("/api/travelsbyuserId/:id", TravelController.getUserTravelsPublic);
 
-// router.post("/api/travels", upload.single("image"), TravelController.create);
 router.post(
   "/api/travels",
   upload.single("image"),
@@ -196,6 +156,7 @@ router.post(
   },
   TravelController.create,
 );
+
 router.get("/api/travels", TravelController.getUserTravels);
 router.delete(
   "/api/trips/:tripId/participants/:userId",
@@ -224,10 +185,119 @@ router.delete(
 );
 router.get("/trip/:trip_id/balance", ExpenseController.getTripBalance);
 router.get("/:id/edit", ExpenseController.getExpenseForEdit);
-// router.post("/:id/settle", ExpenseController.settleDebt);
 
 router.get("/scan/:travelId", qrController.showScannerPage);
 router.post("/process-receipt", qrController.processReceiptQR);
+
+// ========== ЗАГРУЗКА ГОЛОСОВЫХ СООБЩЕНИЙ =====
+const voiceStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, "../public/uploads/voice");
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    cb(
+      null,
+      "voice_" + Date.now() + "-" + Math.round(Math.random() * 1e9) + ".webm",
+    );
+  },
+});
+const voiceUpload = multer({
+  storage: voiceStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
+
+router.post(
+  "/api/chat/upload-voice",
+  voiceUpload.single("voiceMessage"),
+  async (req, res) => {
+    try {
+      if (!req.file)
+        return res
+          .status(400)
+          .json({ success: false, error: "Файл не загружен" });
+      const { tripId } = req.body;
+      const userId = req.session.userId;
+      if (!tripId || !userId)
+        return res
+          .status(400)
+          .json({ success: false, error: "Неверные параметры" });
+
+      const check = await pool.query(
+        `SELECT 1 FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
+        [tripId, userId],
+      );
+      if (check.rows.length === 0)
+        return res
+          .status(403)
+          .json({ success: false, error: "Доступ запрещён" });
+
+      res.json({
+        success: true,
+        audioUrl: "/uploads/voice/" + req.file.filename,
+      });
+    } catch (error) {
+      console.error("❌ Ошибка загрузки голосового:", error);
+      res.status(500).json({ success: false, error: "Ошибка сервера" });
+    }
+  },
+);
+
+// ========== ЗАГРУЗКА ВИДЕОКРУЖОЧКОВ =====
+const videoStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, "../public/uploads/video");
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    cb(
+      null,
+      "video_" + Date.now() + "-" + Math.round(Math.random() * 1e9) + ".webm",
+    );
+  },
+});
+const videoUpload = multer({
+  storage: videoStorage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+});
+
+router.post(
+  "/api/chat/upload-video",
+  videoUpload.single("videoMessage"),
+  async (req, res) => {
+    try {
+      if (!req.file)
+        return res
+          .status(400)
+          .json({ success: false, error: "Файл не загружен" });
+      const { tripId } = req.body;
+      const userId = req.session.userId;
+      if (!tripId || !userId)
+        return res
+          .status(400)
+          .json({ success: false, error: "Неверные параметры" });
+
+      const check = await pool.query(
+        `SELECT 1 FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
+        [tripId, userId],
+      );
+      if (check.rows.length === 0)
+        return res
+          .status(403)
+          .json({ success: false, error: "Доступ запрещён" });
+
+      res.json({
+        success: true,
+        videoUrl: "/uploads/video/" + req.file.filename,
+      });
+    } catch (error) {
+      console.error("❌ Ошибка загрузки видео:", error);
+      res.status(500).json({ success: false, error: "Ошибка сервера" });
+    }
+  },
+);
 
 // ========== УЧАСТНИКИ ПУТЕШЕСТВИЙ ==========
 
@@ -467,7 +537,6 @@ router.get("/travel/:id", async (req, res) => {
       [travelId],
     );
 
-    // ✅ ИСПРАВЛЕННЫЙ ЗАПРОС - добавляем участников каждого расхода
     const expensesResult = await pool.query(
       `SELECT 
           e.*, 
@@ -507,7 +576,6 @@ router.get("/travel/:id", async (req, res) => {
 
     const participants = participantsResult.rows;
 
-    // ✅ ТЕПЕРЬ ВКЛЮЧАЕМ participants В КАЖДЫЙ РАСХОД
     const expenses = expensesResult.rows.map((exp) => ({
       id: exp.id,
       name: exp.expense_name || "Без названия",
@@ -515,7 +583,7 @@ router.get("/travel/:id", async (req, res) => {
       amount: exp.amount,
       payer: exp.payer_name,
       currency: travel.currency || "RUB",
-      participants: exp.participants || [], // ← ВАЖНО: добавляем участников
+      participants: exp.participants || [],
     }));
 
     const userId = req.session.userId;
@@ -538,7 +606,7 @@ router.get("/travel/:id", async (req, res) => {
   }
 });
 
-// Маршрут для загрузки картинок чата (добавьте в блок API):
+// Маршрут для загрузки картинок чата
 router.post(
   "/api/chat/upload-image",
   chatUpload.single("chatImage"),
@@ -550,7 +618,6 @@ router.post(
           .json({ success: false, error: "Файл не загружен" });
       }
 
-      // Проверка прав (опционально, но рекомендуется)
       const tripId = req.body.tripId;
       const userId = req.session.userId;
 
@@ -560,7 +627,6 @@ router.post(
           .json({ success: false, error: "Неверные параметры" });
       }
 
-      // Проверяем, что пользователь участник поездки
       const check = await pool.query(
         `SELECT 1 FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
         [tripId, userId],
@@ -572,7 +638,6 @@ router.post(
           .json({ success: false, error: "Доступ запрещён" });
       }
 
-      // Возвращаем публичный путь к файлу
       const imageUrl = "/uploads/chat/" + req.file.filename;
 
       res.json({
@@ -585,7 +650,7 @@ router.post(
     }
   },
 );
-// ===== МАРШРУТЫ ДЛЯ РЕДАКТИРОВАНИЯ/УДАЛЕНИЯ СООБЩЕНИЙ =====
+
 // ===== РЕДАКТИРОВАНИЕ СООБЩЕНИЯ =====
 router.put("/api/messages/:messageId/edit", async (req, res) => {
   try {
@@ -605,7 +670,6 @@ router.put("/api/messages/:messageId/edit", async (req, res) => {
         .json({ success: false, error: "Текст не может быть пустым" });
     }
 
-    // Проверяем принадлежность
     const msgResult = await pool.query(
       `SELECT m.id, m.user_id, m.created_at, t.user_id as trip_creator 
        FROM messages m 
@@ -622,7 +686,6 @@ router.put("/api/messages/:messageId/edit", async (req, res) => {
 
     const message = msgResult.rows[0];
 
-    // Только автор может редактировать
     if (message.user_id !== userId) {
       return res.status(403).json({
         success: false,
@@ -630,7 +693,6 @@ router.put("/api/messages/:messageId/edit", async (req, res) => {
       });
     }
 
-    // Проверяем время (5 минут)
     const messageTime = new Date(message.created_at);
     const now = new Date();
     const minutesDiff = (now - messageTime) / (1000 * 60);
@@ -642,13 +704,11 @@ router.put("/api/messages/:messageId/edit", async (req, res) => {
       });
     }
 
-    // 🔹 Обновляем
     await pool.query(`UPDATE messages SET text = $1 WHERE id = $2`, [
       text.trim(),
       messageId,
     ]);
 
-    // 🔹 Возвращаем успешный ответ с текстом
     res.json({
       success: true,
       message: "Сообщение обновлено",
@@ -662,6 +722,7 @@ router.put("/api/messages/:messageId/edit", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
 // ===== УДАЛЕНИЕ СООБЩЕНИЯ =====
 router.delete("/api/messages/:messageId", async (req, res) => {
   try {
@@ -676,7 +737,6 @@ router.delete("/api/messages/:messageId", async (req, res) => {
         .json({ success: false, error: "Требуется авторизация" });
     }
 
-    // Проверяем, что сообщение существует и принадлежит пользователю
     const msgResult = await pool.query(
       `SELECT m.id, m.user_id, m.trip_id 
        FROM messages m 
@@ -692,7 +752,6 @@ router.delete("/api/messages/:messageId", async (req, res) => {
 
     const message = msgResult.rows[0];
 
-    // Только автор может удалить своё сообщение
     if (message.user_id !== userId) {
       return res.status(403).json({
         success: false,
@@ -700,7 +759,6 @@ router.delete("/api/messages/:messageId", async (req, res) => {
       });
     }
 
-    // Удаляем из БД
     await pool.query(`DELETE FROM messages WHERE id = $1`, [messageId]);
 
     console.log(`✅ Сообщение ${messageId} удалено`);
@@ -715,6 +773,7 @@ router.delete("/api/messages/:messageId", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
 // ===== ПОИСК ПО СООБЩЕНИЯМ =====
 router.get("/api/trips/:tripId/messages/search", async (req, res) => {
   try {
@@ -726,7 +785,6 @@ router.get("/api/trips/:tripId/messages/search", async (req, res) => {
       return res.json({ success: true, messages: [] });
     }
 
-    // Проверка доступа
     const check = await pool.query(
       `SELECT 1 FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
       [tripId, userId],
@@ -735,7 +793,6 @@ router.get("/api/trips/:tripId/messages/search", async (req, res) => {
       return res.status(403).json({ success: false, error: "Доступ запрещён" });
     }
 
-    // 🔹 ТОЛЬКО существующие колонки
     const result = await pool.query(
       `SELECT id, trip_id, user_id, text, image_url, created_at 
        FROM messages 
@@ -753,76 +810,6 @@ router.get("/api/trips/:tripId/messages/search", async (req, res) => {
     console.error("❌ Ошибка поиска:", error);
     res.status(500).json({ success: false, error: error.message });
   }
-});
-
-// Страница тестирования авиабилетов
-router.get("/tickets", (req, res) => {
-  console.log("✈️ GET /tickets - страница поиска билетов");
-  res.render("tickets", {
-    title: "Поиск авиабилетов",
-  });
-});
-
-router.get("/api/flights/search", async (req, res) => {
-  console.log("✈️ API: поиск авиабилетов", req.query);
-
-  const { from, to, departure_date, return_date } = req.query;
-
-  if (!from || !to || !departure_date) {
-    return res.status(400).json({
-      success: false,
-      message: "Необходимо указать from, to, departure_date",
-    });
-  }
-
-  const result = await ticketService.searchFlights(
-    from,
-    to,
-    departure_date,
-    return_date || null,
-  );
-  res.json(result);
-});
-
-// 2. Поиск ЖД билетов
-router.get("/api/trains/search", async (req, res) => {
-  console.log("🚂 API: поиск ЖД билетов (Tutu)", req.query);
-
-  const { from, to, date } = req.query;
-
-  if (!from || !to) {
-    return res.status(400).json({
-      success: false,
-      message: "Необходимо указать from и to",
-    });
-  }
-
-  const result = await tutuService.searchTrains(from, to, date);
-  if (result.success && result.trains && result.trains.length > 0) {
-    console.log(
-      "🔍 Первый поезд в ответе сервера:",
-      JSON.stringify(result.trains[0], null, 2),
-    );
-  }
-
-  res.json(result);
-});
-
-// 3. Поиск автобусов
-router.get("/api/buses/search", async (req, res) => {
-  console.log("🚌 API: поиск автобусов (Яндекс)", req.query);
-
-  const { from, to, date } = req.query;
-
-  if (!from || !to) {
-    return res.status(400).json({
-      success: false,
-      message: "Необходимо указать from и to",
-    });
-  }
-
-  const result = await ticketService.searchBuses(from, to, date);
-  res.json(result);
 });
 
 module.exports = router;

@@ -122,3 +122,5 @@ ALTER TABLE messages ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'sent';
 
 -- Добавляем колонку updated_at если нет
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS video_url VARCHAR(500);
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS audio_url VARCHAR(500);
