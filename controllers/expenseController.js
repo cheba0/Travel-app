@@ -1,95 +1,98 @@
 // controllers/expenseController.js
 const Expense = require("../Models/Expense_Model");
 const Travel = require("../Models/Travel_model");
-
+const { pool } = require("../db");
 class ExpenseController {
   // Создание расхода с индивидуальными суммами
   static async create(req, res) {
     try {
-      console.log("Create expense request:", req.body);
-
       const {
-        expense_name,
         trip_id,
-        category_id,
+        expense_name,
         amount,
-        description,
         date,
-        shares = [], // Массив объектов {user_id, amount}
+        description,
+        category,
+        paid_by,
       } = req.body;
-
       const userId = req.session.userId;
 
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          error: "Необходима авторизация",
-        });
-      }
+      console.log("📝 Создание расхода:", {
+        trip_id,
+        expense_name,
+        amount,
+        category,
+        paid_by: paid_by || userId, // Используем переданного плательщика или текущего пользователя
+      });
 
-      // Базовая валидация данных
-      if (!expense_name || !amount || !date || !trip_id) {
-        return res.status(400).json({
-          success: false,
-          error: "Название, сумма, дата и ID путешествия обязательны",
-        });
-      }
-
-      if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-        return res.status(400).json({
-          success: false,
-          error: "Сумма должна быть положительным числом",
-        });
-      }
-
-      // Подготавливаем shares для создания
-      let expenseShares = [];
-
-      if (shares.length > 0) {
-        expenseShares = shares.map((share) => ({
-          user_id: share.user_id,
-          amount: parseFloat(share.amount || 0),
-        }));
-      } else {
-        expenseShares = [{ user_id: userId, amount: parseFloat(amount) }];
-      }
-
-      // Проверяем сумму долей
-      const totalShares = expenseShares.reduce(
-        (sum, share) => sum + parseFloat(share.amount || 0),
-        0,
+      // Проверка участия в поездке
+      const check = await pool.query(
+        `SELECT 1 FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
+        [trip_id, userId],
       );
 
-      if (Math.abs(totalShares - parseFloat(amount)) > 0.01) {
-        return res.status(400).json({
-          success: false,
-          error: `Сумма долей (${totalShares}) не равна общей сумме расхода (${amount})`,
-        });
+      if (check.rows.length === 0) {
+        return res
+          .status(403)
+          .json({ success: false, error: "Вы не участник этой поездки" });
       }
 
-      // Создаем расход
-      const expense = await Expense.createWithCustomShares({
-        expense_name,
-        trip_id,
-        paid_by: userId,
-        category_id: category_id || null,
-        amount: parseFloat(amount),
-        description: description || null,
-        date,
-        shares: expenseShares,
-      });
+      // Вставляем расход (paid_by = кто оплатил)
+      const result = await pool.query(
+        `INSERT INTO expenses (trip_id, expense_name, amount, date, description, paid_by, category) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) 
+       RETURNING *`,
+        [
+          trip_id,
+          expense_name,
+          amount,
+          date,
+          description,
+          paid_by || userId,
+          category || null,
+        ],
+      );
 
-      return res.json({
+      const expense = result.rows[0];
+
+      // Получаем участников (по умолчанию все участники поездки)
+      const participantsResult = await pool.query(
+        `SELECT u.id, u.username 
+       FROM trip_participants tp 
+       JOIN users u ON tp.user_id = u.id 
+       WHERE tp.trip_id = $1`,
+        [trip_id],
+      );
+
+      const participants = participantsResult.rows;
+      const shareAmount = amount / participants.length;
+
+      // Создаём записи о долях
+      for (const participant of participants) {
+        await pool.query(
+          `INSERT INTO expense_shares (expense_id, user_id, amount_owed) 
+         VALUES ($1, $2, $3)`,
+          [expense.id, participant.id, shareAmount],
+        );
+      }
+
+      console.log("✅ Расход создан:", expense);
+
+      res.json({
         success: true,
-        message: "Расход успешно добавлен",
-        expense,
+        message: "Расход добавлен",
+        expense: {
+          ...expense,
+          participants: participants.map((p) => ({
+            id: p.id,
+            username: p.username,
+            amount_owed: shareAmount,
+          })),
+        },
       });
     } catch (error) {
-      console.error("Create expense error:", error);
-      return res.status(500).json({
-        success: false,
-        error: error.message,
-      });
+      console.error("❌ Ошибка создания расхода:", error);
+      res.status(500).json({ success: false, error: error.message });
     }
   }
 
@@ -151,74 +154,96 @@ class ExpenseController {
   static async update(req, res) {
     try {
       const { id } = req.params;
-      const { expense_name, amount, date, description, participants } =
-        req.body;
-
-      console.log("Update expense request:", {
-        id,
+      const {
         expense_name,
         amount,
         date,
+        description,
+        category,
         participants,
-      });
+      } = req.body;
+      const userId = req.session.userId;
 
-      // Валидация данных
-      if (!expense_name || !amount || !date) {
-        return res.status(400).json({
-          success: false,
-          error: "Название, сумма и дата являются обязательными полями",
-        });
-      }
-
-      if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-        return res.status(400).json({
-          success: false,
-          error: "Сумма должна быть положительным числом",
-        });
-      }
-
-      // Преобразуем participants в формат shares
-      let shares = [];
-      if (
-        participants &&
-        Array.isArray(participants) &&
-        participants.length > 0
-      ) {
-        shares = participants.map((p) => ({
-          user_id: parseInt(p.id || p.user_id),
-          amount: parseFloat(p.amount_owed || p.amount || 0),
-        }));
-      }
-
-      // Проверяем сумму долей
-      const totalShares = shares.reduce((sum, share) => sum + share.amount, 0);
-      if (Math.abs(totalShares - parseFloat(amount)) > 0.01) {
-        return res.status(400).json({
-          success: false,
-          error: `Сумма долей (${totalShares}) не равна общей сумме расхода (${amount})`,
-        });
-      }
-
-      // Обновляем расход - передаем ТОЛЬКО id и expenseData
-      const updatedExpense = await Expense.updateExpense(id, {
+      console.log("✏️ Обновление расхода:", {
+        id,
         expense_name,
-        amount: parseFloat(amount),
-        description: description || null,
-        date,
-        shares,
+        amount,
+        category,
+        participants_count: participants?.length,
       });
 
-      return res.json({
+      // Проверяем, что расход существует
+      const check = await pool.query(
+        `SELECT e.* FROM expenses e
+       JOIN trip_participants tp ON e.trip_id = tp.trip_id
+       WHERE e.id = $1 AND tp.user_id = $2`,
+        [id, userId],
+      );
+
+      if (check.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Расход не найден" });
+      }
+
+      // 🔹 ИСПРАВЛЕНО: category может быть null или пустой строкой
+      await pool.query(
+        `UPDATE expenses 
+       SET expense_name = $1, 
+           amount = $2, 
+           date = $3, 
+           description = $4, 
+           category = NULLIF($5, '')  -- 🔹 Пустую строку превращаем в NULL
+       WHERE id = $6`,
+        [expense_name, amount, date, description, category || null, id],
+      );
+
+      // Если есть участники — обновляем их доли
+      if (participants && participants.length > 0) {
+        // Удаляем старые доли
+        await pool.query(`DELETE FROM expense_shares WHERE expense_id = $1`, [
+          id,
+        ]);
+
+        // Добавляем новые
+        for (const p of participants) {
+          await pool.query(
+            `INSERT INTO expense_shares (expense_id, user_id, amount_owed) 
+           VALUES ($1, $2, $3)`,
+            [id, p.id, p.amount_owed || 0],
+          );
+        }
+      }
+
+      // Получаем обновленный расход с участниками
+      const updatedExpense = await pool.query(
+        `SELECT 
+          e.*, 
+          u.username as payer_name,
+          (
+            SELECT json_agg(json_build_object(
+              'id', u2.id,
+              'username', u2.username,
+              'amount_owed', es.amount_owed
+            ))
+            FROM expense_shares es
+            JOIN users u2 ON es.user_id = u2.id
+            WHERE es.expense_id = e.id
+          ) as participants
+       FROM expenses e
+       JOIN users u ON e.paid_by = u.id
+       WHERE e.id = $1`,
+        [id],
+      );
+
+      res.json({
         success: true,
-        message: "Расход успешно обновлен",
-        expense: updatedExpense,
+        message: "Расход обновлён",
+        expense: updatedExpense.rows[0],
       });
     } catch (error) {
-      console.error("Update expense error:", error);
-      return res.status(500).json({
-        success: false,
-        error: error.message,
-      });
+      console.error("❌ Ошибка обновления расхода:", error);
+      res.status(500).json({ success: false, error: error.message });
     }
   }
 

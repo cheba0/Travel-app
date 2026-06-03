@@ -539,9 +539,16 @@ router.get("/travel/:id", async (req, res) => {
       [travelId],
     );
 
+    // 🔹 ИСПРАВЛЕНО: добавлены поля category и paid_by
     const expensesResult = await pool.query(
       `SELECT 
-          e.*, 
+          e.id,
+          e.expense_name,
+          e.amount,
+          e.date,
+          e.description,
+          e.category,
+          e.paid_by,
           u.username as payer_name,
           (
             SELECT json_agg(json_build_object(
@@ -578,19 +585,22 @@ router.get("/travel/:id", async (req, res) => {
 
     const participants = participantsResult.rows;
 
+    // 🔹 ИСПРАВЛЕНО: добавлены поля category и paid_by
     const expenses = expensesResult.rows.map((exp) => ({
       id: exp.id,
       name: exp.expense_name || "Без названия",
       date: formatDate(exp.date),
       amount: exp.amount,
       payer: exp.payer_name,
+      paid_by: exp.paid_by, // 🔹 ID плательщика
+      category: exp.category, // 🔹 Категория расхода
       currency: travel.currency || "RUB",
       participants: exp.participants || [],
     }));
 
     const userId = req.session.userId;
 
-    console.log("📊 Пример первого расхода с participants:", expenses[0]);
+    console.log("📊 Пример первого расхода:", expenses[0]);
 
     res.render("travelPage", {
       title: travel.trip_name,

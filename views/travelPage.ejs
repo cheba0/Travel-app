@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= travel.name %></title>
     <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/js/expensesChart.js" defer></script>
     <script src="/js/travelPage.js" defer></script>
 </head>
 
@@ -58,7 +60,7 @@
                 Share
             </button>
             <button id="openChatBtn" style="padding: 8px 16px; background: #f5de4c; color: rgb(17, 17, 17); border: none; border-radius: 8px; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2); cursor: pointer; font-weight: 500;">
-                💬 Чат
+                Чат
             </button>
         </div>
     </div>
@@ -202,6 +204,21 @@
                     <label>Название:</label>
                     <input type="text" id="expense_name" name="expense_name" required>
                 </div>
+                
+                <!-- 🔹 НОВОЕ: Поле выбора категории -->
+                <div class="form-group">
+                    <label>Категория:</label>
+                    <select id="expense_category" name="category" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
+                        <option value="">Без категории</option>
+                        <option value="transport">🚗 Транспорт</option>
+                        <option value="food">🍔 Еда</option>
+                        <option value="hotel">🏨 Отель</option>
+                        <option value="entertainment">🎭 Развлечения</option>
+                        <option value="shopping">🛍️ Покупки</option>
+                        <option value="other">📦 Другое</option>
+                    </select>
+                </div>
+                
                 <div class="form-group">
                     <label>Сумма:</label>
                     <input type="number" step="0.01" id="amount" name="amount" required>
@@ -229,7 +246,7 @@
                         <button type="button" class="btn-delete" onclick="expenseForm.deleteCurrentExpense()">Удалить трату</button>
                     </div>
                 </div>
-            </form>
+            </form>         
         </div>
         </div>
         <div id="chatNotifications" style="
@@ -735,5 +752,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });</script>
+
 </body>
 </html>
