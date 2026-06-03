@@ -1,4 +1,4 @@
-// js/expenseFormUpdate.js
+// public/js/expenseFormUpdate.js
 
 const expenseForm = {
   // Хранилище данных
@@ -8,7 +8,7 @@ const expenseForm = {
   // Открытие модального окна
   openEditModal: async function (expenseId) {
     try {
-      console.log("Loading expense:", expenseId);
+      console.log("📝 Загрузка расхода:", expenseId);
 
       // 1. Загружаем расход
       const expenseRes = await fetch(`/api/expenses/${expenseId}`);
@@ -26,6 +26,8 @@ const expenseForm = {
       this.currentExpense = expenseData.expense;
       this.tripParticipants = tripData.success ? tripData.participants : [];
 
+      console.log("📦 Загруженный расход:", this.currentExpense);
+
       // 4. Заполняем форму
       this.fillForm();
 
@@ -35,7 +37,7 @@ const expenseForm = {
       // 6. Показываем модалку
       document.getElementById("editExpenseModal").style.display = "block";
     } catch (error) {
-      console.error("Error:", error);
+      console.error("❌ Error:", error);
       alert("Ошибка загрузки: " + error.message);
     }
   },
@@ -45,17 +47,27 @@ const expenseForm = {
     const e = this.currentExpense;
     console.log("📅 Исходная дата:", e.date);
     console.log("📅 После форматирования:", this.formatDateForInput(e.date));
+
     document.getElementById("expense_id").value = e.id;
     document.getElementById("expense_name").value = e.expense_name;
     document.getElementById("amount").value = e.amount;
 
-    // 🔧 Форматируем дату правильно
+    // Форматируем дату правильно
     const formattedDate = this.formatDateForInput(e.date);
     document.getElementById("date").value = formattedDate;
 
     document.getElementById("description").value = e.description || "";
 
-    // 🔧 Добавляем обработчик изменения суммы
+    // 🔹 НОВОЕ: Загружаем категорию в select
+    const categorySelect = document.getElementById("expense_category");
+    if (categorySelect) {
+      categorySelect.value = e.category || "";
+      console.log("🏷️ Категория:", e.category);
+    } else {
+      console.warn("⚠️ Поле expense_category не найдено в форме");
+    }
+
+    // Добавляем обработчик изменения суммы
     const amountInput = document.getElementById("amount");
     amountInput.replaceWith(amountInput.cloneNode(true));
     const newAmountInput = document.getElementById("amount");
@@ -85,7 +97,7 @@ const expenseForm = {
     let html =
       '<div class="participants-list" style="max-height: 300px; overflow-y: auto;">';
 
-    // Отображаем ВСЕХ участников, без приоритета плательщика
+    // Отображаем ВСЕХ участников
     shareMap.forEach((share, userId) => {
       const isPayer = userId === window.currentUserId;
       html += this.createParticipantHTML(
@@ -164,14 +176,10 @@ const expenseForm = {
 
   // Показать поиск участников
   showParticipantSearch: function () {
-    // Удаляем старый попап если есть
     const oldPopup = document.getElementById("participantSearchPopup");
     if (oldPopup) oldPopup.remove();
 
-    // Получаем ID текущих участников
     const currentIds = this.getCurrentParticipantIds();
-
-    // Фильтруем доступных (только те, кого еще нет в расходе)
     const available = this.tripParticipants.filter(
       (p) => !currentIds.includes(p.id),
     );
@@ -181,7 +189,6 @@ const expenseForm = {
       return;
     }
 
-    // Создаем попап
     const popup = document.createElement("div");
     popup.id = "participantSearchPopup";
     popup.style.cssText = `
@@ -198,7 +205,6 @@ const expenseForm = {
             padding: 20px;
         `;
 
-    // Заголовок
     popup.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 style="margin: 0;">Добавить участника</h3>
@@ -225,7 +231,6 @@ const expenseForm = {
 
     document.body.appendChild(popup);
 
-    // Добавляем полупрозрачный фон
     const overlay = document.createElement("div");
     overlay.id = "participantSearchOverlay";
     overlay.style.cssText = `
@@ -240,7 +245,6 @@ const expenseForm = {
     overlay.onclick = () => this.closeParticipantSearch();
     document.body.appendChild(overlay);
 
-    // Добавляем обработчик поиска
     const searchInput = document.getElementById("participantSearchInput");
     searchInput.focus();
     searchInput.addEventListener("input", (e) => {
@@ -291,7 +295,6 @@ const expenseForm = {
 
   // Добавление участника
   addParticipant: function (userId, username) {
-    // Добавляем с суммой 0
     if (!this.currentExpense.participants) {
       this.currentExpense.participants = [];
     }
@@ -303,10 +306,7 @@ const expenseForm = {
       is_paid: userId === window.currentUserId,
     });
 
-    // Перерисовываем
     this.renderParticipants();
-
-    // Закрываем поиск
     this.closeParticipantSearch();
   },
 
@@ -330,17 +330,14 @@ const expenseForm = {
         },
       );
 
-      // ПРОВЕРЯЕМ ЧТО ВЕРНУЛ СЕРВЕР
       const contentType = response.headers.get("content-type");
       console.log("📦 Content-Type:", contentType);
       console.log("📦 Статус:", response.status);
 
       if (!contentType || !contentType.includes("application/json")) {
-        // Если сервер вернул HTML - читаем как текст для отладки
         const text = await response.text();
         console.error("❌ Сервер вернул не JSON:", text.substring(0, 200));
 
-        // ПРОБУЕМ АЛЬТЕРНАТИВНЫЙ МЕТОД - просто удаляем из массива на клиенте
         console.log("⚠️ Использую локальное удаление");
         this.currentExpense.participants =
           this.currentExpense.participants.filter((p) => p.id !== userId);
@@ -353,10 +350,8 @@ const expenseForm = {
       console.log("📦 Ответ сервера:", result);
 
       if (result.success) {
-        // Удаляем из массива
         this.currentExpense.participants =
           this.currentExpense.participants.filter((p) => p.id !== userId);
-        // Перерисовываем
         this.renderParticipants();
         alert("✅ Участник удален");
       } else {
@@ -366,8 +361,6 @@ const expenseForm = {
       }
     } catch (error) {
       console.error("❌ Ошибка:", error);
-
-      // В случае ошибки сети - все равно удаляем локально
       console.log("⚠️ Ошибка сети, удаляю локально");
       this.currentExpense.participants =
         this.currentExpense.participants.filter((p) => p.id !== userId);
@@ -381,7 +374,6 @@ const expenseForm = {
     const userId = parseInt(input.dataset.userId);
     const amount = parseFloat(input.value) || 0;
 
-    // Обновляем в currentExpense
     const participant = this.currentExpense.participants.find(
       (p) => p.id === userId,
     );
@@ -389,11 +381,9 @@ const expenseForm = {
       participant.amount_owed = amount;
     }
 
-    // Обновляем отображение суммы долей
     const totalAmount = parseFloat(this.currentExpense.amount);
     const sharesTotal = this.calculateTotalShares();
 
-    // Находим элемент с суммой долей и обновляем его
     const container = document.getElementById("participantsContainer");
     const totalDiv = container.querySelector(
       'div[style*="background: #f5f5f5"]',
@@ -407,30 +397,28 @@ const expenseForm = {
       }
     }
   },
+
   // Форматирование даты для input type="date"
   formatDateForInput: function (dateString) {
     if (!dateString) return "";
 
-    // Если уже в нужном формате YYYY-MM-DD
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return dateString;
 
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return dateString;
 
-    // 🔧 Используем ЛОКАЛЬНЫЕ методы (getFullYear/getDate),
-    // чтобы учесть часовой пояс пользователя
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
   },
+
   updateTotalAmountDisplay: function () {
     const totalAmount =
       parseFloat(document.getElementById("amount").value) || 0;
     const sharesTotal = this.calculateTotalShares();
 
-    // Находим блок с итогами
     const container = document.getElementById("participantsContainer");
     if (!container) return;
 
@@ -439,13 +427,11 @@ const expenseForm = {
     );
     if (!totalDiv) return;
 
-    // Обновляем общую сумму
     const spans = totalDiv.querySelectorAll("span");
     if (spans.length >= 2) {
       spans[1].textContent = `${totalAmount.toFixed(2)} ₽`;
     }
 
-    // Обновляем сумму долей и цвет
     if (spans.length >= 4) {
       spans[3].textContent = `${sharesTotal.toFixed(2)} ₽`;
       const isEqual = Math.abs(sharesTotal - totalAmount) < 0.01;
@@ -470,10 +456,17 @@ const expenseForm = {
   },
 
   // Сохранение изменений
+  // Сохранение изменений
   saveExpense: async function (event) {
     event.preventDefault();
 
     const expenseId = this.currentExpense.id;
+
+    // Получаем выбранную категорию
+    const categorySelect = document.getElementById("expense_category");
+    const category = categorySelect ? categorySelect.value : null;
+
+    console.log("💾 Категория перед отправкой:", category);
 
     // Подготавливаем данные
     const data = {
@@ -481,11 +474,14 @@ const expenseForm = {
       amount: parseFloat(document.getElementById("amount").value),
       date: document.getElementById("date").value,
       description: document.getElementById("description").value,
+      category: category || "", // 🔹 Отправляем пустую строку если null
       participants: this.currentExpense.participants.map((p) => ({
         id: p.id,
         amount_owed: parseFloat(p.amount_owed) || 0,
       })),
     };
+
+    console.log("💾 Сохраняем расход:", data);
 
     // Проверяем сумму
     const totalShares = data.participants.reduce(
@@ -509,18 +505,30 @@ const expenseForm = {
         body: JSON.stringify(data),
       });
 
+      // 🔹 ПРОВЕРКА ОТВЕТА СЕРВЕРА
+      const contentType = response.headers.get("content-type");
+      console.log("📦 Content-Type:", contentType);
+      console.log("📦 Статус:", response.status);
+
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("❌ Сервер вернул не JSON:", text.substring(0, 500));
+        throw new Error("Сервер вернул некорректный ответ");
+      }
+
       const result = await response.json();
+      console.log("📦 Ответ сервера:", result);
 
       if (result.success) {
-        alert("Расход обновлен");
+        alert("✅ Расход обновлен");
         this.closeEditModal();
         location.reload();
       } else {
-        alert("Ошибка: " + result.error);
+        alert("Ошибка: " + (result.error || result.message));
       }
     } catch (error) {
-      console.error("Error:", error);
-      alert("Ошибка при сохранении");
+      console.error("❌ Error:", error);
+      alert("Ошибка при сохранении: " + error.message);
     }
   },
 
@@ -546,14 +554,14 @@ const expenseForm = {
       const result = await response.json();
 
       if (result.success) {
-        alert("Расход удален");
+        alert("✅ Расход удален");
         this.closeEditModal();
         location.reload();
       } else {
         alert("Ошибка: " + result.error);
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("❌ Error:", error);
       alert("Ошибка при удалении");
     }
   },
