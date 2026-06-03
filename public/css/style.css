@@ -31,19 +31,19 @@ body {
 }
 
 .icon {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: bold;
     padding: 7px 14px;
     background-color: #f5de4c;
-    border-radius: 8px;
+    border-radius: 12px;
     display: inline-block;
     margin: 4px;
 }
 
 .search input {
-    padding: 8px 16px;
+    padding: 10px 16px;
     border: 1px solid #ddd;
-    border-radius: 8px;
+    border-radius: 12px;
     width: 210px;
     background-color: #f9f9f9;
     display: inline;
@@ -57,6 +57,7 @@ body {
 .main_container h1 {
     font-size: 24px;
     font-weight: 650;
+    letter-spacing: -0.2px;
 }
 
 .year {
@@ -65,7 +66,7 @@ body {
     font-weight: 650;
     display: block;
     padding: 8px;
-    border-bottom: 1px solid #4e4e4e;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.3);
 }
 
 .card {
@@ -416,7 +417,7 @@ body {
     color: #000000;
     font-weight: 600;
     font-size: 15px;
-    border-radius: 40px;
+    border-radius: 16px;
     text-decoration: none;
     transition: all 0.2s ease;
     cursor: pointer;
@@ -425,17 +426,19 @@ body {
 .profile_header {
     display: flex;
     align-items: center;
-    padding: 8px 16px;
+    padding: 8px 20px;
     background-color: white;
-    border-bottom: 2px solid #ddd;
+    border-bottom: 1px solid #efeff4;
     position: relative;
 }
 
 .profile_title {
-    position: absolute;
-    left: 40%;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
+    text-align: center;
+    width: 75%;
+    letter-spacing: -0.3px;
+    color: #000;
 }
 
 .profile_block {
@@ -453,35 +456,48 @@ body {
     justify-content: center;
     font-size: 60px;
     margin: auto;
-    border: 2px solid #000000;
+    border: 1px solid #cfcfcf;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
 }
 
 .profile_name {
-    margin-top: 10px;
-    font-size: 20px;
-    font-weight: bold;
+     margin-top: 12px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #000;
+    letter-spacing: -0.2px;
 }
 
 .profile_item {
-    padding: 12px;
+    padding: 18px 20px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 14px;
     font-size: 15px;
+    color: #1c1c1e;
+    border-bottom: 1px solid #f5f5f8;
+    transition: background 0.2s ease;
 }
 
 .status {
     margin-left: auto;
-    padding: 5px 12px;
-    border-radius: 8px;
-    font-size: 16px;
+    padding: 6px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 400;
     background-color: #f5de4c;
+    color: #000;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .profile_content {
-    margin: 8px;
-    background-color: #f0f0f0;
-    border-radius: 10px;
+    margin: 6px 16px;
+    background-color: #ffffff;
+    border-radius: 24px;
+    border: 1px solid #efeff4;
+    overflow: hidden;
+    box-shadow: 0 2px 2px rgba(112, 112, 112, 0.3);
 }
 
 .logreg_title {
@@ -490,6 +506,7 @@ body {
     font-weight: 700;
     margin-top: 20%;
     margin-bottom: 20px;
+    letter-spacing: -0.2px;
 }
 
 
@@ -520,11 +537,10 @@ body {
 
 .continue_button {
     color: #000000;
-    margin: 16px;
-    width: 360px;
+    width: 100%;
     background-color: #f5de4c;
-    padding: 12px;
-    border-radius: 10px;
+    padding: 18px;
+    border-radius: 14px;
     text-align: center;
     font-size: 17px;
     font-weight: 500;
@@ -711,15 +727,16 @@ body {
     margin-left: 65px;
     text-align: center;
     max-width: 260px;
+    letter-spacing: -0.3px;
 }
 
 .hello_button {
     color: #000000;
     margin: 15px;
-    width: 360px;
+    width: 100%;
     background-color: #f5de4c;
-    padding: 12px;
-    border-radius: 10px;
+    padding: 18px;
+    border-radius: 18px;
     text-align: center;
     font-size: 16px;
     font-weight: 500;
@@ -737,18 +754,21 @@ body {
 
 .password_field {
     position: relative;
-    padding: 0 16px;
-    width: 100%;
     margin-bottom: 16px;
+    margin-left: 8px;
+    margin-right: 8px;
 }
 
 .password_field input {
     width: 100%;
-    padding: 14px 40px 14px 14px;
+    padding: 14px 0 14px 0;
     border: none;
-    border-bottom: 2px solid #878787;
-    font-size: 14px;
+    border-bottom: 1.5px solid #d0d0d0;
+    font-size: 16px;
     outline: none;
+    background: transparent;
+    transition: border-color 0.2s;
+    font-family: inherit;
 }
 
 .vis_password {
@@ -909,7 +929,7 @@ body {
 }
 
 .file_upload_label {
-    font-size: 14px;
+    font-size: 16px;
     padding: 6px 0;
     display: inline-block;
     font-weight: 500;
