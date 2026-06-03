@@ -120,7 +120,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "https://localhost:3000",
+    origin: process.env.FRONTEND_URL || "https://176.123.163.235:3000",
     methods: ["GET", "POST"],
   },
 });

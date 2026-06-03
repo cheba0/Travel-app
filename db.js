@@ -8,11 +8,11 @@ const pool = new Pool({
   // localhost
   // 26.96.80.103
   // 26.99.190.11
-  host: "localhost",
+  host: "db",
 
   // postgres
   // travel_app
-  database: "postgres", //теперь это меняйте
+  database: "travel_app", //теперь это меняйте
 
   password: "postgres",
   port: 5432,
