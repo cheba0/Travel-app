@@ -8,7 +8,7 @@ const pool = new Pool({
   // localhost
   // 26.96.80.103
   // 26.99.190.11
-  host: "localhost",
+  host: "db",
 
   // postgres
   // travel_app
