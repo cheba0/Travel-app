@@ -240,14 +240,14 @@
     
     <!-- Кнопка фото -->
     <button onclick="togglePhotoMenu()" style="padding: 10px; border-radius: 8px; background: #f5f5f5; border: none; cursor: pointer; font-size: 20px;">
-        📷
+        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#1b1b1b"><path d="M720-330q0 104-73 177T470-80q-104 0-177-73t-73-177v-370q0-75 52.5-127.5T400-880q75 0 127.5 52.5T580-700v350q0 46-32 78t-78 32q-46 0-78-32t-32-78v-370h80v370q0 13 8.5 21.5T470-320q13 0 21.5-8.5T500-350v-350q-1-42-29.5-71T400-800q-42 0-71 29t-29 71v370q-1 71 49 120.5T470-160q70 0 119-49.5T640-330v-390h80v390Z"/></svg>
     </button>
     
     <!-- Меню выбора фото -->
     <div id="photoSourceMenu" style="display: none; position: absolute; bottom: 70px; left: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); padding: 8px; z-index: 1000; min-width: 200px;">
-        <button onclick="selectPhotoSource('gallery')" style="display:block;width:100%;padding:12px;border:none;background:none;text-align:left;cursor:pointer;border-radius:8px;font-size:14px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">🖼️ Из галереи</button>
-        <button onclick="selectPhotoSource('files')" style="display:block;width:100%;padding:12px;border:none;background:none;text-align:left;cursor:pointer;border-radius:8px;font-size:14px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'">📁 Из файлов</button>
-        <button onclick="selectPhotoSource('camera')" style="display:block;width:100%;padding:12px;border:none;background:none;text-align:left;cursor:pointer;border-radius:8px;font-size:14px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'"> Сфотографировать</button>
+        <button onclick="selectPhotoSource('gallery')" style="display:block;width:100%;padding:12px;border:none;background:none;text-align:left;cursor:pointer;border-radius:8px;font-size:14px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M480-480ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h320v80H200v560h560v-320h80v320q0 33-23.5 56.5T760-120H200Zm40-160h480L570-480 450-320l-90-120-120 160Zm440-320v-80h-80v-80h80v-80h80v80h80v80h-80v80h-80Z"/></svg> Из галереи</button>
+        <button onclick="selectPhotoSource('files')" style="display:block;width:100%;padding:12px;border:none;background:none;text-align:left;cursor:pointer;border-radius:8px;font-size:14px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v400q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H447l-80-80H160v480Zm0 0v-480 480Z"/></svg> Из файлов</button>
+        <button onclick="selectPhotoSource('camera')" style="display:block;width:100%;padding:12px;border:none;background:none;text-align:left;cursor:pointer;border-radius:8px;font-size:14px;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='none'"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#000000"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5t-48 119q0 69.5 48 118.5t120 49Zm0-72q-42 0-69-28.13T384-433q0-39.9 27-67.45Q438-528 480-528t69 27.55q27 27.55 27 67.45 0 40.74-27 68.87Q522-336 480-336ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l72-96h240l72 96h120q29.7 0 50.85 21.5Q864-677 864-648v432q0 29-21.15 50.5T792-144H168Zm0-72h624v-432H636l-72.1-96H396l-72 96H168v432Zm312-217Z"/></svg> Сфотографировать</button>
     </div>
     
     <!-- Предпросмотр фото -->
@@ -256,10 +256,10 @@
     </div>
     
     <!-- Поле ввода -->
-    <textarea id="chatTextInput" placeholder="Напишите сообщение..." rows="1" style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; resize: none; font-size: 14px;" onkeydown="handleChatKeydown(event)"></textarea>
+    <textarea id="chatTextInput" placeholder="Напишите сообщение..." rows="1" style="flex: 1; padding: 12px; border: 0.5px solid #ddd; border-radius: 8px; resize: none; font-size: 14px;" onkeydown="handleChatKeydown(event)"></textarea>
     
     <!-- Кнопка отправки/записи (Telegram-стиль) -->
-    <button id="sendBtn" onclick="sendChatMessage()" data-mode="record" style="padding: 12px; border-radius: 50%; background: #f5f5f5; border: none; cursor: pointer; font-size: 20px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;">  
+    <button id="sendBtn" onclick="sendChatMessage()" data-mode="record" style="padding: 8px; border-radius: 50%; background: #f5f5f5; border: none; cursor: pointer; font-size: 18px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;">  
     </button>
        
     <!-- Индикатор записи -->

@@ -177,7 +177,7 @@ function showVideoPreview(stream) {
     height: 120px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid #dc3545;
+    border: 1px solid #e0e0e0;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     z-index: 9999;
     transform: scaleX(-1);
@@ -245,13 +245,13 @@ function updateRecordButtonIcon() {
   if (!btn) return;
 
   if (recordMode === "video") {
-    btn.innerHTML = "🎥";
-    btn.style.background = "#28a745";
+    btn.innerHTML = "📷";
+    btn.style.background = "#ededed";
     btn.style.color = "white";
     btn.title = "Режим: видеокружочек (удерживайте)";
   } else {
-    btn.innerHTML = "🎤";
-    btn.style.background = "#f5f5f5";
+    btn.innerHTML = "🎙️";
+    btn.style.background = "#ededed";
     btn.style.color = "inherit";
     btn.title = "Режим: голосовое (удерживайте)";
   }
@@ -392,13 +392,15 @@ async function startVoiceRecording() {
     const indicator = document.getElementById("recordingIndicator");
 
     if (btn) {
-      btn.innerHTML = "⏹️";
-      btn.style.background = "#dc3545";
-      btn.style.color = "white";
+      btn.innerHTML = "❚❚";
+      btn.style.background = "#f5de4c";
+      btn.style.color = "black";
     }
     if (indicator) {
       indicator.style.display = "block";
-      indicator.style.background = isVideo ? "#28a745" : "#dc3545";
+      indicator.style.background = isVideo ? "#ebebeb" : "#e6e6e6";
+      indicator.style.color = "black";
+      indicator.style.fontWeight = "400";
     }
 
     recordingTimer = setInterval(() => {
@@ -1009,10 +1011,10 @@ function showContextMenu(x, y, messageId, createdAt) {
 
   menu.innerHTML = `
     <button class="edit-btn" ${!canEdit ? "disabled" : ""} style="display:block;width:100%;padding:${isMobile ? "16px" : "14px"} 18px;border:none;background:none;text-align:left;cursor:${canEdit ? "pointer" : "not-allowed"};color:${canEdit ? "#333" : "#999"};font-size:${isMobile ? "16px" : "14px"}">
-      ${canEdit ? "✏️ Редактировать" : "⏱️ Время вышло (5 мин)"}
+      ${canEdit ? "✎ Редактировать" : "◴ Время вышло (5 мин)"}
     </button>
     <div style="height:1px;background:#eee"></div>
-    <button class="delete-btn" style="display:block;width:100%;padding:${isMobile ? "16px" : "14px"} 18px;border:none;background:none;text-align:left;cursor:pointer;color:#ff4444;font-size:${isMobile ? "16px" : "14px"}">🗑️ Удалить сообщение</button>
+    <button class="delete-btn" style="display:block;width:100%;padding:${isMobile ? "16px" : "14px"} 18px;border:none;background:none;text-align:left;cursor:pointer;color:#ff4444;font-size:${isMobile ? "16px" : "14px"}">🗑 Удалить сообщение</button>
   `;
 
   menu.querySelector(".edit-btn").onclick = (e) => {
