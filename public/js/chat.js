@@ -807,25 +807,38 @@ function appendMessageToUI(msg, highlightMode = false, highlightQuery = "") {
   if (msg.audioUrl) {
     const audioDiv = document.createElement("div");
     audioDiv.style.cssText = "margin-top:8px;";
+
+    // Определяем тип аудио
+    const audioType =
+      msg.audioType ||
+      (msg.audioUrl.endsWith(".m4a") ? "audio/mp4" : "audio/webm");
+
     audioDiv.innerHTML = `
-      <audio controls style="max-width:100%;height:32px;">
-        <source src="${msg.audioUrl}" type="audio/webm">
-      </audio>
-    `;
+    <audio controls style="max-width:100%;height:32px;">
+      <source src="${msg.audioUrl}" type="${audioType}">
+      Ваш браузер не поддерживает аудио
+    </audio>
+  `;
     bubble.appendChild(audioDiv);
   }
 
   if (msg.videoUrl) {
     const videoDiv = document.createElement("div");
     videoDiv.style.cssText = "margin-top:8px;";
+
+    // Определяем тип видео
+    const videoType =
+      msg.videoType ||
+      (msg.videoUrl.endsWith(".mp4") ? "video/mp4" : "video/webm");
+
     videoDiv.innerHTML = `
-      <video controls style="max-width:200px;max-height:200px;border-radius:50%;object-fit:cover;display:block;" playsinline>
-        <source src="${msg.videoUrl}" type="video/webm">
-      </video>
-    `;
+    <video controls style="max-width:200px;max-height:200px;border-radius:50%;object-fit:cover;display:block;" playsinline>
+      <source src="${msg.videoUrl}" type="${videoType}">
+      Ваш браузер не поддерживает видео
+    </video>
+  `;
     bubble.appendChild(videoDiv);
   }
-
   const infoDiv = document.createElement("div");
   infoDiv.style.cssText = `font-size:11px;margin-top:4px;text-align:${isMyMessage ? "right" : "left"};display:flex;align-items:center;justify-content:${isMyMessage ? "flex-end" : "flex-start"};gap:4px;color:${isMyMessage ? "rgba(255,255,255,0.7)" : "#888"};`;
 
