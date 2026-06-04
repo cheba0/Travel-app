@@ -7,6 +7,7 @@ const qrController = require("../controllers/qrController");
 const MessageController = require("../controllers/messageController");
 const ticketService = require("../services/ticketService");
 const tutuService = require("../services/tutuService");
+const xoteloService = require("../services/xoteloService");
 const { upload, chatUpload } = require("../config/multer");
 const { pool } = require("../db");
 const multer = require("multer");
@@ -831,6 +832,12 @@ router.get("/store", (req, res) => {
     title: "Поиск авиабилетов",
   });
 });
+router.get("/tickets", (req, res) => {
+  console.log("✈️ GET /tickets - страница поиска билетов");
+  res.render("tickets", {
+    title: "Поиск авиабилетов",
+  });
+});
 
 router.get("/api/flights/search", async (req, res) => {
   console.log("✈️ API: поиск авиабилетов", req.query);
@@ -891,6 +898,105 @@ router.get("/api/buses/search", async (req, res) => {
   }
 
   const result = await ticketService.searchBuses(from, to, date);
+  res.json(result);
+});
+
+// Поиск отелей по названию/городу
+router.get("/api/xotelo/search", async (req, res) => {
+  console.log("🔍 API: поиск отелей Xotelo", req.query);
+
+  const { query } = req.query;
+
+  if (!query) {
+    return res.status(400).json({
+      success: false,
+      message: "Необходимо указать query (название отеля или города)",
+    });
+  }
+
+  const result = await xoteloService.searchHotels(query);
+  res.json(result);
+});
+
+// Получение отелей по локации
+router.get("/api/xotelo/list", async (req, res) => {
+  console.log("🏨 API: список отелей по локации", req.query);
+
+  const {
+    locationKey,
+    limit = 30,
+    offset = 0,
+    sort = "best_value",
+  } = req.query;
+
+  if (!locationKey) {
+    return res.status(400).json({
+      success: false,
+      message: "Необходимо указать locationKey",
+    });
+  }
+
+  const result = await xoteloService.getHotelsByLocation(
+    locationKey,
+    parseInt(limit),
+    parseInt(offset),
+    sort,
+  );
+  res.json(result);
+});
+
+// Получение цен на отель
+router.get("/api/xotelo/rates", async (req, res) => {
+  console.log("💰 API: цены на отель", req.query);
+
+  const {
+    hotelKey,
+    checkIn,
+    checkOut,
+    currency = "RUB",
+    rooms = 1,
+    adults = 2,
+    childrenAges = "",
+  } = req.query;
+
+  if (!hotelKey || !checkIn || !checkOut) {
+    return res.status(400).json({
+      success: false,
+      message: "Необходимо указать hotelKey, checkIn, checkOut",
+    });
+  }
+
+  const result = await xoteloService.getHotelRates(
+    hotelKey,
+    checkIn,
+    checkOut,
+    currency,
+    parseInt(rooms),
+    parseInt(adults),
+    childrenAges,
+  );
+  res.json(result);
+});
+
+// Полный поиск (отель + цены за один запрос)
+router.get("/api/xotelo/searchWithRates", async (req, res) => {
+  console.log("🔍💰 API: полный поиск отеля с ценами", req.query);
+
+  const { query, checkIn, checkOut, adults = 2 } = req.query;
+
+  if (!query || !checkIn || !checkOut) {
+    return res.status(400).json({
+      success: false,
+      message: "Необходимо указать query, checkIn, checkOut",
+    });
+  }
+
+  const result = await xoteloService.searchHotelWithRates(
+    query,
+    checkIn,
+    checkOut,
+    parseInt(adults),
+  );
   res.json(result);
 });
 
