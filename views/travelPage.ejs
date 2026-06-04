@@ -57,8 +57,8 @@
             <button id="openDebtsBtn" style="padding: 8px 16px; background: #e2e2e2; color: rgb(0, 0, 0); border: none; border-radius: 8px; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2); cursor: pointer; font-weight: 500;">
                  Долги
             </button>
-            <button id="openChatBtn" style="padding: 8px 16px; background: #f5de4c; color: rgb(17, 17, 17); border: none; border-radius: 8px; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2); cursor: pointer; font-weight: 500;">
-                💬 Чат
+            <button id="openChatBtn" style="padding: 8px 24px; background: #f5de4c; color: rgb(17, 17, 17); border: none; border-radius: 8px; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2); cursor: pointer; font-weight: 500;">
+                    Чат
             </button>
             
         </div>
@@ -127,7 +127,7 @@
 <div id="debtsModal" class="modal" style="display: none;">
     <div class="modal-content" style="max-width: 600px;">
         <span class="close" onclick="closeDebtsModal()">&times;</span>
-        <h2 style="margin-bottom: 20px;">💰 Долги в путешествии</h2>
+        <h2 style="margin-bottom: 20px;">Долги в путешествии</h2>
         
         <!-- Общая информация -->
         <div id="debtsSummary" style="margin-bottom: 30px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
@@ -136,7 +136,7 @@
 
         <!-- Кто кому должен -->
         <div id="debtsList" style="margin-bottom: 30px;">
-            <h3 style="margin-bottom: 15px; font-size: 16px;">📋 Кто кому должен:</h3>
+            <h3 style="margin-bottom: 15px; font-size: 16px;">☰ Кто кому должен:</h3>
             <div id="settlementsContainer">
                 <!-- Сюда JavaScript вставит долги -->
             </div>
@@ -144,11 +144,11 @@
 
         <!-- Кнопки действий -->
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button onclick="showDebtHistory()" style="flex: 1; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">
-                📜 История транзакций
+            <button onclick="showDebtHistory()" style="flex: 1; padding: 10px; background: #e1e1e1; color: rgb(0, 0, 0); border: none; border-radius: 6px; cursor: pointer;">
+                История транзакций
             </button>
-            <button id="mainActionBtn" onclick="showSettleDebtForm()" style="flex: 1; padding: 10px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer;">
-                💵 Я заплатил
+            <button id="mainActionBtn" onclick="showSettleDebtForm()" style="flex: 1; padding: 10px; background: #45bf62; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                Я заплатил
             </button>
            
         </div>

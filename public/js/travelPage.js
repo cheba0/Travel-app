@@ -403,7 +403,7 @@ function showExpensesChart() {
 
       statsDiv.innerHTML = `
         <div style="margin-bottom: 15px;">
-          <strong>💰 Общая сумма всех расходов: ${totalSpent.toFixed(2)} ${window.travelData.currency}</strong>
+          <strong>Общая сумма всех расходов: ${totalSpent.toFixed(2)} ${window.travelData.currency}</strong>
         </div>
         <div style="font-size: 12px; margin-bottom: 15px;">
           Всего участников: ${allParticipants.length}
