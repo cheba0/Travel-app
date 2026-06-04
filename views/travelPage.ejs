@@ -31,12 +31,6 @@
                 <p class="overlay_date"><%= travel.date_range %></p>
             <% } %>
             
-            <% if (userId && travel.user_id && userId == travel.user_id) { %>
-                <button onclick="deleteTravel(<%= travel.id %>, '<%= travel.name.replace(/'/g, "\\'") %>')" 
-                        style="margin-top: 12px; padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
-                    🗑️ Удалить путешествие
-                </button>
-            <% } %>
         </div>
     </div>
 
@@ -57,15 +51,16 @@
         </div>
 
         <div style="display: flex; gap: 10px;">
-            <button id="inviteParticipantsBtn" style="padding: 8px 16px; background: #f5de4c; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+            <!-- <button id="inviteParticipantsBtn" style="padding: 8px 16px; background: #f5de4c; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
                 Share
+            </button> -->
+            <button id="openDebtsBtn" style="padding: 8px 16px; background: #e2e2e2; color: rgb(0, 0, 0); border: none; border-radius: 8px; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2); cursor: pointer; font-weight: 500;">
+                 Долги
             </button>
             <button id="openChatBtn" style="padding: 8px 16px; background: #f5de4c; color: rgb(17, 17, 17); border: none; border-radius: 8px; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2); cursor: pointer; font-weight: 500;">
                 💬 Чат
             </button>
-            <button id="openDebtsBtn" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 8px; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2); cursor: pointer; font-weight: 500;">
-                 Долги
-            </button>
+            
         </div>
     </div>
 
@@ -779,17 +774,34 @@
             <button onclick="closeMenuModal()" class="close-menu">&times;</button>
         </div>
         <div class="menu-items">
+            <button id="inviteParticipantsBtn"  class="menu-item"> 
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M720-400v-120H600v-80h120v-120h80v120h120v80H800v120h-80ZM247-527q-47-47-47-113t47-113q47-47 113-47t113 47q47 47 47 113t-47 113q-47 47-113 47t-113-47ZM40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm80-80h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm296.5-343.5Q440-607 440-640t-23.5-56.5Q393-720 360-720t-56.5 23.5Q280-673 280-640t23.5 56.5Q327-560 360-560t56.5-23.5ZM360-640Zm0 400Z"/></svg> Пригласить участника
+            </button>
             <button class="menu-item"> 
                 <span><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M216-216h51l375-375-51-51-375 375v51Zm-72 72v-153l498-498q11-11 23.84-16 12.83-5 27-5 14.16 0 27.16 5t24 16l51 51q11 11 16 24t5 26.54q0 14.45-5.02 27.54T795-642L297-144H144Zm600-549-51-51 51 51Zm-127.95 76.95L591-642l51 51-25.95-25.05Z"/></svg></span> Редактировать путешествие
             </button>
             <button onclick="exportToExcel()" class="menu-item">
                 <span><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg></span> Скачать
             </button>
+            <% if (userId && travel.user_id && userId == travel.user_id) { %>
+                <button class="menu-item" style="color:#dc3545" onclick="deleteTravel(<%= travel.id %>, '<%= travel.name.replace(/'/g, "\\'") %>')" >
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#dc3545"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg> Удалить путешествие
+                </button>
+            <% } %>
         </div>
     </div>
 </div>
 
 <script>// Открыть меню
+document.addEventListener('DOMContentLoaded', function() {
+    // Закрытие меню при клике на любую кнопку внутри .menu-items
+    const menuItems = document.querySelectorAll('.menu-items button');
+    menuItems.forEach(button => {
+        button.addEventListener('click', function() {
+            closeMenuModal();
+        });
+    });
+});
 function openMenuModal() {
     const modal = document.getElementById('menuModal');
     if (modal) {
