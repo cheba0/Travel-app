@@ -6,10 +6,7 @@ const countries = {
     name_en: "Russia",
     cities: {
       москва: "Moscow",
-      "санкт-петербург": "Saint Petersburg",
-      сочи: "Sochi",
       казань: "Kazan",
-      екатеринбург: "Yekaterinburg",
       новосибирск: "Novosibirsk",
       владивосток: "Vladivostok",
     },
@@ -18,7 +15,6 @@ const countries = {
     name_en: "Turkey",
     cities: {
       станбул: "Istanbul",
-      анталья: "Antalya",
       анкара: "Ankara",
       измир: "Izmir",
       бодрум: "Bodrum",
@@ -29,8 +25,6 @@ const countries = {
     name_en: "Egypt",
     cities: {
       каир: "Cairo",
-      "шарм-эль-шейх": "Sharm el Sheikh",
-      хургада: "Hurghada",
       луксор: "Luxor",
       александрия: "Alexandria",
     },
@@ -41,8 +35,6 @@ const countries = {
       рим: "Rome",
       милан: "Milan",
       венеция: "Venice",
-      флоренция: "Florence",
-      неаполь: "Naples",
     },
   },
   франция: {
@@ -52,7 +44,6 @@ const countries = {
       марсель: "Marseille",
       лион: "Lyon",
       ницца: "Nice",
-      бордо: "Bordeaux",
     },
   },
   испания: {
@@ -78,8 +69,6 @@ const countries = {
   греция: {
     name_en: "Greece",
     cities: {
-      афины: "Athens",
-      салоники: "Thessaloniki",
       ираклион: "Heraklion",
       родос: "Rhodes",
     },
@@ -87,7 +76,6 @@ const countries = {
   оаэ: {
     name_en: "UAE",
     cities: {
-      дубай: "Dubai",
       "абу-даби": "Abu Dhabi",
       шарджа: "Sharjah",
     },
@@ -96,9 +84,6 @@ const countries = {
     name_en: "Thailand",
     cities: {
       бангкок: "Bangkok",
-      пхукет: "Phuket",
-      паттайя: "Pattaya",
-      чиангмай: "Chiang Mai",
     },
   },
   китай: {
@@ -106,16 +91,6 @@ const countries = {
     cities: {
       пекин: "Beijing",
       шанхай: "Shanghai",
-      гонконг: "Hong Kong",
-    },
-  },
-  япония: {
-    name_en: "Japan",
-    cities: {
-      токио: "Tokyo",
-      осака: "Osaka",
-      киото: "Kyoto",
-      йокогама: "Yokohama",
     },
   },
 };

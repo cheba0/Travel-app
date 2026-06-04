@@ -19,15 +19,15 @@
         <input type="hidden" id="tripId" name="trip_id" value="">
         <div class="add_exp_container">
             <div class="input_field">
-            <input type="text" name="expense_name" placeholder="Название">
+            <input type="text" id="expenseName" name="expense_name" placeholder="Название">
         </div>
 
         <div class="input_field">
-            <input type="date" name="date">
+            <input type="date" id="expenseDate" name="date">
         </div>
 
         <div class="input_field">
-            <input type="number" name="amount" placeholder="Сумма">
+            <input type="number" id="expenseAmount" name="amount" placeholder="Сумма">
         </div>
 
         <div class="input_field">
@@ -48,6 +48,47 @@
             id: '<%= travel.id %>',
             name: '<%= travel.name %>',
         };
+        // Функция для получения сегодняшней даты в формате YYYY-MM-DD
+        function getTodayDate() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        // Заполняем форму данными из URL параметров
+        function fillFormFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Заполняем название
+            if (urlParams.has('expense_name')) {
+                const expenseName = decodeURIComponent(urlParams.get('expense_name'));
+                document.getElementById('expenseName').value = expenseName;
+                console.log('Заполнено название:', expenseName);
+            }
+            
+            // Заполняем сумму
+            if (urlParams.has('amount')) {
+                const amount = decodeURIComponent(urlParams.get('amount'));
+                document.getElementById('expenseAmount').value = amount;
+                console.log('Заполнена сумма:', amount);
+            }
+            
+            // Заполняем дату (если есть в URL, иначе сегодняшняя)
+            let date = getTodayDate();
+            if (urlParams.has('date') && urlParams.get('date')) {
+                date = urlParams.get('date');
+            }
+            document.getElementById('expenseDate').value = date;
+            console.log('Дата:', date);
+        }
+        
+        // Вызываем заполнение при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM загружен, заполняем форму');
+            fillFormFromUrl();
+        });
     </script>
 </body>
 </html>

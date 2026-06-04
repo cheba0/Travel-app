@@ -159,7 +159,7 @@ async function searchFlights() {
                     <div class="ticket-expand-menu">
                         <div class="menu-buttons">
                             <button class="btn-website" onclick="window.open('${ticketLink}', '_blank')">Перейти на сайт</button>
-                            <button class="btn-travel">Добавить в траты</button>
+                            <button class="btn-travel" onclick="openTravelSelectModal(${JSON.stringify(ticket).replace(/"/g, "&quot;")})">Добавить в траты</button>
                         </div>
                     </div>
                 </div>`;
@@ -276,7 +276,7 @@ async function searchTrains() {
                         <div class="train-expand-menu">
                             <div class="menu-buttons">
                                 <button class="btn-website" onclick="window.open('${train.buy_link || train.schedule_link || "#"}', '_blank')">Перейти на сайт</button>
-                                <button class="btn-travel">Добавить в траты</button>
+                                <button class="btn-travel" onclick="alert('Функция в разработке');">Добавить в траты</button>
                             </div>
                         </div>
                     </div>
@@ -381,7 +381,7 @@ async function searchBuses() {
                         <div class="bus-expand-menu">
                             <div class="menu-buttons">
                                 <button class="btn-website" onclick="window.open('${bus.search_link || "#"}', '_blank')">Перейти на сайт</button>
-                                <button class="btn-travel">Добавить в траты</button>
+                                <button class="btn-travel" onclick="alert('Функция в разработке');">Добавить в траты</button>
                             </div>
                         </div>
                     </div>
@@ -409,7 +409,7 @@ async function loadHotelCountries() {
     if (data.success) {
       const select = document.getElementById("hotelCountrySelect");
       if (!select) return;
-      select.innerHTML = '<option value="">-- Выберите страну --</option>';
+      select.innerHTML = '<option value=""></option>';
       data.countries.forEach((country) => {
         const option = document.createElement("option");
         option.value = country.name_ru;
@@ -434,7 +434,7 @@ async function loadHotelCities(countryName) {
     );
     const data = await response.json();
     if (data.success && data.cities && data.cities.length > 0) {
-      citySelect.innerHTML = '<option value="">-- Выберите город --</option>';
+      citySelect.innerHTML = '<option value=""></option>';
       data.cities.forEach((city) => {
         const option = document.createElement("option");
         option.value = city.name_ru;
@@ -458,6 +458,12 @@ async function loadHotelCities(countryName) {
 // === ПОИСК ОТЕЛЕЙ (с выбором страны/города) ===
 // Поиск отелей
 async function searchHotels(page = 1) {
+  // ✅ ДОБАВЬТЕ ЭТУ ПРОВЕРКУ
+  let currentPage = parseInt(page);
+  if (isNaN(currentPage) || currentPage < 1) {
+    currentPage = 1;
+  }
+
   const countrySelect = document.getElementById("hotelCountrySelect");
   const citySelect = document.getElementById("hotelCitySelect");
   const checkIn = document.getElementById("hotelCheckIn")?.value;
@@ -481,13 +487,17 @@ async function searchHotels(page = 1) {
 
   const hotelsList = document.getElementById("hotelsList");
   const hotelsCount = document.getElementById("hotelsCount");
-  if (hotelsList)
+  if (hotelsList) {
     hotelsList.innerHTML =
       '<div style="text-align:center; padding:20px;">🔍 Поиск отелей...</div>';
+  }
 
   try {
-    let url = `/api/hotels/search?city=${encodeURIComponent(cityEn)}&checkIn=${checkIn}&checkOut=${checkOut}&adults=${adults}&currency=${currency}&page=${page}`;
+    // ✅ ИСПОЛЬЗУЙТЕ currentPage ВМЕСТО page
+    let url = `/api/hotels/search?city=${encodeURIComponent(cityEn)}&checkIn=${checkIn}&checkOut=${checkOut}&adults=${adults}&currency=${currency}&page=${currentPage}`;
     if (countryEn) url += `&country=${encodeURIComponent(countryEn)}`;
+
+    console.log("Запрос отелей:", url);
 
     const response = await fetch(url);
     const data = await response.json();
@@ -519,7 +529,7 @@ async function searchHotels(page = 1) {
                             <div class="hotel-expand-menu">
                                 <div class="menu-buttons">
                                     <button class="btn-website" onclick="window.open('${hotel.url}', '_blank')">Перейти на сайт</button>
-                                    <button class="btn-travel">Добавить в траты</button>
+                                    <button class="btn-travel" onclick="alert('Функция в разработке');">Добавить в траты</button>
                                 </div>
                             </div>
                         </div>
@@ -528,13 +538,15 @@ async function searchHotels(page = 1) {
       if (hotelsList) hotelsList.innerHTML = html;
     } else {
       if (hotelsCount) hotelsCount.textContent = `найдено 0`;
-      if (hotelsList)
+      if (hotelsList) {
         hotelsList.innerHTML = `<div style="text-align:center; padding:20px;">❌ ${data.message || "Отели не найдены"}</div>`;
+      }
     }
   } catch (error) {
     console.error("Ошибка:", error);
-    if (hotelsList)
+    if (hotelsList) {
       hotelsList.innerHTML = `<div style="text-align:center; padding:20px;">❌ Ошибка: ${error.message}</div>`;
+    }
   }
 }
 
@@ -599,6 +611,73 @@ function formatDate(dateString) {
   if (!dateString) return "";
   const date = new Date(dateString);
   return date.toLocaleDateString("ru-RU");
+}
+
+let selectedTicketData = null;
+async function loadUserTravels() {
+  try {
+    const response = await fetch("/api/my-travels");
+    const data = await response.json();
+
+    if (data.success && data.travels && data.travels.length > 0) {
+      const travelListDiv = document.getElementById("travelList");
+      travelListDiv.innerHTML = "";
+
+      data.travels.forEach((travel) => {
+        const travelItem = document.createElement("div");
+        travelItem.className = "travel-item";
+        travelItem.innerHTML = `
+                    <div class="travel-name">${travel.trip_name}</div>
+                    <div class="travel-date">${travel.start_date ? new Date(travel.start_date).toLocaleDateString("ru-RU") : "Дата не указана"}</div>
+                `;
+        travelItem.onclick = () => selectTravel(travel.id);
+        travelListDiv.appendChild(travelItem);
+      });
+    } else {
+      document.getElementById("travelList").innerHTML =
+        "<p>У вас пока нет путешествий. Создайте путешествие, чтобы добавить расходы.</p>";
+    }
+  } catch (error) {
+    console.error("Ошибка загрузки путешествий:", error);
+    document.getElementById("travelList").innerHTML =
+      "<p>Ошибка загрузки путешествий</p>";
+  }
+}
+function selectTravel(travelId) {
+  if (!selectedTicketData) return;
+
+  // Формируем URL с параметрами для страницы add_expense
+  const params = new URLSearchParams();
+  params.append("travelId", travelId);
+  params.append(
+    "expense_name",
+    `${selectedTicketData.airline || "Авиабилет"} ${selectedTicketData.from_city} → ${selectedTicketData.to_city}`,
+  );
+  params.append(
+    "amount",
+    selectedTicketData.price_rub || selectedTicketData.price || "",
+  );
+  params.append(
+    "date",
+    selectedTicketData.departure_at
+      ? new Date(selectedTicketData.departure_at).toISOString().split("T")[0]
+      : "",
+  );
+  params.append(
+    "description",
+    `Авиабилет ${selectedTicketData.airline || ""} ${selectedTicketData.from_city} → ${selectedTicketData.to_city}, рейс ${selectedTicketData.flight_number || ""}`,
+  );
+  params.append("currency", "RUB");
+
+  // Закрываем модальное окно и переходим на страницу
+  document.getElementById("travelSelectModal").style.display = "none";
+  window.location.href = `/add_expense/${travelId}?${params.toString()}`;
+}
+// Открыть модальное окно выбора путешествия для билета
+function openTravelSelectModal(ticketData) {
+  selectedTicketData = ticketData;
+  document.getElementById("travelSelectModal").style.display = "flex";
+  loadUserTravels();
 }
 
 window.searchFlights = searchFlights;

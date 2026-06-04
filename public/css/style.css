@@ -1716,8 +1716,21 @@ body {
     letter-spacing: -0.2px;
 }
 
+.search-field select,
 .search-field input,
 .search-field .date-input {
+    width: 100%;
+    padding: 14px 14px;
+    border: 1px solid #e5e5ea;
+    border-radius: 16px;
+    font-size: 16px;
+    background-color: #fbfbfd;
+    font-family: inherit;
+    transition: 0.2s;
+}
+
+
+.search-field_option {
     width: 100%;
     padding: 14px 14px;
     border: 1px solid #e5e5ea;

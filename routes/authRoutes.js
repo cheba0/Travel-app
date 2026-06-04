@@ -1137,6 +1137,8 @@ router.get("/api/buses/search", async (req, res) => {
 });
 
 router.get("/api/hotels/search", async (req, res) => {
+  console.log("🏨 API: поиск отелей", req.query);
+
   const {
     city,
     checkIn,
@@ -1154,7 +1156,6 @@ router.get("/api/hotels/search", async (req, res) => {
     });
   }
 
-  // Убираем limit из параметров
   const result = await omkarHotelService.searchHotels(
     city,
     checkIn,
@@ -1164,6 +1165,7 @@ router.get("/api/hotels/search", async (req, res) => {
     parseInt(page),
     country || null,
   );
+
   res.json(result);
 });
 
