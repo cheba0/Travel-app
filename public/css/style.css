@@ -139,6 +139,7 @@ body {
     padding: 10px 16px 20px 16px;
     max-width: 390px;
     margin: 0 auto;
+    z-index: 1000;
 }
 
 .bottom_navigation button {
@@ -1977,6 +1978,7 @@ body {
 .market-container {
     margin-top: 70px;
     padding: 16px;
+    padding-bottom: 90px !important;
 }
 
 
@@ -2242,12 +2244,6 @@ body {
     border-top: 1px solid #eee;
 }
 
-.menu-buttons {
-    display: flex;
-    gap: 12px;
-}
-
-
 
 
 /* Чтобы кнопки не перекрывались и клик по ним не открывал меню */
@@ -2263,6 +2259,8 @@ body {
     opacity: 1;
     padding: 14px 16px;
     border-top: 1px solid #eee;
+    position: relative;
+    z-index: 1;
 }
 
 
@@ -2623,6 +2621,8 @@ body {
 .menu-buttons {
     display: flex;
     gap: 12px;
+    position: relative;
+    z-index: 2;
 }
 
 .btn-website {
@@ -2635,6 +2635,8 @@ body {
     font-weight: 500;
     border: none;
     cursor: pointer;
+    position: relative;
+    z-index: 3;
 }
 
 .btn-travel {
@@ -2647,6 +2649,8 @@ body {
     font-weight: 500;
     border: none;
     cursor: pointer;
+    position: relative;
+    z-index: 3;
 }
 
 
