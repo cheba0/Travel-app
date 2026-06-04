@@ -213,7 +213,7 @@ async function searchFlights(
       unique: "false",
       sorting: "price",
       direct: "false",
-      one_way: oneWayValue,
+      one_way: isRoundTrip ? "false" : "true",
       token: AVIA_TOKEN,
     });
 
@@ -237,8 +237,8 @@ async function searchFlights(
         to_code: ticket.destination,
         price: ticket.price,
         price_rub: ticket.price,
-        airline_code: ticket.airline, // сохраняем и код
-        airline: getAirlineName(ticket.airline), // ← теперь название
+        airline: getAirlineName(ticket.airline),
+        airline_code: ticket.airline,
         departure_at: ticket.departure_at,
         departure_formatted: formatDate(ticket.departure_at),
         return_at: ticket.return_at || null,
@@ -246,7 +246,11 @@ async function searchFlights(
           ? formatDate(ticket.return_at)
           : null,
         transfers: ticket.transfers || 0,
+        duration_to: ticket.duration_to || null,
+        duration: ticket.duration || null,
         link: ticket.link,
+        origin_airport: ticket.origin_airport,
+        destination_airport: ticket.destination_airport,
       }));
 
       return {

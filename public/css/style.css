@@ -1898,7 +1898,8 @@ body {
 /* Нижняя часть: цена + багаж / питание */
 .ticket-info {
     display: flex;
-    justify-content: space-between;
+    text-align: center;
+    justify-content: center;
     align-items: center;
     padding: 14px 18px 18px 18px;
     border-top: 1px solid #f5f5f8;
@@ -1909,6 +1910,7 @@ body {
     font-size: 24px;
     font-weight: 750;
     color: #000;
+    text-align: center;
 }
 
 .price-tag small {

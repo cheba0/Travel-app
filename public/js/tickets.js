@@ -1,15 +1,5 @@
 // public/js/tickets.js
 
-// Переключение между подразделами
-function showSubsection(subsection) {
-  document.getElementById("flightsSubsection").classList.add("hidden");
-  document.getElementById("trainsSubsection").classList.add("hidden");
-  document.getElementById("busesSubsection").classList.add("hidden");
-  document.getElementById("hotelsSubsection").classList.add("hidden");
-
-  document.getElementById(subsection + "Subsection").classList.remove("hidden");
-}
-
 // Показать/скрыть поле для даты возвращения (для авиа)
 function toggleReturnDate() {
   const roundTripCheckbox = document.getElementById("roundTrip");
@@ -29,197 +19,324 @@ let totalPages = 1;
 let lastSearchParams = null;
 
 // === АВИАБИЛЕТЫ ===
+// Парсинг даты из строки API без смещения часового пояса
+function parseApiDate(dateString) {
+  if (!dateString) return null;
+  const match = dateString.match(
+    /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):\d{2}/,
+  );
+  if (!match) return new Date(dateString);
+  const [, year, month, day, hour, minute] = match;
+  return new Date(Date.UTC(year, month - 1, day, hour, minute));
+}
+// ========== АВИАБИЛЕТЫ ==========
 async function searchFlights() {
-  const from = document.getElementById("flightFrom").value.trim();
-  const to = document.getElementById("flightTo").value.trim();
-  const flightDate = document.getElementById("flightDate").value;
-  const isRoundTrip = document.getElementById("roundTrip")?.checked || false;
+  const origin = document.getElementById("originInput")?.value.trim();
+  const destination = document.getElementById("destinationInput")?.value.trim();
+  const departureDate = document.getElementById("departureDate")?.value;
+  const returnDate = document.getElementById("returnDate")?.value;
 
-  if (!from || !to) {
+  if (!origin || !destination) {
     alert("Введите города");
     return;
   }
-
-  if (!flightDate) {
+  if (!departureDate) {
     alert("Выберите дату вылета");
     return;
   }
 
-  const listDiv = document.getElementById("flightsList");
-  listDiv.innerHTML = "<p>🔍 Поиск билетов...</p>";
+  const flightsList = document.getElementById("flightsList");
+  const flightsCount = document.getElementById("flightsCount");
+  if (flightsList)
+    flightsList.innerHTML =
+      '<div style="text-align:center; padding:20px;">🔍 Поиск билетов...</div>';
 
   try {
-    let url = `/api/flights/search?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&departure_date=${flightDate}`;
-
-    if (isRoundTrip) {
-      const returnDate = document.getElementById("returnDate")?.value;
-      if (returnDate) {
-        url += `&return_date=${returnDate}`;
-      } else {
-        alert("Пожалуйста, выберите дату возвращения");
-        return;
-      }
+    let url = `/api/flights/search?from=${encodeURIComponent(origin)}&to=${encodeURIComponent(destination)}&departure_date=${departureDate}`;
+    if (returnDate) {
+      url += `&return_date=${returnDate}`;
     }
 
+    console.log("Запрос авиа:", url);
+
     const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
     const data = await response.json();
 
+    console.log("Ответ сервера:", data);
+
     if (data.success && data.tickets && data.tickets.length > 0) {
-      let html = `<p class="success">✅ Найдено ${data.count} билетов</p>`;
+      if (flightsCount) flightsCount.textContent = `найдено ${data.count}`;
+      let html = "";
+      data.tickets.forEach((ticket, idx) => {
+        // Определяем тип поездки
+        const isRoundTrip = returnDate !== null && returnDate !== "";
+        const hasTransfers = ticket.transfers > 0;
 
-      data.tickets.forEach((ticket, index) => {
-        html += `
-                    <div class="result-item" style="border-bottom: 1px solid #ccc; padding: 10px; margin: 5px 0;">
-                        <strong>${index + 1}. ${ticket.from_city} → ${ticket.to_city}</strong><br>
-                        📅 Вылет: ${ticket.departure_formatted}<br>
-                        ${ticket.return_formatted ? `📅 Возврат: ${ticket.return_formatted}<br>` : ""}
-                        💰 Цена: ${ticket.price_rub.toLocaleString()} ₽<br>
-                        ✈️ Авиакомпания: ${ticket.airline}<br>
-                        🔄 Пересадки: ${ticket.transfers}<br>
-                        🔗 <a href="https://www.aviasales.ru${ticket.link}" target="_blank" style="color: blue;">Купить билет на Aviasales →</a>
+        // Флаг: нужно ли показывать дату и время прибытия
+        const showArrivalDetails = !(isRoundTrip && hasTransfers);
+
+        // Парсим дату вылета
+        let departureTime = "";
+        let departureDateStr = "";
+        let arrivalTime = "";
+        let arrivalDateStr = "";
+
+        if (ticket.departure_at) {
+          const depDate = parseApiDate(ticket.departure_at);
+          departureTime = depDate.toLocaleTimeString("ru-RU", {
+            hour: "2-digit",
+            minute: "2-digit",
+            timeZone: "UTC",
+          });
+          departureDateStr = depDate.toLocaleDateString("ru-RU", {
+            timeZone: "UTC",
+          });
+
+          if (showArrivalDetails) {
+            // Логика расчёта времени прибытия
+            let durationToUse = null;
+
+            if (!isRoundTrip) {
+              durationToUse = ticket.duration;
+            } else if (isRoundTrip && !hasTransfers) {
+              durationToUse = ticket.duration_to;
+            }
+
+            if (durationToUse) {
+              const arrivalDate = new Date(
+                depDate.getTime() + durationToUse * 60 * 1000,
+              );
+              arrivalTime = arrivalDate.toLocaleTimeString("ru-RU", {
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: "UTC",
+              });
+              arrivalDateStr = arrivalDate.toLocaleDateString("ru-RU", {
+                timeZone: "UTC",
+              });
+            } else {
+              arrivalTime = "—";
+            }
+          }
+        }
+
+        const ticketLink = ticket.link
+          ? `https://www.aviasales.ru${ticket.link}`
+          : "#";
+
+        html += `<div class="ticket-card">
+                    <div class="ticket-airline">
+                        <span class="airline-name">${ticket.airline || ticket.airline_code || "Авиакомпания"}</span>
+                        <span class="flight-site">Aviasales</span>
                     </div>
-                `;
+                    <div class="route-main">
+                        <div class="city-block">
+                            <div class="city-code">${ticket.from_code || "???"}</div>
+                            <div class="city-name">${ticket.from_city || ""}</div>
+                            <div class="time">${departureTime}</div>
+                            <div class="date" style="font-size: 11px; color: #666;">${departureDateStr}</div>
+                        </div>
+                        <div class="flight-duration">
+                            ${ticket.transfers === 0 ? "Прямой рейс" : `${ticket.transfers} пересадк${ticket.transfers === 1 ? "а" : "и"}`}
+                            <div class="stops-badge">✈︎</div>
+                        </div>
+                        <div class="city-block">
+                            <div class="city-code">${ticket.to_code || "???"}</div>
+                            <div class="city-name">${ticket.to_city || ""}</div>
+                            ${showArrivalDetails ? `<div class="time">${arrivalTime}</div>` : ""}
+                            ${showArrivalDetails ? `<div class="date" style="font-size: 11px; color: #666;">${arrivalDateStr || departureDateStr}</div>` : ""}
+                            ${!showArrivalDetails ? '<div class="time" style="color: #999;">-</div>' : ""}
+                        </div>
+                    </div>
+                    <div class="ticket-info">
+                        <div class="price-tag">${ticket.price_rub?.toLocaleString() || "?"} <small>₽</small></div>
+                    </div>
+                    <div class="ticket-expand-menu">
+                        <div class="menu-buttons">
+                            <button class="btn-website" onclick="window.open('${ticketLink}', '_blank')">Перейти на сайт</button>
+                            <button class="btn-travel">Добавить в траты</button>
+                        </div>
+                    </div>
+                </div>`;
       });
-
-      listDiv.innerHTML = html;
+      if (flightsList) flightsList.innerHTML = html;
     } else {
-      listDiv.innerHTML = `<p class="error">❌ ${data.message || "Билеты не найдены"}</p>`;
+      if (flightsCount) flightsCount.textContent = `найдено 0`;
+      if (flightsList)
+        flightsList.innerHTML = `<div style="text-align:center; padding:20px;">❌ ${data.message || "Билеты не найдены"}</div>`;
     }
   } catch (error) {
     console.error("Ошибка:", error);
-    listDiv.innerHTML = `<p class="error">❌ Ошибка: ${error.message}</p>`;
+    if (flightsCount) flightsCount.textContent = `ошибка`;
+    if (flightsList)
+      flightsList.innerHTML = `<div style="text-align:center; padding:20px;">❌ Ошибка: ${error.message}</div>`;
   }
 }
 
 // === ЖД БИЛЕТЫ (Tutu.ru) ===
 async function searchTrains() {
-  const from = document.getElementById("trainFrom").value.trim();
-  const to = document.getElementById("trainTo").value.trim();
-  const date = document.getElementById("trainDate").value;
+  const origin = document.getElementById("originInput")?.value.trim();
+  const destination = document.getElementById("destinationInput")?.value.trim();
+  const date = document.getElementById("departureDate")?.value;
 
-  if (!from || !to) {
+  if (!origin || !destination) {
     alert("Введите города");
     return;
   }
 
-  const listDiv = document.getElementById("trainsList");
-  listDiv.innerHTML = "<p>🔍 Поиск поездов...</p>";
+  const trainsList = document.getElementById("trainsList");
+  const trainsCount = document.getElementById("trainsCount");
+  if (trainsList)
+    trainsList.innerHTML =
+      '<div style="text-align:center; padding:20px;">🔍 Поиск поездов...</div>';
 
   try {
-    let url = `/api/trains/search?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+    let url = `/api/trains/search?from=${encodeURIComponent(origin)}&to=${encodeURIComponent(destination)}`;
     if (date) url += `&date=${date}`;
 
     const response = await fetch(url);
     const data = await response.json();
 
-    console.log("Ответ от сервера:", data);
-
     if (data.success && data.trains && data.trains.length > 0) {
-      let html = `<p class="success">✅ Найдено ${data.count} поездов</p>`;
+      if (trainsCount) trainsCount.textContent = `найдено ${data.count}`;
+      let html = "";
+      data.trains.forEach((train, idx) => {
+        const categoriesHtml =
+          train.categories
+            ?.map(
+              (cat) =>
+                `<div class="price-block"><span class="price-label">${cat.type}</span><span class="price-value">${cat.price.toLocaleString()} ₽</span></div>`,
+            )
+            .join("") ||
+          '<div class="price-block"><span class="price-label">Цена</span><span class="price-value">уточняйте</span></div>';
 
-      data.trains.forEach((train, index) => {
-        html += `
-                    <div class="result-item" style="border-bottom: 1px solid #ccc; padding: 10px; margin: 5px 0;">
-                        <strong>${index + 1}. Поезд №${train.train_number}</strong>
-                        ${train.name ? ` <strong>«${train.name}»</strong>` : ""}<br>
-                        🚉 Отправление: ${train.from_station}<br>
-                        🚉 Прибытие: ${train.to_station}<br>
-                        🕐 Отправление: ${train.departure_time}<br>
-                        🏁 Прибытие: ${train.arrival_time}<br>
-                        ⏱️ В пути: ${train.duration_formatted}<br>
-                        🏢 Перевозчик: ${train.carrier}<br>
-                `;
-
-        // Отображаем цены на все категории
-        if (train.categories && train.categories.length > 0) {
-          html += `<br>📊 <strong>Цены на билеты:</strong><br>`;
-          train.categories.forEach((cat) => {
-            html += `   🎫 ${cat.type}: ${cat.price.toLocaleString()} ₽<br>`;
-          });
-        } else {
-          html += `<br>💰 Цена: уточняйте на сайте<br>`;
-        }
-
-        html += `
-                        <br>
-                        🔗 <a href="${train.buy_link}" target="_blank" style="color: blue;">Купить билет на Tutu.ru →</a><br>
-                        📋 <a href="${train.schedule_link}" target="_blank" style="color: green;">Подробное расписание →</a>
+        html += `<div class="train-card">
+                    <div class="train-header">
+                        <span class="train-company">${train.carrier || "РЖД"} / ${train.train_number || "Поезд"}</span>
+                        <span class="train-site">Tutu.ru</span>
                     </div>
-                `;
+                    <div class="train-route">
+                        <div class="station-block">
+                            <div class="station-code">${train.from_station?.split(" ")[0] || "???"}</div>
+                            <div class="station-name">${train.from_station || ""}</div>
+                            <div class="time">${train.departure_time || ""}</div>
+                        </div>
+                        <div class="train-duration">
+                            ${train.duration_formatted || ""}
+                            <div class="train-stops">${train.transfers === 0 ? "Без пересадок" : ""}</div>
+                        </div>
+                        <div class="station-block">
+                            <div class="station-code">${train.to_station?.split(" ")[0] || "???"}</div>
+                            <div class="station-name">${train.to_station || ""}</div>
+                            <div class="time">${train.arrival_time || ""}</div>
+                        </div>
+                    </div>
+                    <div class="train-prices-row">${categoriesHtml}</div>
+                    <div class="train-expand-menu">
+                        <div class="menu-buttons">
+                            <button class="btn-website" onclick="window.open('${train.buy_link || train.schedule_link || "#"}', '_blank')">Перейти на сайт</button>
+                            <button class="btn-travel">Добавить в траты</button>
+                        </div>
+                    </div>
+                </div>`;
       });
-
-      listDiv.innerHTML = html;
+      if (trainsList) trainsList.innerHTML = html;
     } else {
-      listDiv.innerHTML = `<p class="error">❌ ${data.message || "Поезда не найдены"}</p>`;
+      if (trainsCount) trainsCount.textContent = `найдено 0`;
+      if (trainsList)
+        trainsList.innerHTML = `<div style="text-align:center; padding:20px;">❌ ${data.message || "Поезда не найдены"}</div>`;
     }
   } catch (error) {
     console.error("Ошибка:", error);
-    listDiv.innerHTML = `<p class="error">❌ Ошибка: ${error.message}</p>`;
+    if (trainsList)
+      trainsList.innerHTML = `<div style="text-align:center; padding:20px;">❌ Ошибка: ${error.message}</div>`;
   }
 }
 
 // === АВТОБУСЫ (Яндекс.Расписания) ===
 async function searchBuses() {
-  const from = document.getElementById("busFrom").value.trim();
-  const to = document.getElementById("busTo").value.trim();
-  const date = document.getElementById("busDate").value;
+  const origin = document.getElementById("originInput")?.value.trim();
+  const destination = document.getElementById("destinationInput")?.value.trim();
+  const date = document.getElementById("departureDate")?.value;
 
-  if (!from || !to) {
+  if (!origin || !destination) {
     alert("Введите города");
     return;
   }
 
-  const listDiv = document.getElementById("busesList");
-  listDiv.innerHTML = "<p>🔍 Поиск автобусов...</p>";
+  const busesList = document.getElementById("busesList");
+  const busesCount = document.getElementById("busesCount");
+  if (busesList)
+    busesList.innerHTML =
+      '<div style="text-align:center; padding:20px;">🔍 Поиск автобусов...</div>';
 
   try {
-    let url = `/api/buses/search?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+    let url = `/api/buses/search?from=${encodeURIComponent(origin)}&to=${encodeURIComponent(destination)}`;
     if (date) url += `&date=${date}`;
 
     const response = await fetch(url);
     const data = await response.json();
 
-    console.log("Ответ автобусов:", data);
-
     if (data.success && data.buses && data.buses.length > 0) {
-      let html = `<p class="success">✅ Найдено ${data.count} автобусов</p>`;
-
-      data.buses.forEach((bus, index) => {
-        html += `
-                    <div class="result-item" style="border-bottom: 1px solid #ccc; padding: 10px; margin: 5px 0;">
-                        <strong>${index + 1}. ${bus.transport_type}</strong>
-                        ${bus.bus_number !== "Нет номера" ? ` №${bus.bus_number}` : ""}<br>
-                        🚏 Отправление: ${bus.from_station}<br>
-                        🚏 Прибытие: ${bus.to_station}<br>
-                        🕐 Отправление: ${bus.departure_formatted}<br>
-                        🏁 Прибытие: ${bus.arrival_formatted}<br>
-                        ⏱️ В пути: ${bus.duration_formatted}<br>
-                        🏢 Перевозчик: ${bus.carrier}<br>
-                        🔗 <a href="${bus.search_link}" target="_blank" style="color: blue;">Посмотреть на Яндекс.Расписаниях →</a>
+      if (busesCount) busesCount.textContent = `найдено ${data.count}`;
+      let html = "";
+      data.buses.forEach((bus, idx) => {
+        html += `<div class="bus-card">
+                    <div class="bus-header">
+                        <span class="bus-company">${bus.carrier || "Перевозчик"}</span>
+                        <span class="bus-site">Яндекс</span>
                     </div>
-                `;
+                    <div class="bus-route">
+                        <div class="bus-stop-block">
+                            <div class="bus-stop-name">${bus.from_station?.split(",")[0] || origin}</div>
+                            <div class="bus-stop-city">${bus.from_station || ""}</div>
+                            <div class="time">${bus.departure_time || ""}</div>
+                        </div>
+                        <div class="bus-duration">
+                            ${bus.duration_formatted || ""}
+                            <div class="bus-stops"></div>
+                        </div>
+                        <div class="bus-stop-block">
+                            <div class="bus-stop-name">${bus.to_station?.split(",")[0] || destination}</div>
+                            <div class="bus-stop-city">${bus.to_station || ""}</div>
+                            <div class="time">${bus.arrival_time || ""}</div>
+                        </div>
+                    </div>
+                    <div class="bus-expand-menu">
+                        <div class="menu-buttons">
+                            <button class="btn-website" onclick="window.open('${bus.search_link || "#"}', '_blank')">Перейти на сайт</button>
+                            <button class="btn-travel">Добавить в траты</button>
+                        </div>
+                    </div>
+                </div>`;
       });
-
-      listDiv.innerHTML = html;
+      if (busesList) busesList.innerHTML = html;
     } else {
-      listDiv.innerHTML = `<p class="error">❌ ${data.message || "Автобусы не найдены"}</p>`;
+      if (busesCount) busesCount.textContent = `найдено 0`;
+      if (busesList)
+        busesList.innerHTML = `<div style="text-align:center; padding:20px;">❌ ${data.message || "Автобусы не найдены"}</div>`;
     }
   } catch (error) {
     console.error("Ошибка:", error);
-    listDiv.innerHTML = `<p class="error">❌ Ошибка: ${error.message}</p>`;
+    if (busesList)
+      busesList.innerHTML = `<div style="text-align:center; padding:20px;">❌ Ошибка: ${error.message}</div>`;
   }
 }
 
 // Загрузка списка стран
-async function loadCountries() {
+async function loadHotelCountries() {
   try {
     const response = await fetch("/api/countries");
     const data = await response.json();
-
     if (data.success) {
-      const select = document.getElementById("hotelCountry");
+      const select = document.getElementById("hotelCountrySelect");
+      if (!select) return;
       select.innerHTML = '<option value="">-- Выберите страну --</option>';
-
       data.countries.forEach((country) => {
         const option = document.createElement("option");
         option.value = country.name_ru;
@@ -233,26 +350,24 @@ async function loadCountries() {
 }
 
 // Загрузка городов при выборе страны
-async function loadCities(countryNameRu) {
-  const citySelect = document.getElementById("hotelCity");
+async function loadHotelCities(countryName) {
+  const citySelect = document.getElementById("hotelCitySelect");
+  if (!citySelect) return;
   citySelect.innerHTML = '<option value="">Загрузка...</option>';
   citySelect.disabled = true;
-
   try {
     const response = await fetch(
-      `/api/cities?country=${encodeURIComponent(countryNameRu)}`,
+      `/api/cities?country=${encodeURIComponent(countryName)}`,
     );
     const data = await response.json();
-
-    if (data.success && data.cities.length > 0) {
+    if (data.success && data.cities && data.cities.length > 0) {
       citySelect.innerHTML = '<option value="">-- Выберите город --</option>';
-
       data.cities.forEach((city) => {
         const option = document.createElement("option");
         option.value = city.name_ru;
         option.textContent = city.name_ru;
         option.dataset.cityEn = city.name_en;
-        option.dataset.countryEn = city.country_en; // ← добавляем страну
+        option.dataset.countryEn = city.country_en;
         citySelect.appendChild(option);
       });
       citySelect.disabled = false;
@@ -270,124 +385,83 @@ async function loadCities(countryNameRu) {
 // === ПОИСК ОТЕЛЕЙ (с выбором страны/города) ===
 // Поиск отелей
 async function searchHotels(page = 1) {
-  const countrySelect = document.getElementById("hotelCountry");
-  const citySelect = document.getElementById("hotelCity");
-  const checkInInput = document.getElementById("hotelCheckIn");
-  const checkOutInput = document.getElementById("hotelCheckOut");
-  const adultsInput = document.getElementById("hotelAdults");
-  const currencySelect = document.getElementById("hotelCurrency");
+  const countrySelect = document.getElementById("hotelCountrySelect");
+  const citySelect = document.getElementById("hotelCitySelect");
+  const checkIn = document.getElementById("hotelCheckIn")?.value;
+  const checkOut = document.getElementById("hotelCheckOut")?.value;
+  const adults = document.getElementById("hotelAdults")?.value || 2;
+  const currency = document.getElementById("hotelCurrency")?.value || "RUB";
 
-  // Проверка наличия элементов
-  if (!countrySelect || !citySelect || !checkInInput || !checkOutInput) {
-    console.error("Ошибка: не найдены элементы формы");
-    alert("Ошибка загрузки формы");
-    return;
-  }
-
-  // Получаем выбранные значения
-  const selectedCountry =
-    countrySelect.options[countrySelect.selectedIndex]?.textContent;
-  const cityRu = citySelect.value;
-  const cityEn = citySelect.options[citySelect.selectedIndex]?.dataset?.cityEn;
+  const cityRu = citySelect?.value;
+  const cityEn = citySelect?.options[citySelect.selectedIndex]?.dataset?.cityEn;
   const countryEn =
-    citySelect.options[citySelect.selectedIndex]?.dataset?.countryEn;
-  const checkIn = checkInInput.value;
-  const checkOut = checkOutInput.value;
-  const adults = adultsInput?.value || 2;
-  const currency = currencySelect?.value || "RUB";
+    citySelect?.options[citySelect.selectedIndex]?.dataset?.countryEn;
 
-  // Валидация
-  if (!selectedCountry || !cityRu || !cityEn) {
+  if (!cityRu || !cityEn) {
     alert("Выберите страну и город");
     return;
   }
-
   if (!checkIn || !checkOut) {
     alert("Выберите даты заезда и выезда");
     return;
   }
 
-  // Сохраняем параметры для пагинации
-  lastSearchParams = {
-    cityEn,
-    checkIn,
-    checkOut,
-    adults,
-    currency,
-    cityRu,
-    countryEn,
-  };
-  currentPage = page;
-
-  const listDiv = document.getElementById("hotelsList");
-  if (!listDiv) return;
-  listDiv.innerHTML = "<p>🔍 Поиск отелей...</p>";
+  const hotelsList = document.getElementById("hotelsList");
+  const hotelsCount = document.getElementById("hotelsCount");
+  if (hotelsList)
+    hotelsList.innerHTML =
+      '<div style="text-align:center; padding:20px;">🔍 Поиск отелей...</div>';
 
   try {
     let url = `/api/hotels/search?city=${encodeURIComponent(cityEn)}&checkIn=${checkIn}&checkOut=${checkOut}&adults=${adults}&currency=${currency}&page=${page}`;
-    if (countryEn) {
-      url += `&country=${encodeURIComponent(countryEn)}`;
-    }
-
-    console.log("Запрос:", url);
+    if (countryEn) url += `&country=${encodeURIComponent(countryEn)}`;
 
     const response = await fetch(url);
     const data = await response.json();
 
-    console.log("Ответ:", data);
-
     if (data.success && data.hotels && data.hotels.length > 0) {
-      totalPages = data.total_pages || Math.ceil(data.count / 30);
-
-      let html = `<p class="success">✅ Найдено ${data.count} отелей в городе ${cityRu}</p>`;
-      html += `<p>📅 Заезд: ${checkIn} | Выезд: ${checkOut} | Гостей: ${adults} | Валюта: ${currency}</p>`;
-      html += `<p>📄 Страница ${currentPage} из ${totalPages}</p>`;
-
-      data.hotels.forEach((hotel, index) => {
-        const stars = "⭐".repeat(Math.floor(hotel.stars || 0));
-        const globalIndex = (currentPage - 1) * 30 + index + 1;
+      if (hotelsCount) hotelsCount.textContent = `найдено ${data.count}`;
+      let html = "";
+      data.hotels.forEach((hotel, idx) => {
+        const starsFull = Math.floor(hotel.stars || 0);
+        let starsHtml = "";
+        for (let i = 0; i < starsFull; i++)
+          starsHtml += '<span class="star-filled">★</span>';
+        for (let i = starsFull; i < 5; i++)
+          starsHtml += '<span class="star-empty">☆</span>';
 
         html += `
-                    <div class="hotel-card" style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin: 15px 0; display: flex; gap: 15px;">
-                        <div class="hotel-image" style="flex-shrink: 0;">
-                            ${
-                              hotel.imageUrl
-                                ? `<img src="${hotel.imageUrl}" alt="${hotel.name}" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">`
-                                : `<div style="width: 150px; height: 150px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px;">📷 Нет фото</div>`
-                            }
+                    <div class="hotel-card">
+                        <div class="hotel-image">${hotel.imageUrl ? `<img src="${hotel.imageUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">` : "🏨"}</div>
+                        <div class="hotel-info">
+                            <div class="hotel-title">${hotel.name}</div>
+                            <div class="hotel-location">⚲ ${hotel.address?.split(",")[0] || cityRu}</div>
+                            <div class="hotel-rating">
+                                <div class="stars">${starsHtml}</div>
+                                <span class="rating-text">${hotel.rating || "Нет"} • отель</span>
+                            </div>
+                            <div class="hotel-price-row">
+                                <span class="hotel-price">${hotel.priceFormatted} <small>/ночь</small></span>
+                            </div>
+                            <div class="hotel-expand-menu">
+                                <div class="menu-buttons">
+                                    <button class="btn-website" onclick="window.open('${hotel.url}', '_blank')">Перейти на сайт</button>
+                                    <button class="btn-travel">Добавить в траты</button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="hotel-info" style="flex-grow: 1;">
-                            <strong style="font-size: 18px;">${globalIndex}. ${hotel.name}</strong> ${stars}<br>
-                            📍 Адрес: ${hotel.address || "Не указан"}<br>
-                            ⭐ Рейтинг: ${hotel.rating || "Нет"}/5<br>
-                            💰 Цена за ночь: <strong style="color: #e74c3c;">${hotel.priceFormatted}</strong><br>
-                            🔗 <a href="${hotel.url}" target="_blank" style="color: blue;">Подробнее об отеле →</a>
-                        </div>
-                    </div>
-                `;
+                    </div>`;
       });
-
-      // Пагинация
-      if (totalPages > 1) {
-        html +=
-          '<div class="pagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">';
-        if (currentPage > 1) {
-          html += `<button onclick="searchHotels(${currentPage - 1})" style="padding: 8px 12px;">◀ Предыдущая</button>`;
-        }
-        html += `<span style="padding: 8px 12px;">Страница ${currentPage} из ${totalPages}</span>`;
-        if (currentPage < totalPages) {
-          html += `<button onclick="searchHotels(${currentPage + 1})" style="padding: 8px 12px;">Следующая ▶</button>`;
-        }
-        html += "</div>";
-      }
-
-      listDiv.innerHTML = html;
+      if (hotelsList) hotelsList.innerHTML = html;
     } else {
-      listDiv.innerHTML = `<p class="error">❌ ${data.message || "Отели не найдены"}</p>`;
+      if (hotelsCount) hotelsCount.textContent = `найдено 0`;
+      if (hotelsList)
+        hotelsList.innerHTML = `<div style="text-align:center; padding:20px;">❌ ${data.message || "Отели не найдены"}</div>`;
     }
   } catch (error) {
     console.error("Ошибка:", error);
-    listDiv.innerHTML = `<p class="error">❌ Ошибка: ${error.message}</p>`;
+    if (hotelsList)
+      hotelsList.innerHTML = `<div style="text-align:center; padding:20px;">❌ Ошибка: ${error.message}</div>`;
   }
 }
 
@@ -454,9 +528,16 @@ function formatDate(dateString) {
   return date.toLocaleDateString("ru-RU");
 }
 
+window.searchFlights = searchFlights;
+window.searchTrains = searchTrains;
+window.searchBuses = searchBuses;
+window.searchHotels = searchHotels;
+window.loadHotelCountries = loadHotelCountries;
+window.loadHotelCities = loadHotelCities;
+
 // Назначаем обработчики событий после загрузки DOM
 document.addEventListener("DOMContentLoaded", () => {
-  loadCountries();
+  loadHotelCountries();
   // Авиабилеты
   const flightForm = document.getElementById("flightForm");
   if (flightForm) {
@@ -508,7 +589,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Обработчик формы
-  const hotelForm = document.getElementById("hotelSearchForm");
+  const hotelForm = document.getElementById("hotelsSearchBlock");
   if (hotelForm) {
     hotelForm.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -516,9 +597,6 @@ document.addEventListener("DOMContentLoaded", () => {
       searchHotels(1);
     });
   } else {
-    console.error('Форма с id="hotelSearchForm" не найдена!');
+    console.error('Форма с id="hotelsSearchBlock" не найдена!');
   }
-
-  // Показываем авиабилеты по умолчанию
-  showSubsection("flights");
 });
