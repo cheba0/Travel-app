@@ -5,7 +5,7 @@ function showSubsection(subsection) {
   document.getElementById("flightsSubsection").classList.add("hidden");
   document.getElementById("trainsSubsection").classList.add("hidden");
   document.getElementById("busesSubsection").classList.add("hidden");
-  document.getElementById("xoteloSubsection").classList.add("hidden");
+  document.getElementById("hotelsSubsection").classList.add("hidden");
 
   document.getElementById(subsection + "Subsection").classList.remove("hidden");
 }
@@ -23,6 +23,10 @@ function toggleReturnDate() {
     }
   }
 }
+
+let currentPage = 1;
+let totalPages = 1;
+let lastSearchParams = null;
 
 // === АВИАБИЛЕТЫ ===
 async function searchFlights() {
@@ -206,15 +210,95 @@ async function searchBuses() {
   }
 }
 
-// === ОТЕЛИ XOTELO ===
-async function searchXoteloHotels() {
-  const query = document.getElementById("xoteloQuery").value.trim();
-  const checkIn = document.getElementById("xoteloCheckIn").value;
-  const checkOut = document.getElementById("xoteloCheckOut").value;
-  const adults = document.getElementById("xoteloAdults").value;
+// Загрузка списка стран
+async function loadCountries() {
+  try {
+    const response = await fetch("/api/countries");
+    const data = await response.json();
 
-  if (!query) {
-    alert("Введите название отеля или города");
+    if (data.success) {
+      const select = document.getElementById("hotelCountry");
+      select.innerHTML = '<option value="">-- Выберите страну --</option>';
+
+      data.countries.forEach((country) => {
+        const option = document.createElement("option");
+        option.value = country.name_ru;
+        option.textContent = country.name_ru;
+        select.appendChild(option);
+      });
+    }
+  } catch (error) {
+    console.error("Ошибка загрузки стран:", error);
+  }
+}
+
+// Загрузка городов при выборе страны
+async function loadCities(countryNameRu) {
+  const citySelect = document.getElementById("hotelCity");
+  citySelect.innerHTML = '<option value="">Загрузка...</option>';
+  citySelect.disabled = true;
+
+  try {
+    const response = await fetch(
+      `/api/cities?country=${encodeURIComponent(countryNameRu)}`,
+    );
+    const data = await response.json();
+
+    if (data.success && data.cities.length > 0) {
+      citySelect.innerHTML = '<option value="">-- Выберите город --</option>';
+
+      data.cities.forEach((city) => {
+        const option = document.createElement("option");
+        option.value = city.name_ru;
+        option.textContent = city.name_ru;
+        option.dataset.cityEn = city.name_en;
+        option.dataset.countryEn = city.country_en; // ← добавляем страну
+        citySelect.appendChild(option);
+      });
+      citySelect.disabled = false;
+    } else {
+      citySelect.innerHTML = '<option value="">Нет городов</option>';
+      citySelect.disabled = true;
+    }
+  } catch (error) {
+    console.error("Ошибка загрузки городов:", error);
+    citySelect.innerHTML = '<option value="">Ошибка загрузки</option>';
+    citySelect.disabled = true;
+  }
+}
+
+// === ПОИСК ОТЕЛЕЙ (с выбором страны/города) ===
+// Поиск отелей
+async function searchHotels(page = 1) {
+  const countrySelect = document.getElementById("hotelCountry");
+  const citySelect = document.getElementById("hotelCity");
+  const checkInInput = document.getElementById("hotelCheckIn");
+  const checkOutInput = document.getElementById("hotelCheckOut");
+  const adultsInput = document.getElementById("hotelAdults");
+  const currencySelect = document.getElementById("hotelCurrency");
+
+  // Проверка наличия элементов
+  if (!countrySelect || !citySelect || !checkInInput || !checkOutInput) {
+    console.error("Ошибка: не найдены элементы формы");
+    alert("Ошибка загрузки формы");
+    return;
+  }
+
+  // Получаем выбранные значения
+  const selectedCountry =
+    countrySelect.options[countrySelect.selectedIndex]?.textContent;
+  const cityRu = citySelect.value;
+  const cityEn = citySelect.options[citySelect.selectedIndex]?.dataset?.cityEn;
+  const countryEn =
+    citySelect.options[citySelect.selectedIndex]?.dataset?.countryEn;
+  const checkIn = checkInInput.value;
+  const checkOut = checkOutInput.value;
+  const adults = adultsInput?.value || 2;
+  const currency = currencySelect?.value || "RUB";
+
+  // Валидация
+  if (!selectedCountry || !cityRu || !cityEn) {
+    alert("Выберите страну и город");
     return;
   }
 
@@ -223,73 +307,144 @@ async function searchXoteloHotels() {
     return;
   }
 
-  const listDiv = document.getElementById("xoteloList");
+  // Сохраняем параметры для пагинации
+  lastSearchParams = {
+    cityEn,
+    checkIn,
+    checkOut,
+    adults,
+    currency,
+    cityRu,
+    countryEn,
+  };
+  currentPage = page;
+
+  const listDiv = document.getElementById("hotelsList");
+  if (!listDiv) return;
   listDiv.innerHTML = "<p>🔍 Поиск отелей...</p>";
 
   try {
-    // Используем полный поиск (отель + цены)
-    const url = `/api/xotelo/searchWithRates?query=${encodeURIComponent(query)}&checkIn=${checkIn}&checkOut=${checkOut}&adults=${adults}`;
+    let url = `/api/hotels/search?city=${encodeURIComponent(cityEn)}&checkIn=${checkIn}&checkOut=${checkOut}&adults=${adults}&currency=${currency}&page=${page}`;
+    if (countryEn) {
+      url += `&country=${encodeURIComponent(countryEn)}`;
+    }
+
+    console.log("Запрос:", url);
 
     const response = await fetch(url);
     const data = await response.json();
 
-    console.log("Ответ Xotelo:", data);
+    console.log("Ответ:", data);
 
-    if (data.success && data.hotel && data.rates) {
-      let html = `
-                <div class="result-item" style="border-bottom: 1px solid #ccc; padding: 10px; margin: 10px 0;">
-                    <strong>🏨 ${data.hotel.name}</strong><br>
-                    📍 ${data.hotel.address || data.hotel.place || "Адрес не указан"}<br>
-                    📅 Заезд: ${data.rates.checkIn || checkIn} | Выезд: ${data.rates.checkOut || checkOut}<br>
-                    👥 Гостей: ${adults}<br>
-                    <br>
-                    <strong>💰 Лучшая цена: ${data.rates.bestRate?.rateFormatted || "не найдена"} за ночь</strong><br>
-                    <small>от ${data.rates.bestRate?.name || "сервиса"}</small><br>
-                    <br>
-                    📊 <strong>Цены от всех сервисов:</strong><br>
-            `;
+    if (data.success && data.hotels && data.hotels.length > 0) {
+      totalPages = data.total_pages || Math.ceil(data.count / 30);
 
-      if (data.rates.rates && data.rates.rates.length > 0) {
-        data.rates.rates.forEach((rate) => {
-          html += `   • ${rate.name}: ${rate.rateFormatted}<br>`;
-        });
-      } else {
-        html += `   • Цены не найдены<br>`;
+      let html = `<p class="success">✅ Найдено ${data.count} отелей в городе ${cityRu}</p>`;
+      html += `<p>📅 Заезд: ${checkIn} | Выезд: ${checkOut} | Гостей: ${adults} | Валюта: ${currency}</p>`;
+      html += `<p>📄 Страница ${currentPage} из ${totalPages}</p>`;
+
+      data.hotels.forEach((hotel, index) => {
+        const stars = "⭐".repeat(Math.floor(hotel.stars || 0));
+        const globalIndex = (currentPage - 1) * 30 + index + 1;
+
+        html += `
+                    <div class="hotel-card" style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin: 15px 0; display: flex; gap: 15px;">
+                        <div class="hotel-image" style="flex-shrink: 0;">
+                            ${
+                              hotel.imageUrl
+                                ? `<img src="${hotel.imageUrl}" alt="${hotel.name}" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">`
+                                : `<div style="width: 150px; height: 150px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px;">📷 Нет фото</div>`
+                            }
+                        </div>
+                        <div class="hotel-info" style="flex-grow: 1;">
+                            <strong style="font-size: 18px;">${globalIndex}. ${hotel.name}</strong> ${stars}<br>
+                            📍 Адрес: ${hotel.address || "Не указан"}<br>
+                            ⭐ Рейтинг: ${hotel.rating || "Нет"}/5<br>
+                            💰 Цена за ночь: <strong style="color: #e74c3c;">${hotel.priceFormatted}</strong><br>
+                            🔗 <a href="${hotel.url}" target="_blank" style="color: blue;">Подробнее об отеле →</a>
+                        </div>
+                    </div>
+                `;
+      });
+
+      // Пагинация
+      if (totalPages > 1) {
+        html +=
+          '<div class="pagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">';
+        if (currentPage > 1) {
+          html += `<button onclick="searchHotels(${currentPage - 1})" style="padding: 8px 12px;">◀ Предыдущая</button>`;
+        }
+        html += `<span style="padding: 8px 12px;">Страница ${currentPage} из ${totalPages}</span>`;
+        if (currentPage < totalPages) {
+          html += `<button onclick="searchHotels(${currentPage + 1})" style="padding: 8px 12px;">Следующая ▶</button>`;
+        }
+        html += "</div>";
       }
 
-      html += `
-                    <br>
-                    🔗 <a href="${data.hotel.url}" target="_blank" style="color: blue;">Посмотреть отель на TripAdvisor →</a>
-                </div>
-            `;
-
-      listDiv.innerHTML = html;
-    } else if (data.success && data.hotel && !data.rates) {
-      // Отель нашли, но цены не загрузились
-      let html = `
-                <div class="result-item" style="border-bottom: 1px solid #ccc; padding: 10px; margin: 10px 0;">
-                    <strong>🏨 ${data.hotel.name}</strong><br>
-                    📍 ${data.hotel.address || data.hotel.place || "Адрес не указан"}<br>
-                    <br>
-                    <p class="error">❌ ${data.message || "Цены не найдены для указанных дат"}</p>
-                    <br>
-                    🔗 <a href="${data.hotel.url}" target="_blank" style="color: blue;">Посмотреть отель на TripAdvisor →</a>
-                </div>
-            `;
       listDiv.innerHTML = html;
     } else {
-      // Если не нашли отель
-      let html = `<p class="error">❌ ${data.message || "Отели не найдены"}</p>`;
-      html += `<p>💡 Советы:<br>
-                       • Попробуйте искать на английском языке (например, "Moscow")<br>
-                       • Попробуйте известные отели (Marriott, Ritz, Hilton)<br>
-                       • Попробуйте крупные города (Moscow, London, Paris)</p>`;
-      listDiv.innerHTML = html;
+      listDiv.innerHTML = `<p class="error">❌ ${data.message || "Отели не найдены"}</p>`;
     }
   } catch (error) {
     console.error("Ошибка:", error);
     listDiv.innerHTML = `<p class="error">❌ Ошибка: ${error.message}</p>`;
   }
+}
+
+function renderPagination() {
+  if (totalPages <= 1) return "";
+
+  let html =
+    '<div class="pagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap;">';
+
+  // Кнопка "Первая"
+  if (currentPage > 1) {
+    html += `<button onclick="goToPage(1)" style="padding: 8px 12px; cursor: pointer;">⏮️ Первая</button>`;
+    html += `<button onclick="goToPage(${currentPage - 1})" style="padding: 8px 12px; cursor: pointer;">◀ Предыдущая</button>`;
+  }
+
+  // Номера страниц (показываем 5 страниц вокруг текущей)
+  let startPage = Math.max(1, currentPage - 2);
+  let endPage = Math.min(totalPages, currentPage + 2);
+
+  if (startPage > 1) {
+    html += `<button onclick="goToPage(1)" style="padding: 8px 12px; cursor: pointer;">1</button>`;
+    if (startPage > 2) html += `<span style="padding: 8px 4px;">...</span>`;
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    if (i === currentPage) {
+      html += `<button disabled style="padding: 8px 12px; background: #3498db; color: white; border: none;">${i}</button>`;
+    } else {
+      html += `<button onclick="goToPage(${i})" style="padding: 8px 12px; cursor: pointer;">${i}</button>`;
+    }
+  }
+
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1)
+      html += `<span style="padding: 8px 4px;">...</span>`;
+    html += `<button onclick="goToPage(${totalPages})" style="padding: 8px 12px; cursor: pointer;">${totalPages}</button>`;
+  }
+
+  // Кнопка "Последняя"
+  if (currentPage < totalPages) {
+    html += `<button onclick="goToPage(${currentPage + 1})" style="padding: 8px 12px; cursor: pointer;">Следующая ▶</button>`;
+    html += `<button onclick="goToPage(${totalPages})" style="padding: 8px 12px; cursor: pointer;">Последняя ⏭️</button>`;
+  }
+
+  html += "</div>";
+  return html;
+}
+
+function goToPage(page) {
+  if (page < 1 || page > totalPages || page === currentPage) return;
+  searchHotels(page);
+}
+
+// Назначение обработчиков для кнопок пагинации
+function attachPaginationHandlers() {
+  // Обработчики уже назначены через onclick в кнопках
+  // Эта функция может быть расширена для дополнительной логики
 }
 
 // Форматирование даты для отображения
@@ -301,6 +456,7 @@ function formatDate(dateString) {
 
 // Назначаем обработчики событий после загрузки DOM
 document.addEventListener("DOMContentLoaded", () => {
+  loadCountries();
   // Авиабилеты
   const flightForm = document.getElementById("flightForm");
   if (flightForm) {
@@ -335,12 +491,32 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Отели
-  const xoteloForm = document.getElementById("xoteloForm");
-  if (xoteloForm) {
-    xoteloForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      searchXoteloHotels();
+  const countrySelect = document.getElementById("hotelCountry");
+  if (countrySelect) {
+    countrySelect.addEventListener("change", (e) => {
+      if (e.target.value) {
+        loadCities(e.target.value);
+      } else {
+        const citySelect = document.getElementById("hotelCity");
+        if (citySelect) {
+          citySelect.innerHTML =
+            '<option value="">-- Сначала выберите страну --</option>';
+          citySelect.disabled = true;
+        }
+      }
     });
+  }
+
+  // Обработчик формы
+  const hotelForm = document.getElementById("hotelSearchForm");
+  if (hotelForm) {
+    hotelForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      console.log("Форма отправлена, запускаем поиск...");
+      searchHotels(1);
+    });
+  } else {
+    console.error('Форма с id="hotelSearchForm" не найдена!');
   }
 
   // Показываем авиабилеты по умолчанию
