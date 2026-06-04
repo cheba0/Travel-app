@@ -49,7 +49,7 @@ async function searchFlights() {
   const flightsCount = document.getElementById("flightsCount");
   if (flightsList)
     flightsList.innerHTML =
-      '<div style="text-align:center; padding:20px;">🔍 Поиск билетов...</div>';
+      '<div style="text-align:center; padding:20px;">Поиск билетов...</div>';
 
   try {
     let url = `/api/flights/search?from=${encodeURIComponent(origin)}&to=${encodeURIComponent(destination)}&departure_date=${departureDate}`;
@@ -189,23 +189,57 @@ async function searchTrains() {
     return;
   }
 
+  if (!date) {
+    alert("Пожалуйста, выберите дату поездки");
+    return;
+  }
+
   const trainsList = document.getElementById("trainsList");
   const trainsCount = document.getElementById("trainsCount");
   if (trainsList)
     trainsList.innerHTML =
-      '<div style="text-align:center; padding:20px;">🔍 Поиск поездов...</div>';
+      '<div style="text-align:center; padding:20px;">Поиск поездов...</div>';
 
   try {
     let url = `/api/trains/search?from=${encodeURIComponent(origin)}&to=${encodeURIComponent(destination)}`;
     if (date) url += `&date=${date}`;
 
+    console.log("Запрос ЖД:", url);
+
     const response = await fetch(url);
     const data = await response.json();
+
+    console.log("Ответ ЖД:", data);
 
     if (data.success && data.trains && data.trains.length > 0) {
       if (trainsCount) trainsCount.textContent = `найдено ${data.count}`;
       let html = "";
       data.trains.forEach((train, idx) => {
+        // Форматируем время отправления
+        let departureTime = "";
+        let departureDateStr = "";
+        let arrivalTime = "";
+        let arrivalDateStr = "";
+
+        if (train.departure) {
+          const depDate = new Date(train.departure);
+          departureTime = depDate.toLocaleTimeString("ru-RU", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          departureDateStr = depDate.toLocaleDateString("ru-RU");
+        }
+
+        if (train.arrival) {
+          const arrDate = new Date(train.arrival);
+          arrivalTime = arrDate.toLocaleTimeString("ru-RU", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          arrivalDateStr = arrDate.toLocaleDateString("ru-RU");
+        }
+
+        // Формируем строку категорий с ценами
         const categoriesHtml =
           train.categories
             ?.map(
@@ -215,35 +249,38 @@ async function searchTrains() {
             .join("") ||
           '<div class="price-block"><span class="price-label">Цена</span><span class="price-value">уточняйте</span></div>';
 
-        html += `<div class="train-card">
-                    <div class="train-header">
-                        <span class="train-company">${train.carrier || "РЖД"} / ${train.train_number || "Поезд"}</span>
-                        <span class="train-site">Tutu.ru</span>
+        html += `
+                    <div class="train-card">
+                        <div class="train-header">
+                            <span class="train-company">${train.carrier || "РЖД"} / ${train.train_number || "Поезд"}</span>
+                            <span class="train-site">Tutu.ru</span>
+                        </div>
+                        <div class="train-route">
+                            <div class="station-block">
+                                <div class="station-code">${train.from_station?.split(" ")[0] || "???"}</div>
+                                <div class="station-name">${train.from_station || ""}</div>
+                                <div class="time">${departureTime}</div>
+                                <div class="date" style="font-size: 11px; color: #666;">${departureDateStr}</div>
+                            </div>
+                            <div class="train-duration">
+                                ${train.duration_formatted || ""}
+                            </div>
+                            <div class="station-block">
+                                <div class="station-code">${train.to_station?.split(" ")[0] || "???"}</div>
+                                <div class="station-name">${train.to_station || ""}</div>
+                                <div class="time">${arrivalTime}</div>
+                                <div class="date" style="font-size: 11px; color: #666;">${arrivalDateStr}</div>
+                            </div>
+                        </div>
+                        <div class="train-prices-row">${categoriesHtml}</div>
+                        <div class="train-expand-menu">
+                            <div class="menu-buttons">
+                                <button class="btn-website" onclick="window.open('${train.buy_link || train.schedule_link || "#"}', '_blank')">Перейти на сайт</button>
+                                <button class="btn-travel">Добавить в траты</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="train-route">
-                        <div class="station-block">
-                            <div class="station-code">${train.from_station?.split(" ")[0] || "???"}</div>
-                            <div class="station-name">${train.from_station || ""}</div>
-                            <div class="time">${train.departure_time || ""}</div>
-                        </div>
-                        <div class="train-duration">
-                            ${train.duration_formatted || ""}
-                            <div class="train-stops">${train.transfers === 0 ? "Без пересадок" : ""}</div>
-                        </div>
-                        <div class="station-block">
-                            <div class="station-code">${train.to_station?.split(" ")[0] || "???"}</div>
-                            <div class="station-name">${train.to_station || ""}</div>
-                            <div class="time">${train.arrival_time || ""}</div>
-                        </div>
-                    </div>
-                    <div class="train-prices-row">${categoriesHtml}</div>
-                    <div class="train-expand-menu">
-                        <div class="menu-buttons">
-                            <button class="btn-website" onclick="window.open('${train.buy_link || train.schedule_link || "#"}', '_blank')">Перейти на сайт</button>
-                            <button class="btn-travel">Добавить в траты</button>
-                        </div>
-                    </div>
-                </div>`;
+                `;
       });
       if (trainsList) trainsList.innerHTML = html;
     } else {
@@ -253,6 +290,7 @@ async function searchTrains() {
     }
   } catch (error) {
     console.error("Ошибка:", error);
+    if (trainsCount) trainsCount.textContent = `ошибка`;
     if (trainsList)
       trainsList.innerHTML = `<div style="text-align:center; padding:20px;">❌ Ошибка: ${error.message}</div>`;
   }
@@ -269,15 +307,22 @@ async function searchBuses() {
     return;
   }
 
+  if (!date) {
+    alert("Пожалуйста, выберите дату поездки");
+    return;
+  }
+
   const busesList = document.getElementById("busesList");
   const busesCount = document.getElementById("busesCount");
   if (busesList)
     busesList.innerHTML =
-      '<div style="text-align:center; padding:20px;">🔍 Поиск автобусов...</div>';
+      '<div style="text-align:center; padding:20px;">Поиск автобусов...</div>';
 
   try {
     let url = `/api/buses/search?from=${encodeURIComponent(origin)}&to=${encodeURIComponent(destination)}`;
     if (date) url += `&date=${date}`;
+
+    console.log("Запрос автобусов:", url);
 
     const response = await fetch(url);
     const data = await response.json();
@@ -286,34 +331,61 @@ async function searchBuses() {
       if (busesCount) busesCount.textContent = `найдено ${data.count}`;
       let html = "";
       data.buses.forEach((bus, idx) => {
-        html += `<div class="bus-card">
-                    <div class="bus-header">
-                        <span class="bus-company">${bus.carrier || "Перевозчик"}</span>
-                        <span class="bus-site">Яндекс</span>
+        let departureTime = "";
+        let departureDateStr = "";
+        let arrivalTime = "";
+        let arrivalDateStr = "";
+
+        if (bus.departure) {
+          const depDate = new Date(bus.departure);
+          departureTime = depDate.toLocaleTimeString("ru-RU", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          departureDateStr = depDate.toLocaleDateString("ru-RU");
+        }
+
+        if (bus.arrival) {
+          const arrDate = new Date(bus.arrival);
+          arrivalTime = arrDate.toLocaleTimeString("ru-RU", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          arrivalDateStr = arrDate.toLocaleDateString("ru-RU");
+        }
+
+        html += `
+                    <div class="bus-card">
+                        <div class="bus-header">
+                            <span class="bus-company">${bus.carrier || "Перевозчик"}</span>
+                            <span class="bus-site">Яндекс</span>
+                        </div>
+                        <div class="bus-route">
+                            <div class="bus-stop-block">
+                                <div class="bus-stop-name">${bus.from_station?.split(",")[0] || origin}</div>
+                                <div class="bus-stop-city">${bus.from_station || ""}</div>
+                                <div class="time">${departureTime}</div>
+                                <div class="date" style="font-size: 11px; color: #666;">${departureDateStr}</div>
+                            </div>
+                            <div class="bus-duration">
+                                ${bus.duration_formatted || ""}
+                                <div class="bus-stops"></div>
+                            </div>
+                            <div class="bus-stop-block">
+                                <div class="bus-stop-name">${bus.to_station?.split(",")[0] || destination}</div>
+                                <div class="bus-stop-city">${bus.to_station || ""}</div>
+                                <div class="time">${arrivalTime}</div>
+                                <div class="date" style="font-size: 11px; color: #666;">${arrivalDateStr}</div>
+                            </div>
+                        </div>
+                        <div class="bus-expand-menu">
+                            <div class="menu-buttons">
+                                <button class="btn-website" onclick="window.open('${bus.search_link || "#"}', '_blank')">Перейти на сайт</button>
+                                <button class="btn-travel">Добавить в траты</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bus-route">
-                        <div class="bus-stop-block">
-                            <div class="bus-stop-name">${bus.from_station?.split(",")[0] || origin}</div>
-                            <div class="bus-stop-city">${bus.from_station || ""}</div>
-                            <div class="time">${bus.departure_time || ""}</div>
-                        </div>
-                        <div class="bus-duration">
-                            ${bus.duration_formatted || ""}
-                            <div class="bus-stops"></div>
-                        </div>
-                        <div class="bus-stop-block">
-                            <div class="bus-stop-name">${bus.to_station?.split(",")[0] || destination}</div>
-                            <div class="bus-stop-city">${bus.to_station || ""}</div>
-                            <div class="time">${bus.arrival_time || ""}</div>
-                        </div>
-                    </div>
-                    <div class="bus-expand-menu">
-                        <div class="menu-buttons">
-                            <button class="btn-website" onclick="window.open('${bus.search_link || "#"}', '_blank')">Перейти на сайт</button>
-                            <button class="btn-travel">Добавить в траты</button>
-                        </div>
-                    </div>
-                </div>`;
+                `;
       });
       if (busesList) busesList.innerHTML = html;
     } else {
@@ -323,6 +395,7 @@ async function searchBuses() {
     }
   } catch (error) {
     console.error("Ошибка:", error);
+    if (busesCount) busesCount.textContent = `ошибка`;
     if (busesList)
       busesList.innerHTML = `<div style="text-align:center; padding:20px;">❌ Ошибка: ${error.message}</div>`;
   }

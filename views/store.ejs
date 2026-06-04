@@ -47,7 +47,7 @@
                     <input type="date" id="returnDate" class="date-input">
                 </div>
             </div>
-            <button class="search-btn" id="searchTicketsBtn">🔍︎ Найти билеты</button>
+            <button class="search-btn" id="searchTicketsBtn">Найти билеты</button>
         </div>
 
         <!-- СЕКЦИЯ АВИА -->
@@ -99,7 +99,7 @@
                     <input type="text" id="tourNights" placeholder="7 ночей">
                 </div>
             </div>
-            <button class="search-btn" id="searchToursBtn">🔍︎ Найти туры</button>
+            <button class="search-btn" id="searchToursBtn">Найти туры</button>
         </div>
 
         <!-- СЕКЦИЯ ТУРОВ -->
@@ -151,7 +151,7 @@
                     </select>
                 </div>
             </div>
-            <button class="search-btn" id="searchHotelsBtn">🔍︎ Найти жильё</button>
+            <button class="search-btn" id="searchHotelsBtn">Найти жильё</button>
         </div>
 
         <!-- СЕКЦИЯ ЖИЛЬЯ -->
@@ -303,7 +303,9 @@
         const flightsSearchBlock = document.getElementById('flightsSearchBlock');
         const toursSearchBlock = document.getElementById('toursSearchBlock');
         const hotelsSearchBlock = document.getElementById('hotelsSearchBlock');
-        const flightsMainBlock = document.getElementById('flightsMainBlock');
+        const flightsMainBlock = document.getElementById('aviationSection');
+        const trainsMainBlock = document.getElementById('trainsSection');
+        const busesMainBlock = document.getElementById('busesSection');
         const toursMainBlock = document.getElementById('toursSection');
         const hotelsMainBlock = document.getElementById('hotelsSection');
 
@@ -315,12 +317,15 @@
             
             // Скрываем секции результатов
             if (flightsMainBlock) flightsMainBlock.style.display = 'none';
+            if (trainsMainBlock) trainsMainBlock.style.display = 'none';
+            if (busesMainBlock) busesMainBlock.style.display = 'none';
             if (toursMainBlock) toursMainBlock.style.display = 'none';
             if (hotelsMainBlock) hotelsMainBlock.style.display = 'none';
             
             if (tab === 'flights') {
                 if (flightsSearchBlock) flightsSearchBlock.style.display = 'block';
                 if (flightsMainBlock) flightsMainBlock.style.display = 'block';
+                
                 const aviationBtn = document.querySelector('.transport-option.aviation');
                 const trainBtn = document.querySelector('.transport-option.train');
                 const busBtn = document.querySelector('.transport-option.bus');
@@ -328,6 +333,7 @@
                 if (trainBtn) trainBtn.classList.remove('active');
                 if (busBtn) busBtn.classList.remove('active');
                 switchTransport('aviation');
+                toggleReturnDateField();
             } else if (tab === 'tours') {
                 if (toursSearchBlock) toursSearchBlock.style.display = 'block';
                 if (toursMainBlock) toursMainBlock.style.display = 'block';
@@ -357,6 +363,37 @@
         
         // По умолчанию показываем Билеты
         switchCategoryTab('flights');
+
+        // Показать/скрыть поле "Обратно" в зависимости от выбранного транспорта
+        function toggleReturnDateField() {
+            const activeTransport = document.querySelector('.transport-option.active');
+            const transport = activeTransport ? activeTransport.getAttribute('data-transport') : 'aviation';
+            const returnDateField = document.getElementById('returnDateField');
+            const returnDateInput = document.getElementById('returnDate');
+            
+            if (transport === 'aviation') {
+                if (returnDateField) returnDateField.style.display = 'block';
+            } else {
+                if (returnDateField) returnDateField.style.display = 'none';
+                if (returnDateInput) returnDateInput.value = '';
+            }
+        }
+
+        // Добавляем обработчики на кнопки транспорта
+        const transportBtnsForReturn = document.querySelectorAll('.transport-option');
+        if (transportBtnsForReturn.length > 0) {
+            transportBtnsForReturn.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    setTimeout(toggleReturnDateField, 50);
+                });
+            });
+        }
+
+        // Вызываем после полной загрузки страницы
+        setTimeout(() => {
+            toggleReturnDateField();
+        }, 100);
+
     </script>
 
     <!-- Подключаем существующие JS файлы с функциями поиска -->
@@ -420,6 +457,8 @@
             
             addExpandHandlers();
         }, 100);
+
+        
     </script>
 </body>
 
