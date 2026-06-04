@@ -18,8 +18,73 @@ const DebtController = require("../controllers/debtController");
 const fluentFFmpeg = require("fluent-ffmpeg");
 
 console.log("✅ AuthRoutes загружен");
-// ========== iOS ГОЛОСОВЫЕ СООБЩЕНИЯ ==========
+// ========== iOS ГОЛОСОВЫЕ СООБЩЕНИЯ И КРУЖОЧКИ ==========
+// ========== iOS ВИДЕОКРУЖОЧКИ (mp4/mov) ==========
 
+// Загрузка видеокружочка с iOS (без конвертации)
+router.post("/api/ios/video", upload.single("video"), async (req, res) => {
+  try {
+    console.log(" iOS video upload:", req.file?.filename);
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Нет файла" });
+    }
+
+    // Проверяем расширение
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const allowedExts = [".mp4", ".mov", ".m4v"];
+
+    if (!allowedExts.includes(ext)) {
+      fs.unlinkSync(req.file.path);
+      return res
+        .status(400)
+        .json({ error: "Неподдерживаемый формат. Разрешены: mp4, mov, m4v" });
+    }
+
+    // Переименовываем в mp4 если mov или m4v
+    let finalPath = req.file.path;
+    if (ext !== ".mp4") {
+      finalPath = req.file.path.replace(ext, ".mp4");
+      fs.renameSync(req.file.path, finalPath);
+    }
+
+    const videoUrl = "/uploads/video/" + path.basename(finalPath);
+    const tripId = req.body.tripId;
+    const userId = req.body.userId;
+
+    console.log("✅ Видео сохранено:", videoUrl);
+
+    // Сохраняем в БД
+    const result = await pool.query(
+      `INSERT INTO messages (trip_id, user_id, video_url, created_at) 
+       VALUES ($1, $2, $3, NOW()) 
+       RETURNING *`,
+      [tripId, userId, videoUrl],
+    );
+
+    // Отправляем через Socket.IO
+    const io = req.app.get("io");
+    if (io && tripId) {
+      io.to(`trip_${tripId}`).emit("new_message", {
+        id: result.rows[0].id,
+        user_id: userId,
+        video_url: videoUrl,
+        video_type: "video/mp4",
+        created_at: result.rows[0].created_at,
+      });
+      console.log("📡 Видео отправлено через Socket.IO");
+    }
+
+    res.json({
+      success: true,
+      videoUrl: videoUrl,
+      videoType: "video/mp4",
+    });
+  } catch (error) {
+    console.error("❌ Ошибка:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // Простая загрузка голосового с iOS (без конвертации)
 router.post("/api/ios/voice", upload.single("voice"), async (req, res) => {
   try {
