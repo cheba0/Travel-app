@@ -807,11 +807,18 @@ function appendMessageToUI(msg, highlightMode = false, highlightQuery = "") {
   if (msg.audioUrl) {
     const audioDiv = document.createElement("div");
     audioDiv.style.cssText = "margin-top:8px;";
+
+    // Определяем тип аудио
+    const audioType =
+      msg.audioType ||
+      (msg.audioUrl.endsWith(".m4a") ? "audio/mp4" : "audio/webm");
+
     audioDiv.innerHTML = `
-      <audio controls style="max-width:100%;height:32px;">
-        <source src="${msg.audioUrl}" type="audio/webm">
-      </audio>
-    `;
+    <audio controls style="max-width:100%;height:32px;">
+      <source src="${msg.audioUrl}" type="${audioType}">
+      Ваш браузер не поддерживает аудио
+    </audio>
+  `;
     bubble.appendChild(audioDiv);
   }
 

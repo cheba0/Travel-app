@@ -19,6 +19,11 @@ const fluentFFmpeg = require("fluent-ffmpeg");
 
 console.log("✅ AuthRoutes загружен");
 // ========== iOS ГОЛОСОВЫЕ СООБЩЕНИЯ ==========
+// ========== iOS ГОЛОСОВЫЕ СООБЩЕНИЯ (m4a) ==========
+const fs = require("fs");
+const path = require("path");
+
+// Простая загрузка голосового с iOS (без конвертации)
 router.post("/api/ios/voice", upload.single("voice"), async (req, res) => {
   try {
     console.log("📱 iOS voice upload:", req.file?.filename);
@@ -27,27 +32,29 @@ router.post("/api/ios/voice", upload.single("voice"), async (req, res) => {
       return res.status(400).json({ error: "Нет файла" });
     }
 
-    const inputPath = req.file.path;
-    const outputPath = inputPath.replace(".m4a", ".webm");
+    // Проверяем расширение
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const allowedExts = [".m4a", ".aac", ".mp4", ".mp3"];
 
-    // Конвертация m4a → webm/opus
-    await new Promise((resolve, reject) => {
-      fluentFFmpeg(inputPath)
-        .audioCodec("libopus")
-        .toFormat("webm")
-        .save(outputPath)
-        .on("end", resolve)
-        .on("error", reject);
-    });
+    if (!allowedExts.includes(ext)) {
+      fs.unlinkSync(req.file.path);
+      return res
+        .status(400)
+        .json({ error: "Неподдерживаемый формат. Разрешены: m4a, aac, mp3" });
+    }
 
-    // Удаляем оригинал
-    fs.unlinkSync(inputPath);
+    // Переименовываем если нужно (чтобы было .m4a)
+    let finalPath = req.file.path;
+    if (ext !== ".m4a") {
+      finalPath = req.file.path.replace(ext, ".m4a");
+      fs.renameSync(req.file.path, finalPath);
+    }
 
-    const audioUrl = "/uploads/voice/" + path.basename(outputPath);
+    const audioUrl = "/uploads/voice/" + path.basename(finalPath);
     const tripId = req.body.tripId;
     const userId = req.body.userId;
 
-    console.log("✅ Конвертация завершена:", audioUrl);
+    console.log("✅ Файл сохранён:", audioUrl);
 
     // Сохраняем в БД
     const result = await pool.query(
@@ -64,6 +71,7 @@ router.post("/api/ios/voice", upload.single("voice"), async (req, res) => {
         id: result.rows[0].id,
         user_id: userId,
         audio_url: audioUrl,
+        audio_type: "audio/mp4", // Важно для iOS!
         created_at: result.rows[0].created_at,
       });
       console.log("📡 Отправлено через Socket.IO");
@@ -72,6 +80,7 @@ router.post("/api/ios/voice", upload.single("voice"), async (req, res) => {
     res.json({
       success: true,
       audioUrl: audioUrl,
+      audioType: "audio/mp4",
     });
   } catch (error) {
     console.error("❌ Ошибка:", error);
