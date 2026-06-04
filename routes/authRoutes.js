@@ -15,9 +15,69 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const DebtController = require("../controllers/debtController");
+const fluentFFmpeg = require("fluent-ffmpeg");
 
 console.log("✅ AuthRoutes загружен");
+// ========== iOS ГОЛОСОВЫЕ СООБЩЕНИЯ ==========
+router.post("/api/ios/voice", upload.single("voice"), async (req, res) => {
+  try {
+    console.log("📱 iOS voice upload:", req.file?.filename);
 
+    if (!req.file) {
+      return res.status(400).json({ error: "Нет файла" });
+    }
+
+    const inputPath = req.file.path;
+    const outputPath = inputPath.replace(".m4a", ".webm");
+
+    // Конвертация m4a → webm/opus
+    await new Promise((resolve, reject) => {
+      fluentFFmpeg(inputPath)
+        .audioCodec("libopus")
+        .toFormat("webm")
+        .save(outputPath)
+        .on("end", resolve)
+        .on("error", reject);
+    });
+
+    // Удаляем оригинал
+    fs.unlinkSync(inputPath);
+
+    const audioUrl = "/uploads/voice/" + path.basename(outputPath);
+    const tripId = req.body.tripId;
+    const userId = req.body.userId;
+
+    console.log("✅ Конвертация завершена:", audioUrl);
+
+    // Сохраняем в БД
+    const result = await pool.query(
+      `INSERT INTO messages (trip_id, user_id, audio_url, created_at) 
+       VALUES ($1, $2, $3, NOW()) 
+       RETURNING *`,
+      [tripId, userId, audioUrl],
+    );
+
+    // Отправляем через Socket.IO
+    const io = req.app.get("io");
+    if (io && tripId) {
+      io.to(`trip_${tripId}`).emit("new_message", {
+        id: result.rows[0].id,
+        user_id: userId,
+        audio_url: audioUrl,
+        created_at: result.rows[0].created_at,
+      });
+      console.log("📡 Отправлено через Socket.IO");
+    }
+
+    res.json({
+      success: true,
+      audioUrl: audioUrl,
+    });
+  } catch (error) {
+    console.error("❌ Ошибка:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ========== СТРАНИЦЫ ==========
 router.get("/", (req, res) => {
   console.log(" GET / - главная страница");
