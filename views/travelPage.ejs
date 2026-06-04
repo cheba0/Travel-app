@@ -181,10 +181,9 @@
     <textarea id="chatTextInput" placeholder="Напишите сообщение..." rows="1" style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; resize: none; font-size: 14px;" onkeydown="handleChatKeydown(event)"></textarea>
     
     <!-- Кнопка отправки/записи (Telegram-стиль) -->
-    <button id="sendBtn" data-mode="record" style="padding: 12px; border-radius: 50%; background: #f5f5f5; border: none; cursor: pointer; font-size: 20px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;">
-        
+    <button id="sendBtn" onclick="sendChatMessage()" data-mode="record" style="padding: 12px; border-radius: 50%; background: #f5f5f5; border: none; cursor: pointer; font-size: 20px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;">  
     </button>
-    
+       
     <!-- Индикатор записи -->
     <div id="recordingIndicator" style="display: none; position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; z-index: 100;">
          Запись...
