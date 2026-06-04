@@ -350,6 +350,12 @@
                     <div class="tour-price-row">
                         <span class="tour-price">79 900 <small>₽</small></span>
                     </div>
+                    <div class="tour-expand-menu">
+                        <div class="menu-buttons">
+                            <button class="btn-website">Перейти на сайт</button>
+                            <button class="btn-travel">Добавить в траты</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -366,6 +372,12 @@
                     </div>
                     <div class="tour-price-row">
                         <span class="tour-price">89 500 <small>₽</small></span>
+                    </div>
+                    <div class="tour-expand-menu">
+                        <div class="menu-buttons">
+                            <button class="btn-website">Перейти на сайт</button>
+                            <button class="btn-travel">Добавить в траты</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -420,6 +432,12 @@
                     <div class="hotel-price-row">
                         <span class="hotel-price">12 990 <small>₽/ночь</small></span>
                     </div>
+                    <div class="hotel-expand-menu">
+                        <div class="menu-buttons">
+                            <button class="btn-website">Перейти на сайт</button>
+                            <button class="btn-travel">Добавить в траты</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -438,6 +456,12 @@
                     </div>
                     <div class="hotel-price-row">
                         <span class="hotel-price">28 990 <small>₽/ночь</small></span>
+                    </div>
+                    <div class="hotel-expand-menu">
+                        <div class="menu-buttons">
+                            <button class="btn-website">Перейти на сайт</button>
+                            <button class="btn-travel">Добавить в траты</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -468,160 +492,186 @@
     </div>
 
     <script>
-        // ========== 1. РАСКРЫВАЮЩИЕСЯ МЕНЮ ДЛЯ КАРТОЧЕК ==========
-        function closeAllMenus() {
-            document.querySelectorAll('.ticket-card, .train-card, .bus-card, .tour-card, .hotel-card').forEach(card => {
+    // ========== 1. РАСКРЫВАЮЩИЕСЯ МЕНЮ ДЛЯ КАРТОЧЕК ==========
+    function closeAllMenus() {
+        document.querySelectorAll('.ticket-card, .train-card, .bus-card, .tour-card, .hotel-card').forEach(card => {
+            card.classList.remove('expanded');
+        });
+    }
+
+    // Авиабилеты
+    document.querySelectorAll('.ticket-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-website') || e.target.closest('.btn-travel')) return;
+            if (card.classList.contains('expanded')) {
                 card.classList.remove('expanded');
-            });
-        }
-
-        // Авиабилеты
-        document.querySelectorAll('.ticket-card').forEach(card => {
-            card.addEventListener('click', function (e) {
-                if (e.target.closest('.btn-website') || e.target.closest('.btn-travel')) return;
-                if (card.classList.contains('expanded')) {
-                    card.classList.remove('expanded');
-                } else {
-                    closeAllMenus();
-                    card.classList.add('expanded');
-                }
-            });
-        });
-
-        // ЖД билеты
-        document.querySelectorAll('.train-card').forEach(card => {
-            card.addEventListener('click', function (e) {
-                if (e.target.closest('.btn-website') || e.target.closest('.btn-travel')) return;
-                if (card.classList.contains('expanded')) {
-                    card.classList.remove('expanded');
-                } else {
-                    closeAllMenus();
-                    card.classList.add('expanded');
-                }
-            });
-        });
-
-        // Автобусы
-        document.querySelectorAll('.bus-card').forEach(card => {
-            card.addEventListener('click', function (e) {
-                if (e.target.closest('.btn-website') || e.target.closest('.btn-travel')) return;
-                if (card.classList.contains('expanded')) {
-                    card.classList.remove('expanded');
-                } else {
-                    closeAllMenus();
-                    card.classList.add('expanded');
-                }
-            });
-        });
-
-        // ========== 2. ПЕРЕКЛЮЧЕНИЕ МЕЖДУ АВИА/ЖД/АВТОБУСАМИ ==========
-        const transportBtns = document.querySelectorAll('.transport-option');
-
-        // Находим три основные секции
-        const aviationSection = document.querySelector('#aviationSection');
-        const trainsSection = document.querySelector('#trainsSection');
-        const busesSection = document.querySelector('#busesSection');
-
-        function switchTransport(transport) {
-            // Скрываем все секции
-            if (aviationSection) aviationSection.style.display = 'none';
-            if (trainsSection) trainsSection.style.display = 'none';
-            if (busesSection) busesSection.style.display = 'none';
-
-            // Показываем выбранную секцию
-            if (transport === 'aviation') {
-                if (aviationSection) aviationSection.style.display = 'block';
-            } else if (transport === 'train') {
-                if (trainsSection) trainsSection.style.display = 'block';
-            } else if (transport === 'bus') {
-                if (busesSection) busesSection.style.display = 'block';
+            } else {
+                closeAllMenus();
+                card.classList.add('expanded');
             }
-        }
-
-        // Вешаем обработчики на кнопки Авиа/ЖД/Автобусы
-        transportBtns.forEach(btn => {
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                transportBtns.forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                const transport = this.getAttribute('data-transport');
-                switchTransport(transport);
-            });
         });
+    });
 
-        // ========== 3. ПЕРЕКЛЮЧЕНИЕ МЕЖДУ БИЛЕТЫ/ТУРЫ/ЖИЛЬЁ (ШАПКА) ==========
-        const categoryBtns = document.querySelectorAll('.cat-item');
-
-        const flightsSearchBlock = document.getElementById('flightsSearchBlock');
-        const toursSearchBlock = document.getElementById('toursSearchBlock');
-        const hotelsSearchBlock = document.getElementById('hotelsSearchBlock');
-
-        const flightsMainBlock = document.getElementById('flightsMainBlock');
-        const toursMainBlock = document.getElementById('toursSection');
-        const hotelsMainBlock = document.getElementById('hotelsSection');
-
-        function switchCategoryTab(tab) {
-            // Скрываем все поисковые блоки
-            if (flightsSearchBlock) flightsSearchBlock.style.display = 'none';
-            if (toursSearchBlock) toursSearchBlock.style.display = 'none';
-            if (hotelsSearchBlock) hotelsSearchBlock.style.display = 'none';
-
-            // Скрываем все секции результатов
-            if (flightsMainBlock) flightsMainBlock.style.display = 'none';
-            if (toursMainBlock) toursMainBlock.style.display = 'none';
-            if (hotelsMainBlock) hotelsMainBlock.style.display = 'none';
-
-            // Показываем нужные
-            if (tab === 'flights') {
-                if (flightsSearchBlock) flightsSearchBlock.style.display = 'block';
-                if (flightsMainBlock) flightsMainBlock.style.display = 'block';
-                // По умолчанию показываем авиабилеты
-                switchTransport('aviation');
-                // Активируем кнопку Авиа в селекторе
-                const aviationBtn = document.querySelector('.transport-option.aviation');
-                const trainBtn = document.querySelector('.transport-option.train');
-                const busBtn = document.querySelector('.transport-option.bus');
-                if (aviationBtn) aviationBtn.classList.add('active');
-                if (trainBtn) trainBtn.classList.remove('active');
-                if (busBtn) busBtn.classList.remove('active');
-            } else if (tab === 'tours') {
-                if (toursSearchBlock) toursSearchBlock.style.display = 'block';
-                if (toursMainBlock) toursMainBlock.style.display = 'block';
-            } else if (tab === 'hotels') {
-                if (hotelsSearchBlock) hotelsSearchBlock.style.display = 'block';
-                if (hotelsMainBlock) hotelsMainBlock.style.display = 'block';
+    // ЖД билеты
+    document.querySelectorAll('.train-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-website') || e.target.closest('.btn-travel')) return;
+            if (card.classList.contains('expanded')) {
+                card.classList.remove('expanded');
+            } else {
+                closeAllMenus();
+                card.classList.add('expanded');
             }
+        });
+    });
 
-            // Обновляем активный класс у кнопок в шапке
-            categoryBtns.forEach(btn => {
-                btn.classList.remove('active');
-                if (
-                    (tab === 'flights' && btn.innerText.includes('Билеты')) ||
-                    (tab === 'tours' && btn.innerText.includes('Туры')) ||
-                    (tab === 'hotels' && btn.innerText.includes('Жильё'))
-                ) {
-                    btn.classList.add('active');
-                }
-            });
+    // Автобусы
+    document.querySelectorAll('.bus-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-website') || e.target.closest('.btn-travel')) return;
+            if (card.classList.contains('expanded')) {
+                card.classList.remove('expanded');
+            } else {
+                closeAllMenus();
+                card.classList.add('expanded');
+            }
+        });
+    });
+
+    // Туры
+    document.querySelectorAll('.tour-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-website') || e.target.closest('.btn-travel')) return;
+            if (card.classList.contains('expanded')) {
+                card.classList.remove('expanded');
+            } else {
+                closeAllMenus();
+                card.classList.add('expanded');
+            }
+        });
+    });
+
+    // Жилье
+    document.querySelectorAll('.hotel-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-website') || e.target.closest('.btn-travel')) return;
+            if (card.classList.contains('expanded')) {
+                card.classList.remove('expanded');
+            } else {
+                closeAllMenus();
+                card.classList.add('expanded');
+            }
+        });
+    });
+
+    // ========== 2. ПЕРЕКЛЮЧЕНИЕ МЕЖДУ АВИА/ЖД/АВТОБУСАМИ ==========
+    const transportBtns = document.querySelectorAll('.transport-option');
+    
+    // Находим три основные секции
+    const aviationSection = document.querySelector('#aviationSection');
+    const trainsSection = document.querySelector('#trainsSection');
+    const busesSection = document.querySelector('#busesSection');
+
+    function switchTransport(transport) {
+        // Скрываем все секции
+        if (aviationSection) aviationSection.style.display = 'none';
+        if (trainsSection) trainsSection.style.display = 'none';
+        if (busesSection) busesSection.style.display = 'none';
+        
+        // Показываем выбранную секцию
+        if (transport === 'aviation') {
+            if (aviationSection) aviationSection.style.display = 'block';
+        } else if (transport === 'train') {
+            if (trainsSection) trainsSection.style.display = 'block';
+        } else if (transport === 'bus') {
+            if (busesSection) busesSection.style.display = 'block';
         }
+    }
 
-        // Вешаем обработчики на кнопки в шапке
+    // Вешаем обработчики на кнопки Авиа/ЖД/Автобусы
+    transportBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            transportBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            const transport = this.getAttribute('data-transport');
+            switchTransport(transport);
+        });
+    });
+
+    // ========== 3. ПЕРЕКЛЮЧЕНИЕ МЕЖДУ БИЛЕТЫ/ТУРЫ/ЖИЛЬЁ (ШАПКА) ==========
+    const categoryBtns = document.querySelectorAll('.cat-item');
+    
+    const flightsSearchBlock = document.getElementById('flightsSearchBlock');
+    const toursSearchBlock = document.getElementById('toursSearchBlock');
+    const hotelsSearchBlock = document.getElementById('hotelsSearchBlock');
+    
+    const flightsMainBlock = document.getElementById('flightsMainBlock');
+    const toursMainBlock = document.getElementById('toursSection');
+    const hotelsMainBlock = document.getElementById('hotelsSection');
+
+    function switchCategoryTab(tab) {
+        // Скрываем все поисковые блоки
+        if (flightsSearchBlock) flightsSearchBlock.style.display = 'none';
+        if (toursSearchBlock) toursSearchBlock.style.display = 'none';
+        if (hotelsSearchBlock) hotelsSearchBlock.style.display = 'none';
+        
+        // Скрываем все секции результатов
+        if (flightsMainBlock) flightsMainBlock.style.display = 'none';
+        if (toursMainBlock) toursMainBlock.style.display = 'none';
+        if (hotelsMainBlock) hotelsMainBlock.style.display = 'none';
+        
+        // Показываем нужные
+        if (tab === 'flights') {
+            if (flightsSearchBlock) flightsSearchBlock.style.display = 'block';
+            if (flightsMainBlock) flightsMainBlock.style.display = 'block';
+            // По умолчанию показываем авиабилеты
+            switchTransport('aviation');
+            // Активируем кнопку Авиа в селекторе
+            const aviationBtn = document.querySelector('.transport-option.aviation');
+            const trainBtn = document.querySelector('.transport-option.train');
+            const busBtn = document.querySelector('.transport-option.bus');
+            if (aviationBtn) aviationBtn.classList.add('active');
+            if (trainBtn) trainBtn.classList.remove('active');
+            if (busBtn) busBtn.classList.remove('active');
+        } else if (tab === 'tours') {
+            if (toursSearchBlock) toursSearchBlock.style.display = 'block';
+            if (toursMainBlock) toursMainBlock.style.display = 'block';
+        } else if (tab === 'hotels') {
+            if (hotelsSearchBlock) hotelsSearchBlock.style.display = 'block';
+            if (hotelsMainBlock) hotelsMainBlock.style.display = 'block';
+        }
+        
+        // Обновляем активный класс у кнопок в шапке
         categoryBtns.forEach(btn => {
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                if (this.innerText.includes('Билеты')) {
-                    switchCategoryTab('flights');
-                } else if (this.innerText.includes('Туры')) {
-                    switchCategoryTab('tours');
-                } else if (this.innerText.includes('Жильё')) {
-                    switchCategoryTab('hotels');
-                }
-            });
+            btn.classList.remove('active');
+            if (
+                (tab === 'flights' && btn.innerText.includes('Билеты')) ||
+                (tab === 'tours' && btn.innerText.includes('Туры')) ||
+                (tab === 'hotels' && btn.innerText.includes('Жильё'))
+            ) {
+                btn.classList.add('active');
+            }
         });
-
-        // По умолчанию показываем Билеты
-        switchCategoryTab('flights');
-    </script>
+    }
+    
+    // Вешаем обработчики на кнопки в шапке
+    categoryBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (this.innerText.includes('Билеты')) {
+                switchCategoryTab('flights');
+            } else if (this.innerText.includes('Туры')) {
+                switchCategoryTab('tours');
+            } else if (this.innerText.includes('Жильё')) {
+                switchCategoryTab('hotels');
+            }
+        });
+    });
+    
+    // По умолчанию показываем Билеты
+    switchCategoryTab('flights');
+</script>
 
 </body>
 
