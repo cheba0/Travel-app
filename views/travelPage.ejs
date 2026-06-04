@@ -63,6 +63,9 @@
             <button id="openChatBtn" style="padding: 8px 16px; background: #f5de4c; color: rgb(17, 17, 17); border: none; border-radius: 8px; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2); cursor: pointer; font-weight: 500;">
                 💬 Чат
             </button>
+            <button id="openDebtsBtn" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 8px; box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2); cursor: pointer; font-weight: 500;">
+                 Долги
+            </button>
         </div>
     </div>
 
@@ -125,7 +128,82 @@
             <button class="close_part" onclick="closeInviteModal()">Закрыть</button>
         </div>
     </div>
+    <!-- 🔹 Модальное окно долгов -->
+<div id="debtsModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+        <span class="close" onclick="closeDebtsModal()">&times;</span>
+        <h2 style="margin-bottom: 20px;">💰 Долги в путешествии</h2>
+        
+        <!-- Общая информация -->
+        <div id="debtsSummary" style="margin-bottom: 30px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+            <p style="margin: 0; color: #666;">Загрузка...</p>
+        </div>
 
+        <!-- Кто кому должен -->
+        <div id="debtsList" style="margin-bottom: 30px;">
+            <h3 style="margin-bottom: 15px; font-size: 16px;">📋 Кто кому должен:</h3>
+            <div id="settlementsContainer">
+                <!-- Сюда JavaScript вставит долги -->
+            </div>
+        </div>
+
+        <!-- Кнопки действий -->
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button onclick="showDebtHistory()" style="flex: 1; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                📜 История транзакций
+            </button>
+            <button id="mainActionBtn" onclick="showSettleDebtForm()" style="flex: 1; padding: 10px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                💵 Я заплатил
+            </button>
+            <button onclick="exportToExcel()" style="flex: 1; padding: 10px; background: #17a2b8; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                📊 Excel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 🔹 Модальное окно истории транзакций -->
+<div id="historyModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <span class="close" onclick="closeHistoryModal()">&times;</span>
+        <h2 style="margin-bottom: 20px;">📜 История транзакций</h2>
+        <div id="historyContainer">
+            <!-- Сюда JavaScript вставит историю -->
+        </div>
+    </div>
+</div>
+
+<!-- 🔹 Модальное окно оплаты долга -->
+<div id="settleModal" class="modal" style="display: none;" data-mode="pay">
+    <div class="modal-content" style="max-width: 400px;">
+        <span class="close" onclick="closeSettleModal()">&times;</span>
+        <h2 style="margin-bottom: 20px;">💵 Я заплатил</h2>
+        <form id="settleDebtForm" onsubmit="submitSettleDebt(event)">
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Кому заплатили:</label>
+                <select id="toUserId" name="toUserId" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="">Выберите участника</option>
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Сумма (₽):</label>
+                <input type="number" id="settleAmount" name="amount" step="0.01" min="0.01" required 
+                       style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Заметка (необязательно):</label>
+                <input type="text" id="settleNote" name="note" placeholder="Например: перевёл на карту"
+                       style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            
+            <button type="submit" style="width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                 Записать транзакцию
+            </button>
+        </form>
+    </div>
+</div>
     <!-- Модальное окно чата -->
     <div id="chatModal" class="chat-modal" style="display: none;">
         <div class="chat-modal-content" >
@@ -752,6 +830,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });</script>
-
+<script src="/js/debts.js"></script>
 </body>
 </html>

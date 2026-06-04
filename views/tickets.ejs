@@ -44,6 +44,7 @@
         <button onclick="showSubsection('flights')">✈️ Авиабилеты</button>
         <button onclick="showSubsection('trains')">🚆 ЖД билеты</button>
         <button onclick="showSubsection('buses')">🚌 Автобусы</button>
+        <button onclick="showSubsection('xotelo')">🏨 Отели (Xotelo)</button>
     </div>
     
     <!-- === АВИАБИЛЕТЫ === -->
@@ -123,6 +124,38 @@
         <div id="busesResults">
             <h3>Результаты:</h3>
             <div id="busesList"></div>
+        </div>
+    </div>
+
+    <div id="xoteloSubsection" class="hidden">
+        <h2>🏨 Поиск отелей (Xotelo)</h2>
+        <form id="xoteloForm">
+            <div>
+                <label>Отель или город:</label>
+                <input type="text" id="xoteloQuery" placeholder="Например: Москва, Санкт-Петербург, Hilton" required>
+            </div>
+            <div>
+                <label>Дата заезда:</label>
+                <input type="date" id="xoteloCheckIn" required>
+            </div>
+            <div>
+                <label>Дата выезда:</label>
+                <input type="date" id="xoteloCheckOut" required>
+            </div>
+            <div>
+                <label>Количество гостей:</label>
+                <select id="xoteloAdults">
+                    <option value="1">1 взрослый</option>
+                    <option value="2" selected>2 взрослых</option>
+                    <option value="3">3 взрослых</option>
+                    <option value="4">4 взрослых</option>
+                </select>
+            </div>
+            <button type="submit">Найти отели</button>
+        </form>
+        <div id="xoteloResults">
+            <h3>Результаты:</h3>
+            <div id="xoteloList"></div>
         </div>
     </div>
 

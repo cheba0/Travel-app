@@ -5,6 +5,7 @@ function showSubsection(subsection) {
   document.getElementById("flightsSubsection").classList.add("hidden");
   document.getElementById("trainsSubsection").classList.add("hidden");
   document.getElementById("busesSubsection").classList.add("hidden");
+  document.getElementById("xoteloSubsection").classList.add("hidden");
 
   document.getElementById(subsection + "Subsection").classList.remove("hidden");
 }
@@ -205,6 +206,99 @@ async function searchBuses() {
   }
 }
 
+// === ОТЕЛИ XOTELO ===
+async function searchXoteloHotels() {
+  const query = document.getElementById("xoteloQuery").value.trim();
+  const checkIn = document.getElementById("xoteloCheckIn").value;
+  const checkOut = document.getElementById("xoteloCheckOut").value;
+  const adults = document.getElementById("xoteloAdults").value;
+
+  if (!query) {
+    alert("Введите название отеля или города");
+    return;
+  }
+
+  if (!checkIn || !checkOut) {
+    alert("Выберите даты заезда и выезда");
+    return;
+  }
+
+  const listDiv = document.getElementById("xoteloList");
+  listDiv.innerHTML = "<p>🔍 Поиск отелей...</p>";
+
+  try {
+    // Используем полный поиск (отель + цены)
+    const url = `/api/xotelo/searchWithRates?query=${encodeURIComponent(query)}&checkIn=${checkIn}&checkOut=${checkOut}&adults=${adults}`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    console.log("Ответ Xotelo:", data);
+
+    if (data.success && data.hotel && data.rates) {
+      let html = `
+                <div class="result-item" style="border-bottom: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+                    <strong>🏨 ${data.hotel.name}</strong><br>
+                    📍 ${data.hotel.address || data.hotel.place || "Адрес не указан"}<br>
+                    📅 Заезд: ${data.rates.checkIn || checkIn} | Выезд: ${data.rates.checkOut || checkOut}<br>
+                    👥 Гостей: ${adults}<br>
+                    <br>
+                    <strong>💰 Лучшая цена: ${data.rates.bestRate?.rateFormatted || "не найдена"} за ночь</strong><br>
+                    <small>от ${data.rates.bestRate?.name || "сервиса"}</small><br>
+                    <br>
+                    📊 <strong>Цены от всех сервисов:</strong><br>
+            `;
+
+      if (data.rates.rates && data.rates.rates.length > 0) {
+        data.rates.rates.forEach((rate) => {
+          html += `   • ${rate.name}: ${rate.rateFormatted}<br>`;
+        });
+      } else {
+        html += `   • Цены не найдены<br>`;
+      }
+
+      html += `
+                    <br>
+                    🔗 <a href="${data.hotel.url}" target="_blank" style="color: blue;">Посмотреть отель на TripAdvisor →</a>
+                </div>
+            `;
+
+      listDiv.innerHTML = html;
+    } else if (data.success && data.hotel && !data.rates) {
+      // Отель нашли, но цены не загрузились
+      let html = `
+                <div class="result-item" style="border-bottom: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+                    <strong>🏨 ${data.hotel.name}</strong><br>
+                    📍 ${data.hotel.address || data.hotel.place || "Адрес не указан"}<br>
+                    <br>
+                    <p class="error">❌ ${data.message || "Цены не найдены для указанных дат"}</p>
+                    <br>
+                    🔗 <a href="${data.hotel.url}" target="_blank" style="color: blue;">Посмотреть отель на TripAdvisor →</a>
+                </div>
+            `;
+      listDiv.innerHTML = html;
+    } else {
+      // Если не нашли отель
+      let html = `<p class="error">❌ ${data.message || "Отели не найдены"}</p>`;
+      html += `<p>💡 Советы:<br>
+                       • Попробуйте искать на английском языке (например, "Moscow")<br>
+                       • Попробуйте известные отели (Marriott, Ritz, Hilton)<br>
+                       • Попробуйте крупные города (Moscow, London, Paris)</p>`;
+      listDiv.innerHTML = html;
+    }
+  } catch (error) {
+    console.error("Ошибка:", error);
+    listDiv.innerHTML = `<p class="error">❌ Ошибка: ${error.message}</p>`;
+  }
+}
+
+// Форматирование даты для отображения
+function formatDate(dateString) {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("ru-RU");
+}
+
 // Назначаем обработчики событий после загрузки DOM
 document.addEventListener("DOMContentLoaded", () => {
   // Авиабилеты
@@ -237,6 +331,15 @@ document.addEventListener("DOMContentLoaded", () => {
     busForm.addEventListener("submit", (e) => {
       e.preventDefault();
       searchBuses();
+    });
+  }
+
+  // Отели
+  const xoteloForm = document.getElementById("xoteloForm");
+  if (xoteloForm) {
+    xoteloForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      searchXoteloHotels();
     });
   }
 

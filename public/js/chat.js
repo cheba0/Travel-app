@@ -1278,3 +1278,4 @@ function initChatScripts() {
 if (document.readyState === "loading")
   document.addEventListener("DOMContentLoaded", initChatScripts);
 else initChatScripts();
+window.showChatNotification = showNotification;

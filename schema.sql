@@ -125,3 +125,24 @@ ALTER TABLE messages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS video_url VARCHAR(500);
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS audio_url VARCHAR(500);
 ALTER TABLE expenses ADD COLUMN IF NOT EXISTS category VARCHAR(50);
+
+-- Таблица для записи фактов оплаты долгов между участниками
+CREATE TABLE IF NOT EXISTS debt_settlements (
+    id SERIAL PRIMARY KEY,
+    trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    from_user_id INTEGER NOT NULL REFERENCES users(id), -- Кто платит
+    to_user_id INTEGER NOT NULL REFERENCES users(id),   -- Кому платит
+    amount DECIMAL(10, 2) NOT NULL CHECK (amount > 0),
+    note VARCHAR(500),                                    -- Заметка (опционально)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CHECK (from_user_id != to_user_id)                   -- Нельзя платить самому себе
+);
+
+-- Индексы для быстрого поиска
+CREATE INDEX IF NOT EXISTS idx_debt_settlements_trip ON debt_settlements(trip_id);
+CREATE INDEX IF NOT EXISTS idx_debt_settlements_from ON debt_settlements(from_user_id);
+CREATE INDEX IF NOT EXISTS idx_debt_settlements_to ON debt_settlements(to_user_id);
+
+COMMENT ON TABLE debt_settlements IS 'История погашения долгов между участниками путешествия';
+COMMENT ON COLUMN debt_settlements.from_user_id IS 'Кто заплатил (должник)';
+COMMENT ON COLUMN debt_settlements.to_user_id IS 'Кому заплатили (кредитор)';

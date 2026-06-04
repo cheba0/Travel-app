@@ -124,7 +124,10 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
-
+// Инициализируем socket.js для доступа из контроллеров
+const { setIO } = require("./socket");
+setIO(io);
+console.log("✅ Socket.io инициализирован для уведомлений");
 // Хранилище подключённых пользователей (в памяти, для продакшена лучше Redis)
 const onlineUsers = new Map(); // Map<userId, socketId>
 
