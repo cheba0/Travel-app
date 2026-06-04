@@ -12,6 +12,7 @@ const { pool } = require("../db");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const DebtController = require("../controllers/debtController");
 
 console.log("✅ AuthRoutes загружен");
 
@@ -504,7 +505,10 @@ router.get("/api/my-travels", async (req, res) => {
     });
   }
 });
-
+// ========== СТРАНИЦА долгового расчета ==========
+router.get("/api/trips/:tripId/debts", DebtController.getDebts);
+router.get("/api/trips/:tripId/debt-history", DebtController.getDebtHistory);
+router.post("/api/trips/:tripId/settle-debt", DebtController.settleDebt);
 // ========== СТРАНИЦА ПУТЕШЕСТВИЯ ==========
 router.get("/travel/:id", async (req, res) => {
   try {
@@ -785,7 +789,106 @@ router.delete("/api/messages/:messageId", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+// ========== ЭКСПОРТ ДОЛГОВ В CSV ==========
+router.get("/api/trips/:tripId/debts/export", async (req, res) => {
+  try {
+    const { tripId } = req.params;
+    const userId = req.session.userId;
 
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Требуется авторизация" });
+    }
+
+    const check = await pool.query(
+      `SELECT 1 FROM trip_participants WHERE trip_id = $1 AND user_id = $2`,
+      [tripId, userId],
+    );
+
+    if (check.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ success: false, error: "Вы не участник этой поездки" });
+    }
+
+    // Получаем данные о путешествии
+    const tripResult = await pool.query(
+      `SELECT trip_name, currency FROM trips WHERE id = $1`,
+      [tripId],
+    );
+    const trip = tripResult.rows[0];
+
+    // Получаем все долги
+    const debtsResult = await pool.query(
+      `SELECT 
+        ds.*,
+        fu.username as from_username,
+        tu.username as to_username
+      FROM debt_settlements ds
+      JOIN users fu ON ds.from_user_id = fu.id
+      JOIN users tu ON ds.to_user_id = tu.id
+      WHERE ds.trip_id = $1
+      ORDER BY ds.created_at DESC`,
+      [tripId],
+    );
+
+    // Получаем балансы участников
+    const balancesResult = await pool.query(
+      `SELECT 
+        u.id,
+        u.username,
+        COALESCE(SUM(e.amount), 0) as total_paid,
+        COALESCE((
+          SELECT SUM(es.amount_owed)
+          FROM expense_shares es
+          JOIN expenses e2 ON es.expense_id = e2.id
+          WHERE es.user_id = u.id AND e2.trip_id = $1
+        ), 0) as total_owed
+      FROM trip_participants tp
+      JOIN users u ON tp.user_id = u.id
+      LEFT JOIN expenses e ON e.paid_by = u.id AND e.trip_id = $1
+      WHERE tp.trip_id = $1
+      GROUP BY u.id, u.username`,
+      [tripId],
+    );
+
+    // Генерируем CSV
+    let csv = "\uFEFF"; // BOM для Excel
+    csv += `Отчёт по долгами: ${trip.trip_name}\n`;
+    csv += `Валюта: ${trip.currency}\n`;
+    csv += `Дата генерации: ${new Date().toLocaleString("ru-RU")}\n\n`;
+
+    // Балансы участников
+    csv += `БАЛАНСЫ УЧАСТНИКОВ:\n`;
+    csv += `Участник;Заплатил;Должен;Баланс\n`;
+    balancesResult.rows.forEach((row) => {
+      const balance = parseFloat(row.total_paid) - parseFloat(row.total_owed);
+      csv += `${row.username};${row.total_paid};${row.total_owed};${balance}\n`;
+    });
+
+    csv += `\n`;
+
+    // История транзакций
+    csv += `ИСТОРИЯ ТРАНЗАКЦИЙ:\n`;
+    csv += `Дата;От кого;Кому;Сумма;Заметка\n`;
+    debtsResult.rows.forEach((row) => {
+      const date = new Date(row.created_at).toLocaleString("ru-RU");
+      csv += `${date};${row.from_username};${row.to_username};${row.amount};${row.note || ""}\n`;
+    });
+
+    // Отправляем файл
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="debts_${tripId}_${Date.now()}.csv"`,
+    );
+    res.send(csv);
+  } catch (error) {
+    console.error("Ошибка экспорта:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 // ===== ПОИСК ПО СООБЩЕНИЯМ =====
 router.get("/api/trips/:tripId/messages/search", async (req, res) => {
   try {
