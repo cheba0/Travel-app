@@ -1831,7 +1831,7 @@ body {
     letter-spacing: -0.2px;
 }
 
-.flight-number {
+.flight-site {
     font-size: 13px;
     color: #8e8e93;
     font-weight: 500;
@@ -2248,12 +2248,389 @@ body {
 }
 
 
+
+
+/* Чтобы кнопки не перекрывались и клик по ним не открывал меню */
+.btn-website, .btn-travel {
+    position: relative;
+    z-index: 10;
+}
+
+.ticket-card.expanded .ticket-expand-menu,
+.train-card.expanded .train-expand-menu,
+.bus-card.expanded .bus-expand-menu {
+    max-height: 120px;
+    opacity: 1;
+    padding: 14px 16px;
+    border-top: 1px solid #eee;
+}
+
+
+/* ============================================ */
+/* СЕЛЕКТОР ТИПА ТРАНСПОРТА (авиа, ЖД, автобусы) */
+/* ============================================ */
+
+.transport-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    background: #f5f5f7;
+    padding: 6px;
+    border-radius: 50px;
+}
+
+.transport-option {
+    flex: 1;
+    text-align: center;
+    padding: 10px 12px;
+    border-radius: 40px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #6c6c6e;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+}
+
+.transport-option.active {
+    background: #f5de4c;
+    color: #000000;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.transport-option:active {
+    transform: scale(0.96);
+}
+
+
+
+
+
+
+/* ============================================ */
+/* КАРТОЧКИ ДЛЯ ЖД И АВТОБУСОВ */
+/* ============================================ */
+
+/* Ж/Д карточка */
+.train-card {
+    background: #ffffff;
+    border-radius: 28px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid #efeff4;
+    overflow: hidden;
+    transition: all 0.2s;
+    margin-bottom: 18px;
+}
+
+.train-card:active {
+    transform: scale(0.98);
+    background: #fefefe;
+}
+
+.train-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 18px 8px 18px;
+    border-bottom: 1px dashed #f0f0f0;
+}
+
+.train-company {
+    font-weight: 620;
+    font-size: 16px;
+    background: #f5f5f7;
+    padding: 5px 14px;
+    border-radius: 40px;
+    color: #1c1c1e;
+}
+
+.train-site {
+    font-size: 13px;
+    color: #8e8e93;
+    font-weight: 500;
+}
+
+.train-route {
+    padding: 16px 18px 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.station-block {
+    text-align: center;
+    flex: 1;
+}
+
+.station-code {
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -0.3px;
+    color: #000;
+}
+
+.station-name {
+    font-size: 13px;
+    color: #5f5f63;
+    margin-top: 4px;
+}
+
+.train-duration {
+    flex: 1.2;
+    text-align: center;
+    font-size: 12px;
+    color: #8e8e93;
+    border-top: 1px solid #e9e9ef;
+    border-bottom: 1px solid #e9e9ef;
+    padding: 6px 4px;
+    margin: 0 4px;
+    font-weight: 500;
+}
+
+.train-stops {
+    font-size: 11px;
+    background: #f2f2f6;
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 40px;
+    margin-top: 6px;
+    font-weight: 500;
+    color: #3a3a3c;
+}
+
+.train-info {
+    display: flex;
+    justify-content: right;
+    align-items: center;
+    padding: 14px 18px 18px 18px;
+    border-top: 1px solid #f5f5f8;
+    background: #fefefc;
+    margin-right: 14px;
+}
+
+.train-price {
+    font-size: 24px;
+    font-weight: 750;
+    color: #000;
+}
+
+.train-price small {
+    font-size: 14px;
+    font-weight: 500;
+    color: #8e8e93;
+}
+
+.train-prices-row {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid #f5f5f8;
+    background: #fefefc;
+}
+
+.price-block {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 4px;
+    border-radius: 12px;
+    background: #f5f5f7;
+}
+
+.price-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6c6c6e;
+}
+
+.price-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #000;
+}
+
+.train-badge {
+    display: flex;
+    gap: 12px;
+    font-size: 13px;
+    color: #5f5f63;
+    background: #ffffff;
+    padding: 6px 12px;
+    border-radius: 40px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.wagon-type {
+    font-size: 12px;
+    color: #6c6c6e;
+}
+
+/* Автобус карточка */
+.bus-card {
+    background: #ffffff;
+    border-radius: 28px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid #efeff4;
+    overflow: hidden;
+    transition: all 0.2s;
+    margin-bottom: 18px;
+}
+
+.bus-card:active {
+    transform: scale(0.98);
+    background: #fefefe;
+}
+
+.bus-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 18px 8px 18px;
+    border-bottom: 1px dashed #f0f0f0;
+}
+
+.bus-company {
+    font-weight: 620;
+    font-size: 16px;
+    background: #f5f5f7;
+    padding: 5px 14px;
+    border-radius: 40px;
+    color: #1c1c1e;
+}
+
+.bus-site {
+    font-size: 13px;
+    color: #8e8e93;
+    font-weight: 500;
+}
+
+.bus-route {
+    padding: 16px 18px 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.bus-stop-block {
+    text-align: center;
+    flex: 1;
+}
+
+.bus-stop-name {
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.3px;
+    color: #000;
+}
+
+.bus-stop-city {
+    font-size: 13px;
+    color: #5f5f63;
+    margin-top: 4px;
+}
+
+.bus-duration {
+    flex: 1.2;
+    text-align: center;
+    font-size: 12px;
+    color: #8e8e93;
+    border-top: 1px solid #e9e9ef;
+    border-bottom: 1px solid #e9e9ef;
+    padding: 6px 4px;
+    margin: 0 4px;
+    font-weight: 500;
+}
+
+.bus-stops {
+    font-size: 11px;
+    background: #f2f2f6;
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 40px;
+    margin-top: 6px;
+    font-weight: 500;
+    color: #3a3a3c;
+}
+
+.bus-info {
+    display: flex;
+    justify-content: right;
+    align-items: center;
+    padding: 14px 18px 18px 18px;
+    border-top: 1px solid #f5f5f8;
+    background: #fefefc;
+    margin-right: 14px;
+}
+
+.bus-price {
+    font-size: 24px;
+    font-weight: 750;
+    color: #000;
+}
+
+.bus-price small {
+    font-size: 14px;
+    font-weight: 500;
+    color: #8e8e93;
+}
+
+.bus-badge {
+    display: flex;
+    gap: 12px;
+    font-size: 13px;
+    color: #5f5f63;
+    background: #ffffff;
+    padding: 6px 12px;
+    border-radius: 40px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.seat-type {
+    font-size: 12px;
+    color: #6c6c6e;
+}
+
+/* Скрытие/показ карточек в зависимости от выбранного транспорта */
+.transport-section {
+    display: none;
+}
+
+.transport-section.active {
+    display: block;
+}
+
+/* Выпадающее меню для всех типов карточек */
+.train-expand-menu, .bus-expand-menu {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.train-card.expanded .train-expand-menu,
+.bus-card.expanded .bus-expand-menu {
+    max-height: 120px;
+    opacity: 1;
+    padding: 14px 16px;
+    border-top: 1px solid #eee;
+}
+
+.menu-buttons {
+    display: flex;
+    gap: 12px;
+}
+
 .btn-website {
     background: #ececec;
     color: rgb(0, 0, 0);
     flex: 1;
-    padding: 6px;
-    border-radius: 20px;
+    padding: 10px;
+    border-radius: 25px;
     font-size: 14px;
     font-weight: 500;
     border: none;
@@ -2264,13 +2641,10 @@ body {
     background: #f5de4c;
     color: #000;
     flex: 1;
-    padding: 6px;
-    border-radius: 20px;
+    padding: 10px;
+    border-radius: 25px;
     font-size: 14px;
     font-weight: 500;
     border: none;
     cursor: pointer;
 }
-
-
-

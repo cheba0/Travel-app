@@ -20,14 +20,20 @@
 
     <main class="market-container">
         <div class="search-card">
+            <div class="transport-selector">
+                <button class="transport-option aviation active" data-transport="aviation">Авиа</button>
+                <button class="transport-option train" data-transport="train">ЖД</button>
+                <button class="transport-option bus" data-transport="bus">Автобусы</button>
+            </div>
+
             <div class="twin-fields">
                 <div class="search-field">
                     <label>Откуда</label>
-                    <input type="text" placeholder="Город вылета">
+                    <input type="text" placeholder="Город отправления">
                 </div>
                 <div class="search-field">
                     <label>Куда</label>
-                    <input type="text" placeholder="Город прилёта">
+                    <input type="text" placeholder="Город прибытия">
                 </div>
             </div>
             <div class="twin-fields">
@@ -42,82 +48,252 @@
             </div>
             <button class="search-btn">🔍︎ Найти билеты</button>
         </div>
+        <div id="flightsSection" class="transport-section active">
+            <div class="results-header">
+                <h3>Билеты</h3>
+                <span class="results-count">найдено 2</span>
+            </div>
 
-        <div class="results-header">
-            <h3>✈︎ Билеты</h3>
-            <span class="results-count">найдено 2</span>
+            <div class="ticket-list">
+                <!-- БИЛЕТ №1: прямой рейс Москва → Барселона -->
+                <div class="ticket-card">
+                    <div class="ticket-airline">
+                        <span class="airline-name">Аэрофлот</span>
+                        <span class="flight-site">Сайт</span>
+                    </div>
+                    <div class="route-main">
+                        <div class="city-block">
+                            <div class="city-code">SVO</div>
+                            <div class="city-name">Москва</div>
+                            <div class="time">09:25</div>
+                        </div>
+                        <div class="flight-duration">
+                            4ч 25м
+                            <div class="stops-badge">✈︎ Прямой рейс</div>
+                        </div>
+                        <div class="city-block">
+                            <div class="city-code">BCN</div>
+                            <div class="city-name">Барселона</div>
+                            <div class="time">12:50</div>
+                        </div>
+                    </div>
+                    <div class="ticket-info">
+                        <div class="price-tag">18 990 <small>₽</small></div>
+                        <div class="luggage-badge">
+                            <span>𖠩 1×23кг</span>
+                        </div>
+                    </div>
+                    <div class="ticket-expand-menu">
+                        <div class="menu-buttons">
+                            <button class="btn-website" data-action="website">Перейти на сайт</button>
+                            <button class="btn-travel" data-action="travel">Добавить в траты</button>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- БИЛЕТ №2: с 1 пересадкой (Стамбул) -->
+                <div class="ticket-card">
+                    <div class="ticket-airline">
+                        <span class="airline-name">Turkish Airlines</span>
+                        <span class="flight-site">Сайт</span>
+                    </div>
+                    <div class="route-main">
+                        <div class="city-block">
+                            <div class="city-code">VKO</div>
+                            <div class="city-name">Москва</div>
+                            <div class="time">04:55</div>
+                        </div>
+                        <div class="flight-duration">
+                            7ч 25м
+                            <div class="stops-badge">↪ 1 пересадка</div>
+                        </div>
+                        <div class="city-block">
+                            <div class="city-code">BCN</div>
+                            <div class="city-name">Барселона</div>
+                            <div class="time">09:20</div>
+                        </div>
+                    </div>
+                    <div class="ticket-info">
+                        <div class="price-tag">15 750 <small>₽</small></div>
+                        <div class="luggage-badge">
+                            <span>𖠩 2×23кг</span>
+                        </div>
+                    </div>
+                    <div class="ticket-expand-menu">
+                        <div class="menu-buttons">
+                            <button class="btn-website" data-action="website">Перейти на сайт</button>
+                            <button class="btn-travel" data-action="travel">Добавить в траты</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="ticket-list">
-            <!-- БИЛЕТ №1: прямой рейс Москва → Барселона -->
-            <div class="ticket-card">
-                <div class="ticket-airline">
-                    <span class="airline-name">Аэрофлот</span>
-                    <span class="flight-number">SU 2602</span>
+        <!-- ЖД секция -->
+        <div id="trainsSection" class="transport-section">
+            <div class="results-header">
+                <h3>Билеты</h3>
+                <span class="results-count">найдено 2</span>
+            </div>
+
+            <!-- Ж/Д билет №1: Сапсан Москва → Санкт-Петербург -->
+            <div class="train-card">
+                <div class="train-header">
+                    <span class="train-company">РЖД / Сапсан</span>
+                    <span class="train-site">Сайт</span>
                 </div>
-                <div class="route-main">
-                    <div class="city-block">
-                        <div class="city-code">SVO</div>
-                        <div class="city-name">Москва</div>
-                        <div class="time">09:25</div>
+                <div class="train-route">
+                    <div class="station-block">
+                        <div class="station-code">МОСКВА</div>
+                        <div class="station-name">Ленинградский вокзал</div>
+                        <div class="time">08:00</div>
                     </div>
-                    <div class="flight-duration">
-                        4ч 25м
-                        <div class="stops-badge">✈︎ Прямой рейс</div>
+                    <div class="train-duration">
+                        3ч 55м
+                        <div class="train-stops">Без пересадок</div>
                     </div>
-                    <div class="city-block">
-                        <div class="city-code">BCN</div>
-                        <div class="city-name">Барселона</div>
-                        <div class="time">12:50</div>
-                    </div>
-                </div>
-                <div class="ticket-info">
-                    <div class="price-tag">18 990 <small>₽</small></div>
-                    <div class="luggage-badge">
-                        <span>𖠩 1×23кг</span>
+                    <div class="station-block">
+                        <div class="station-code">СПБ</div>
+                        <div class="station-name">Московский вокзал</div>
+                        <div class="time">11:55</div>
                     </div>
                 </div>
-                <div class="ticket-expand-menu">
+
+                <!-- Три цены в строке -->
+                <div class="train-prices-row">
+                    <div class="price-block">
+                        <span class="price-label">Купе</span>
+                        <span class="price-value">3 890 ₽</span>
+                    </div>
+                    <div class="price-block">
+                        <span class="price-label">Люкс</span>
+                        <span class="price-value">8 990 ₽</span>
+                    </div>
+                    <div class="price-block">
+                        <span class="price-label">Мягкий</span>
+                        <span class="price-value">12 490 ₽</span>
+                    </div>
+                </div>
+
+                <div class="train-expand-menu">
                     <div class="menu-buttons">
-                        <button class="btn-website" data-action="website">Перейти на сайт</button>
-                        <button class="btn-travel" data-action="travel">Добавить в путешествие</button>
+                        <button class="btn-website">Перейти на сайт</button>
+                        <button class="btn-travel">Добавить в траты</button>
                     </div>
                 </div>
             </div>
 
+            <!-- Ж/Д билет №2: Ласточка Москва → Нижний Новгород -->
+            <div class="train-card">
+                <div class="train-header">
+                    <span class="train-company">РЖД / Ласточка</span>
+                    <span class="train-site">Сайт</span>
+                </div>
+                <div class="train-route">
+                    <div class="station-block">
+                        <div class="station-code">МОСКВА</div>
+                        <div class="station-name">Курский вокзал</div>
+                        <div class="time">10:30</div>
+                    </div>
+                    <div class="train-duration">
+                        4ч 15м
+                        <div class="train-stops">↪ Остановки: 1</div>
+                    </div>
+                    <div class="station-block">
+                        <div class="station-code">Н.НОВГ.</div>
+                        <div class="station-name">Московский вокзал</div>
+                        <div class="time">14:45</div>
+                    </div>
+                </div>
 
-            <!-- БИЛЕТ №2: с 1 пересадкой (Стамбул) -->
-            <div class="ticket-card">
-                <div class="ticket-airline">
-                    <span class="airline-name">Turkish Airlines</span>
-                    <span class="flight-number">TK 412</span>
-                </div>
-                <div class="route-main">
-                    <div class="city-block">
-                        <div class="city-code">VKO</div>
-                        <div class="city-name">Москва</div>
-                        <div class="time">04:55</div>
+                <div class="train-prices-row">
+                    <div class="price-block">
+                        <span class="price-label">Купе</span>
+                        <span class="price-value">2 450 ₽</span>
                     </div>
-                    <div class="flight-duration">
-                        7ч 25м
-                        <div class="stops-badge">↪ 1 пересадка (Стамбул)</div>
+                    <div class="price-block">
+                        <span class="price-label">Люкс</span>
+                        <span class="price-value">5 490 ₽</span>
                     </div>
-                    <div class="city-block">
-                        <div class="city-code">BCN</div>
-                        <div class="city-name">Барселона</div>
-                        <div class="time">09:20</div>
+                    <div class="price-block">
+                        <span class="price-label">Мягкий</span>
+                        <span class="price-value">7 990 ₽</span>
                     </div>
                 </div>
-                <div class="ticket-info">
-                    <div class="price-tag">15 750 <small>₽</small></div>
-                    <div class="luggage-badge">
-                        <span>𖠩 2×23кг</span>
-                    </div>
-                </div>
-                <div class="ticket-expand-menu">
+
+                <div class="train-expand-menu">
                     <div class="menu-buttons">
-                        <button class="btn-website" data-action="website">Перейти на сайт</button>
-                        <button class="btn-travel" data-action="travel">Добавить в путешествие</button>
+                        <button class="btn-website">Перейти на сайт</button>
+                        <button class="btn-travel">Добавить в траты</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="busesSection" class="transport-section">
+            <div class="results-header">
+                <h3>Билеты</h3>
+                <span class="results-count">найдено 2</span>
+            </div>
+
+            <!-- Автобус №1: Москва → Ярославль -->
+            <div class="bus-card">
+                <div class="bus-header">
+                    <span class="bus-company">FlixBus</span>
+                    <span class="bus-site">Сайт</span>
+                </div>
+                <div class="bus-route">
+                    <div class="bus-stop-block">
+                        <div class="bus-stop-name">Москва</div>
+                        <div class="bus-stop-city">Автовокзал Щёлковский</div>
+                        <div class="time">09:00</div>
+                    </div>
+                    <div class="bus-duration">
+                        5ч 30м
+                        <div class="bus-stops">↪ Остановки: 1</div>
+                    </div>
+                    <div class="bus-stop-block">
+                        <div class="bus-stop-name">Ярославль</div>
+                        <div class="bus-stop-city">Главный автовокзал</div>
+                        <div class="time">14:30</div>
+                    </div>
+                </div>
+                <div class="bus-expand-menu">
+                    <div class="menu-buttons">
+                        <button class="btn-website">Перейти на сайт</button>
+                        <button class="btn-travel">Добавить в траты</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Автобус №2: Москва → Минск -->
+            <div class="bus-card">
+                <div class="bus-header">
+                    <span class="bus-company">Ecolines</span>
+                    <span class="bus-site">Сайт</span>
+                </div>
+                <div class="bus-route">
+                    <div class="bus-stop-block">
+                        <div class="bus-stop-name">Москва</div>
+                        <div class="bus-stop-city">Автовокзал Саларьево</div>
+                        <div class="time">22:00</div>
+                    </div>
+                    <div class="bus-duration">
+                        10ч 15м
+                        <div class="bus-stops">Ночной рейс</div>
+                    </div>
+                    <div class="bus-stop-block">
+                        <div class="bus-stop-name">Минск</div>
+                        <div class="bus-stop-city">Центральный автовокзал</div>
+                        <div class="time">08:15+1</div>
+                    </div>
+                </div>
+                <div class="bus-expand-menu">
+                    <div class="menu-buttons">
+                        <button class="btn-website">Перейти на сайт</button>
+                        <button class="btn-travel">Добавить в траты</button>
                     </div>
                 </div>
             </div>
@@ -151,32 +327,109 @@
 
 
     <script>
-    // Функция закрытия всех меню
-    function closeAllMenus() {
-        document.querySelectorAll('.ticket-card').forEach(card => {
-            card.classList.remove('expanded');
-        });
-    }
-
-    document.querySelectorAll('.ticket-card').forEach(card => {
-        // Клик по карточке открывает/закрывает меню
-        card.addEventListener('click', function(e) {
-            // Если кликнули на кнопку меню - не закрываем
-            if (e.target.closest('.menu-btn')) return;
-            
-            // Если это меню уже открыто - закрываем его
-            if (card.classList.contains('expanded')) {
+        // Функция закрытия всех меню для всех типов билетов
+        function closeAllMenus() {
+            // Закрываем меню у авиабилетов
+            document.querySelectorAll('.ticket-card').forEach(card => {
                 card.classList.remove('expanded');
-            } else {
-                // Закрываем ВСЕ другие меню
-                closeAllMenus();
-                // Открываем текущее
-                card.classList.add('expanded');
-            }
+            });
+            // Закрываем меню у ЖД билетов
+            document.querySelectorAll('.train-card').forEach(card => {
+                card.classList.remove('expanded');
+            });
+            // Закрываем меню у автобусных билетов
+            document.querySelectorAll('.bus-card').forEach(card => {
+                card.classList.remove('expanded');
+            });
+        }
+
+        // Обработчик для авиабилетов
+        document.querySelectorAll('.ticket-card').forEach(card => {
+            card.addEventListener('click', function (e) {
+                // Если кликнули на кнопку - не закрываем
+                if (e.target.closest('.btn-website') || e.target.closest('.btn-travel')) return;
+
+                if (card.classList.contains('expanded')) {
+                    card.classList.remove('expanded');
+                } else {
+                    closeAllMenus();
+                    card.classList.add('expanded');
+                }
+            });
         });
 
-    });
-</script>
+        // Обработчик для ЖД билетов
+        document.querySelectorAll('.train-card').forEach(card => {
+            card.addEventListener('click', function (e) {
+                // Если кликнули на кнопку - не закрываем
+                if (e.target.closest('.btn-website') || e.target.closest('.btn-travel')) return;
+
+                if (card.classList.contains('expanded')) {
+                    card.classList.remove('expanded');
+                } else {
+                    closeAllMenus();
+                    card.classList.add('expanded');
+                }
+            });
+        });
+
+        // Обработчик для автобусных билетов
+        document.querySelectorAll('.bus-card').forEach(card => {
+            card.addEventListener('click', function (e) {
+                // Если кликнули на кнопку - не закрываем
+                if (e.target.closest('.btn-website') || e.target.closest('.btn-travel')) return;
+
+                if (card.classList.contains('expanded')) {
+                    card.classList.remove('expanded');
+                } else {
+                    closeAllMenus();
+                    card.classList.add('expanded');
+                }
+            });
+        });
+
+        // Предотвращаем всплытие клика по кнопкам, чтобы не открывалось/закрывалось меню
+        document.querySelectorAll('.btn-website, .btn-travel').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                // Здесь можно добавить действие для кнопок
+                if (this.classList.contains('btn-website')) {
+                    alert('Переход на сайт бронирования');
+                } else {
+                    alert('Добавлено в путешествие');
+                }
+            });
+        });
+        // Переключение между авиа, ЖД и автобусами
+        const transportBtns = document.querySelectorAll('.transport-option');
+        const flightsSection = document.getElementById('flightsSection');
+        const trainsSection = document.getElementById('trainsSection');
+        const busesSection = document.getElementById('busesSection');
+
+        transportBtns.forEach(btn => {
+            btn.addEventListener('click', function () {
+                // Убираем активный класс у всех кнопок
+                transportBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                const transport = this.getAttribute('data-transport');
+
+                // Скрываем все секции
+                if (flightsSection) flightsSection.style.display = 'none';
+                if (trainsSection) trainsSection.style.display = 'none';
+                if (busesSection) busesSection.style.display = 'none';
+
+                // Показываем нужную секцию
+                if (transport === 'aviation' && flightsSection) {
+                    flightsSection.style.display = 'block';
+                } else if (transport === 'train' && trainsSection) {
+                    trainsSection.style.display = 'block';
+                } else if (transport === 'bus' && busesSection) {
+                    busesSection.style.display = 'block';
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>
