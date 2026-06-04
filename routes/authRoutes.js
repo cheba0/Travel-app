@@ -19,9 +19,6 @@ const fluentFFmpeg = require("fluent-ffmpeg");
 
 console.log("✅ AuthRoutes загружен");
 // ========== iOS ГОЛОСОВЫЕ СООБЩЕНИЯ ==========
-// ========== iOS ГОЛОСОВЫЕ СООБЩЕНИЯ (m4a) ==========
-const fs = require("fs");
-const path = require("path");
 
 // Простая загрузка голосового с iOS (без конвертации)
 router.post("/api/ios/voice", upload.single("voice"), async (req, res) => {
