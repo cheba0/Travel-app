@@ -629,7 +629,7 @@ async function searchFlights(
     if (!originCode || !destCode) {
       return {
         success: false,
-        message: `Не удалось найти коды для городов: ${originCity} → ${destinationCity}. Доступные города: Москва, СПб, Сочи, Барселона, Лондон, Париж, Стамбул, Дубай, Бангкок, Рим, Нью-Йорк`,
+        message: `Не удалось найти коды для городов: ${originCity} → ${destinationCity}. Попробуйте другие города`,
         tickets: [],
       };
     }
