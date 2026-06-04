@@ -1,5 +1,5 @@
 // public/js/chat.js
-// ===== ПОЛНАЯ ЛОГИКА ЧАТА =====
+// ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =====
 
 let chatSocket = null;
 let currentTripId = null;
@@ -24,6 +24,8 @@ let videoPreviewElement = null;
 let recordMode = "voice";
 let pressTimer = null;
 let isPressed = false;
+let recordStartTime = 0;
+let recordTimeout = null;
 
 // ===== ГЛОБАЛЬНЫЕ ФУНКЦИИ =====
 window.openChatModal = function () {
@@ -41,7 +43,7 @@ window.openChatModal = function () {
   const inp = document.getElementById("chatTextInput");
   if (inp) {
     inp.addEventListener("input", updateSendButton);
-    updateSendButton(); // Инициализация кнопки
+    updateSendButton();
   }
 };
 
@@ -67,7 +69,7 @@ window.closeChatModal = function () {
   }
 };
 
-//  ГЛОБАЛЬНЫЕ ФУНКЦИИ
+// ГЛОБАЛЬНЫЕ ФУНКЦИИ
 window.sendChatMessage = sendChatMessage;
 window.handleChatKeydown = handleChatKeydown;
 window.handleImageSelect = handleImageSelect;
@@ -201,7 +203,7 @@ function updateSendButton() {
   const hasText = inp.value.trim() || selectedImage;
 
   if (hasText) {
-    //  РЕЖИМ ОТПРАВКИ ТЕКСТА
+    // РЕЖИМ ОТПРАВКИ ТЕКСТА
     btn.innerHTML = "➤";
     btn.dataset.mode = "send";
     btn.style.background = "#007bff";
@@ -220,7 +222,7 @@ function updateSendButton() {
 
     console.log("✅ Режим: ОТПРАВКА ТЕКСТА");
   } else {
-    // 🔹 РЕЖИМ ЗАПИСИ (голосовое/видео)
+    // РЕЖИМ ЗАПИСИ (голосовое/видео)
     updateRecordButtonIcon();
     btn.dataset.mode = "record";
 
@@ -425,7 +427,11 @@ async function startVoiceRecording() {
       clearInterval(recordingTimer);
       hideVideoPreview();
 
-      if (btn) updateRecordButtonIcon();
+      // 🔹 ВОЗВРАЩАЕМ КНОПКУ В ИСХОДНОЕ СОСТОЯНИЕ
+      const btn = document.getElementById("sendBtn");
+      if (btn) {
+        updateRecordButtonIcon();
+      }
       if (indicator) indicator.style.display = "none";
 
       if (audioChunks.length > 0) {
@@ -436,6 +442,26 @@ async function startVoiceRecording() {
 
       isRecording = false;
       isVideoRecording = false;
+      isPressed = false;
+
+      // 🔹 ПЕРЕНАЗНАЧАЕМ ОБРАБОТЧИКИ
+      if (btn) {
+        btn.removeEventListener("mousedown", handleRecordStart);
+        btn.removeEventListener("mouseup", handleRecordEnd);
+        btn.removeEventListener("mouseleave", handleRecordLeave);
+        btn.removeEventListener("touchstart", handleRecordTouchStart);
+        btn.removeEventListener("touchend", handleRecordTouchEnd);
+
+        btn.addEventListener("mousedown", handleRecordStart);
+        btn.addEventListener("mouseup", handleRecordEnd, { once: true });
+        btn.addEventListener("mouseleave", handleRecordLeave, { once: true });
+        btn.addEventListener("touchstart", handleRecordTouchStart, {
+          passive: false,
+        });
+        btn.addEventListener("touchend", handleRecordTouchEnd, { once: true });
+      }
+
+      console.log("✅ Обработчики записи переназначены");
     };
 
     mediaRecorder.start(100);
@@ -460,55 +486,115 @@ function stopRecording() {
   }
 }
 
-// ===== ОБРАБОТЧИКИ КНОПКИ ЗАПИСИ =====
+// ===== ОБРАБОТЧИКИ КНОПКИ ЗАПИСИ (ИСПРАВЛЕНО) =====
 function handleRecordStart(e) {
   e.preventDefault();
+  e.stopPropagation();
+
   const btn = document.getElementById("sendBtn");
   if (!btn || btn.dataset.mode !== "record") return;
 
+  console.log("👆 handleRecordStart вызвана");
+
+  // Если уже идёт запись — не делаем ничего
+  if (isRecording || isVideoRecording) {
+    console.log("⚠️ Запись уже идёт");
+    return;
+  }
+
   isPressed = true;
-  pressTimer = setTimeout(() => {
-    if (isPressed) {
-      console.log("⏱️ Долгое нажатие - начало записи");
+  recordStartTime = Date.now();
+
+  // Убираем все старые обработчики чтобы не дублировались
+  btn.removeEventListener("mouseup", handleRecordEnd);
+  btn.removeEventListener("mouseleave", handleRecordLeave);
+  btn.removeEventListener("touchend", handleRecordTouchEnd);
+
+  // Добавляем обработчики окончания
+  btn.addEventListener("mouseup", handleRecordEnd, { once: true });
+  btn.addEventListener("mouseleave", handleRecordLeave, { once: true });
+  btn.addEventListener("touchend", handleRecordTouchEnd, { once: true });
+
+  // Запускаем таймер для долгого нажатия (500мс)
+  if (recordTimeout) clearTimeout(recordTimeout);
+
+  recordTimeout = setTimeout(() => {
+    if (isPressed && !isRecording && !isVideoRecording) {
+      console.log("⏱️ Долгое нажатие (>500мс) — начинаем запись");
       startVoiceRecording();
     }
   }, 500);
 }
 
 function handleRecordEnd(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  console.log("👆 handleRecordEnd вызвана");
+
   const btn = document.getElementById("sendBtn");
-  if (!btn || btn.dataset.mode !== "record") return;
+  if (!btn) return;
 
-  clearTimeout(pressTimer);
+  // Очищаем таймер
+  if (recordTimeout) {
+    clearTimeout(recordTimeout);
+    recordTimeout = null;
+  }
 
-  if (!isRecording && !isVideoRecording) {
-    console.log("👆 Короткое нажатие - переключение режима");
+  const pressDuration = Date.now() - recordStartTime;
+  console.log(`⏱️ Длительность нажатия: ${pressDuration}мс`);
+
+  // Если запись идёт — останавливаем
+  if (isRecording || isVideoRecording) {
+    console.log("🔴 Остановка записи");
+    isPressed = false;
+    stopRecording();
+    return;
+  }
+
+  // Если нажатие было коротким (< 500мс) — переключаем режим
+  if (pressDuration < 500) {
+    console.log("👆 Короткое нажатие — переключение режима");
     isPressed = false;
     toggleRecordMode();
   } else {
-    console.log("👆 Отпускание - остановка записи");
+    console.log("👆 Отпускание после долгого нажатия (но запись не началась)");
     isPressed = false;
-    stopRecording();
   }
 }
 
-function handleRecordLeave() {
-  if (isPressed) {
-    clearTimeout(pressTimer);
-    isPressed = false;
-    if (isRecording || isVideoRecording) {
-      stopRecording();
-    }
+function handleRecordLeave(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  console.log("🖱️ handleRecordLeave вызвана");
+
+  // Очищаем таймер
+  if (recordTimeout) {
+    clearTimeout(recordTimeout);
+    recordTimeout = null;
   }
+
+  // Если запись идёт — оставляем как есть (пользователь может увести мышь)
+  if (isRecording || isVideoRecording) {
+    console.log("⚠️ Запись идёт, игнорируем mouseleave");
+    return;
+  }
+
+  // Иначе просто сбрасываем
+  isPressed = false;
+  console.log("❌ Сброс нажатия (мышь ушла с кнопки)");
 }
 
 function handleRecordTouchStart(e) {
   e.preventDefault();
+  console.log("👆 handleRecordTouchStart вызвана");
   handleRecordStart(e);
 }
 
 function handleRecordTouchEnd(e) {
   e.preventDefault();
+  console.log("👆 handleRecordTouchEnd вызвана");
   handleRecordEnd(e);
 }
 
@@ -779,23 +865,87 @@ function appendMessageToUI(msg, highlightMode = false, highlightQuery = "") {
 // ===== ИСТОРИЯ И ПОИСК =====
 async function loadChatHistory(tripId) {
   const container = document.getElementById("chatMessages");
+  const emptyPlaceholder = document.getElementById("emptyChatPlaceholder");
+
+  if (!container) {
+    console.error("❌ Контейнер chatMessages не найден!");
+    return;
+  }
+
+  // 🔹 Скрываем заглушку
+  if (emptyPlaceholder) {
+    emptyPlaceholder.style.display = "none";
+  }
+
+  console.log("🧹 Очистка контейнера...");
+
+  // Полная очистка
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
+
+  // Возвращаем заглушку (но скрытую)
+  if (emptyPlaceholder) {
+    container.appendChild(emptyPlaceholder);
+  }
+
   container.innerHTML = '<div class="chat-loading">Загрузка...</div>';
+
   try {
+    console.log(`📡 Загрузка истории для tripId: ${tripId}`);
+
     const res = await fetch(`/api/trips/${tripId}/messages`);
     const data = await res.json();
-    container.innerHTML = "";
-    if (!data.success || !data.messages?.length) {
-      container.innerHTML =
-        '<div class="chat-empty">Сообщений пока нет. Напишите первым! 👋</div>';
+
+    console.log("📥 Ответ сервера:", data);
+    console.log("📊 Количество сообщений:", data.messages?.length);
+
+    // Снова очистка
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+
+    if (!data.success || !data.messages || data.messages.length === 0) {
+      console.log("⚠️ Сообщений нет, показываем заглушку");
+      if (emptyPlaceholder) {
+        emptyPlaceholder.style.display = "block";
+        container.appendChild(emptyPlaceholder);
+      } else {
+        container.innerHTML =
+          '<div class="chat-empty">Сообщений пока нет. Напишите первым! 👋</div>';
+      }
       return;
     }
-    data.messages.forEach((m) => appendMessageToUI(normalizeMsg(m), false));
-    if (readObserver)
+
+    // Сортируем по дате (старые сначала)
+    const sortedMessages = data.messages.sort((a, b) => {
+      const dateA = new Date(a.created_at || a.createdAt);
+      const dateB = new Date(b.created_at || b.createdAt);
+      return dateA - dateB;
+    });
+
+    console.log(`📋 Загрузка ${sortedMessages.length} сообщений`);
+
+    sortedMessages.forEach((m, index) => {
+      const normalized = normalizeMsg(m);
+      appendMessageToUI(normalized, false);
+    });
+
+    // Наблюдатель для прочитанных
+    if (readObserver) {
       document
         .querySelectorAll(".chat-message:not(.mine)")
         .forEach((el) => readObserver.observe(el));
+    }
+
+    console.log("✅ История загружена");
+
+    // Прокрутка вниз
+    setTimeout(() => {
+      scrollToBottom();
+    }, 100);
   } catch (e) {
-    console.error(e);
+    console.error("❌ Ошибка загрузки истории:", e);
     container.innerHTML = '<div class="chat-error">Ошибка загрузки</div>';
   }
 }
@@ -1205,6 +1355,7 @@ function requestNotificationPermission() {
   if ("Notification" in window && Notification.permission === "default")
     Notification.requestPermission();
 }
+
 function showNotification(title, body) {
   const c = document.getElementById("chatNotifications");
   if (!c) return;
@@ -1222,6 +1373,9 @@ function showNotification(title, body) {
     setTimeout(() => n.remove(), 300);
   }, 4000);
 }
+
+// Делаем функцию глобальной
+window.showChatNotification = showNotification;
 
 function initNotificationStyles() {
   if (document.getElementById("chatStyles")) return;
@@ -1271,13 +1425,40 @@ if (textInput) {
   });
 }
 
-// ===== ЗАПУСК =====
+// ===== ИНИЦИАЛИЗАЦИЯ =====
 function initChatScripts() {
   console.log("🚀 initChatScripts вызвана");
   initNotificationStyles();
   initSearch();
+
+  // Назначаем обработчики кнопки при загрузке
+  const sendBtn = document.getElementById("sendBtn");
+  if (sendBtn) {
+    // Удаляем старые обработчики
+    const newBtn = sendBtn.cloneNode(true);
+    sendBtn.parentNode.replaceChild(newBtn, sendBtn);
+
+    // Получаем обновлённую кнопку
+    const updatedBtn = document.getElementById("sendBtn");
+
+    updatedBtn.addEventListener("click", function (e) {
+      console.log("🔘 Клик по sendBtn, mode:", this.dataset.mode);
+      if (this.dataset.mode === "send") {
+        sendChatMessage();
+      }
+    });
+
+    updatedBtn.addEventListener("mousedown", handleRecordStart);
+    updatedBtn.addEventListener("touchstart", handleRecordTouchStart, {
+      passive: false,
+    });
+
+    console.log("✅ Обработчики sendBtn назначены");
+  } else {
+    console.warn("⚠️ sendBtn не найден!");
+  }
 }
+
 if (document.readyState === "loading")
   document.addEventListener("DOMContentLoaded", initChatScripts);
 else initChatScripts();
-window.showChatNotification = showNotification;

@@ -7,7 +7,8 @@ const qrController = require("../controllers/qrController");
 const MessageController = require("../controllers/messageController");
 const ticketService = require("../services/ticketService");
 const tutuService = require("../services/tutuService");
-const xoteloService = require("../services/xoteloService");
+const omkarHotelService = require("../services/omkarHotelService");
+const countryCityService = require("../services/countryCityService");
 const { upload, chatUpload } = require("../config/multer");
 const { pool } = require("../db");
 const multer = require("multer");
@@ -1004,103 +1005,60 @@ router.get("/api/buses/search", async (req, res) => {
   res.json(result);
 });
 
-// Поиск отелей по названию/городу
-router.get("/api/xotelo/search", async (req, res) => {
-  console.log("🔍 API: поиск отелей Xotelo", req.query);
-
-  const { query } = req.query;
-
-  if (!query) {
-    return res.status(400).json({
-      success: false,
-      message: "Необходимо указать query (название отеля или города)",
-    });
-  }
-
-  const result = await xoteloService.searchHotels(query);
-  res.json(result);
-});
-
-// Получение отелей по локации
-router.get("/api/xotelo/list", async (req, res) => {
-  console.log("🏨 API: список отелей по локации", req.query);
-
+router.get("/api/hotels/search", async (req, res) => {
   const {
-    locationKey,
-    limit = 30,
-    offset = 0,
-    sort = "best_value",
-  } = req.query;
-
-  if (!locationKey) {
-    return res.status(400).json({
-      success: false,
-      message: "Необходимо указать locationKey",
-    });
-  }
-
-  const result = await xoteloService.getHotelsByLocation(
-    locationKey,
-    parseInt(limit),
-    parseInt(offset),
-    sort,
-  );
-  res.json(result);
-});
-
-// Получение цен на отель
-router.get("/api/xotelo/rates", async (req, res) => {
-  console.log("💰 API: цены на отель", req.query);
-
-  const {
-    hotelKey,
+    city,
     checkIn,
     checkOut,
-    currency = "RUB",
-    rooms = 1,
-    adults = 2,
-    childrenAges = "",
-  } = req.query;
-
-  if (!hotelKey || !checkIn || !checkOut) {
-    return res.status(400).json({
-      success: false,
-      message: "Необходимо указать hotelKey, checkIn, checkOut",
-    });
-  }
-
-  const result = await xoteloService.getHotelRates(
-    hotelKey,
-    checkIn,
-    checkOut,
+    adults,
     currency,
-    parseInt(rooms),
-    parseInt(adults),
-    childrenAges,
+    page = 1,
+    country,
+  } = req.query;
+
+  if (!city || !checkIn || !checkOut) {
+    return res.status(400).json({
+      success: false,
+      message: "Необходимо указать city, checkIn, checkOut",
+    });
+  }
+
+  // Убираем limit из параметров
+  const result = await omkarHotelService.searchHotels(
+    city,
+    checkIn,
+    checkOut,
+    adults || 2,
+    currency || "RUB",
+    parseInt(page),
+    country || null,
   );
   res.json(result);
 });
 
-// Полный поиск (отель + цены за один запрос)
-router.get("/api/xotelo/searchWithRates", async (req, res) => {
-  console.log("🔍💰 API: полный поиск отеля с ценами", req.query);
+router.get("/api/countries", (req, res) => {
+  const countries = countryCityService.getCountriesList();
+  res.json({ success: true, countries });
+});
 
-  const { query, checkIn, checkOut, adults = 2 } = req.query;
-
-  if (!query || !checkIn || !checkOut) {
-    return res.status(400).json({
-      success: false,
-      message: "Необходимо указать query, checkIn, checkOut",
-    });
+// Получить города по стране
+router.get("/api/cities", (req, res) => {
+  const { country } = req.query;
+  if (!country) {
+    return res.status(400).json({ success: false, message: "Укажите страну" });
   }
+  const cities = countryCityService.getCitiesByCountry(country);
+  res.json({ success: true, cities });
+});
 
-  const result = await xoteloService.searchHotelWithRates(
-    query,
-    checkIn,
-    checkOut,
-    parseInt(adults),
-  );
-  res.json(result);
+// Поиск города по русскому названию
+router.get("/api/search-city", (req, res) => {
+  const { query } = req.query;
+  if (!query || query.length < 2) {
+    return res.json({ success: true, results: [] });
+  }
+  const results = countryCityService.searchCities(query);
+  res.json({ success: true, results });
 });
 
 module.exports = router;
