@@ -1257,11 +1257,12 @@ body {
 
         .tour-price-row {
             display: flex;
-            justify-content: space-between;
+            justify-content: right;
             align-items: baseline;
             border-top: 1px solid #f0f0f0;
-            padding-top: 12px;
+            padding-top: 8px;
             margin-top: 4px;
+            margin-right: 14px;
         }
 
         .tour-price {
@@ -1383,11 +1384,12 @@ body {
 
         .hotel-price-row {
             display: flex;
-            justify-content: space-between;
+            justify-content: right;
             align-items: baseline;
             border-top: 1px solid #f0f0f0;
-            padding-top: 12px;
+            padding-top: 8px;
             margin-top: 4px;
+            margin-right: 14px;
         }
 
         .hotel-price {

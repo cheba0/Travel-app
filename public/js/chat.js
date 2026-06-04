@@ -1,5 +1,5 @@
 // public/js/chat.js
-// ===== ПОЛНАЯ ЛОГИКА ЧАТА: TELEGRAM-СТИЛЬ + ИСПРАВЛЕНИЯ =====
+// ===== ПОЛНАЯ ЛОГИКА ЧАТА =====
 
 let chatSocket = null;
 let currentTripId = null;
@@ -27,6 +27,7 @@ let isPressed = false;
 
 // ===== ГЛОБАЛЬНЫЕ ФУНКЦИИ =====
 window.openChatModal = function () {
+  console.log("🔓 openChatModal вызвана");
   const modal = document.getElementById("chatModal");
   if (!modal) return;
   modal.style.display = "flex";
@@ -38,7 +39,10 @@ window.openChatModal = function () {
     setTimeout(() => initChat(tripId), 100);
   }
   const inp = document.getElementById("chatTextInput");
-  if (inp) inp.addEventListener("input", updateSendButton);
+  if (inp) {
+    inp.addEventListener("input", updateSendButton);
+    updateSendButton(); // Инициализация кнопки
+  }
 };
 
 window.closeChatModal = function () {
@@ -49,7 +53,6 @@ window.closeChatModal = function () {
   hidePhotoMenu();
   hideVideoPreview();
 
-  // Останавливаем запись при закрытии
   if (mediaRecorder && (isRecording || isVideoRecording)) {
     mediaRecorder.stop();
   }
@@ -64,12 +67,15 @@ window.closeChatModal = function () {
   }
 };
 
+//  ГЛОБАЛЬНЫЕ ФУНКЦИИ
 window.sendChatMessage = sendChatMessage;
 window.handleChatKeydown = handleChatKeydown;
 window.handleImageSelect = handleImageSelect;
 window.togglePhotoMenu = togglePhotoMenu;
 window.selectPhotoSource = selectPhotoSource;
 window.toggleRecordMode = toggleRecordMode;
+window.startVoiceRecording = startVoiceRecording;
+window.stopVoiceRecording = stopVoiceRecording;
 
 // ===== ВСПОМОГАТЕЛЬНЫЕ =====
 function getCurrentUserId() {
@@ -123,19 +129,7 @@ function safeDecodeText(text) {
 }
 
 function normalizeMsg(msg) {
-  console.log(" normalizeMsg вход:", {
-    id: msg.id,
-    user_id: msg.user_id,
-    userId: msg.userId,
-    audio_url: msg.audio_url,
-    audioUrl: msg.audioUrl,
-    video_url: msg.video_url,
-    videoUrl: msg.videoUrl,
-    image_url: msg.image_url,
-    imageUrl: msg.imageUrl,
-    text: msg.text?.substring(0, 30),
-  });
-
+  console.log("📩 normalizeMsg вход:", msg);
   const result = {
     id: msg.id,
     userId: msg.user_id ?? msg.userId,
@@ -150,8 +144,7 @@ function normalizeMsg(msg) {
       msg.userName ??
       getAvatarLetter(msg.user_id ?? msg.userId),
   };
-
-  console.log("🔧 normalizeMsg результат:", result);
+  console.log("📩 normalizeMsg результат:", result);
   return result;
 }
 
@@ -171,7 +164,6 @@ function scrollToBottom() {
 // ===== ПРЕДПРОСМОТР ВИДЕО =====
 function showVideoPreview(stream) {
   hideVideoPreview();
-
   videoPreviewElement = document.createElement("video");
   videoPreviewElement.srcObject = stream;
   videoPreviewElement.autoplay = true;
@@ -190,7 +182,6 @@ function showVideoPreview(stream) {
     z-index: 9999;
     transform: scaleX(-1);
   `;
-
   document.body.appendChild(videoPreviewElement);
 }
 
@@ -201,20 +192,51 @@ function hideVideoPreview() {
   }
 }
 
-// ===== КНОПКА ОТПРАВКИ =====
+// ===== КНОПКА ОТПРАВКИ/ЗАПИСИ =====
 function updateSendButton() {
   const btn = document.getElementById("sendBtn");
   const inp = document.getElementById("chatTextInput");
   if (!btn || !inp) return;
 
-  if (inp.value.trim() || selectedImage) {
-    btn.innerHTML = "";
+  const hasText = inp.value.trim() || selectedImage;
+
+  if (hasText) {
+    //  РЕЖИМ ОТПРАВКИ ТЕКСТА
+    btn.innerHTML = "➤";
     btn.dataset.mode = "send";
     btn.style.background = "#007bff";
+    btn.style.color = "white";
     btn.title = "Отправить сообщение";
+
+    // Удаляем обработчики записи
+    btn.removeEventListener("mousedown", handleRecordStart);
+    btn.removeEventListener("mouseup", handleRecordEnd);
+    btn.removeEventListener("mouseleave", handleRecordLeave);
+    btn.removeEventListener("touchstart", handleRecordTouchStart);
+    btn.removeEventListener("touchend", handleRecordTouchEnd);
+
+    // Добавляем обработчик отправки
+    btn.onclick = sendChatMessage;
+
+    console.log("✅ Режим: ОТПРАВКА ТЕКСТА");
   } else {
+    // 🔹 РЕЖИМ ЗАПИСИ (голосовое/видео)
     updateRecordButtonIcon();
     btn.dataset.mode = "record";
+
+    // Удаляем обработчик отправки
+    btn.onclick = null;
+
+    // Добавляем обработчики записи
+    btn.addEventListener("mousedown", handleRecordStart);
+    btn.addEventListener("mouseup", handleRecordEnd);
+    btn.addEventListener("mouseleave", handleRecordLeave);
+    btn.addEventListener("touchstart", handleRecordTouchStart, {
+      passive: false,
+    });
+    btn.addEventListener("touchend", handleRecordTouchEnd);
+
+    console.log(" Режим: ЗАПИСЬ (удерживайте для записи)");
   }
 }
 
@@ -225,21 +247,20 @@ function updateRecordButtonIcon() {
   if (recordMode === "video") {
     btn.innerHTML = "🎥";
     btn.style.background = "#28a745";
-    btn.title = "Режим: видеокружочек (нажмите для смены)";
+    btn.style.color = "white";
+    btn.title = "Режим: видеокружочек (удерживайте)";
   } else {
     btn.innerHTML = "🎤";
     btn.style.background = "#f5f5f5";
-    btn.title = "Режим: голосовое (нажмите для смены)";
+    btn.style.color = "inherit";
+    btn.title = "Режим: голосовое (удерживайте)";
   }
 }
 
-// ===== ПЕРЕКЛЮЧЕНИЕ РЕЖИМА =====
 function toggleRecordMode() {
   if (isRecording || isVideoRecording) return;
-
   recordMode = recordMode === "voice" ? "video" : "voice";
   updateRecordButtonIcon();
-
   const btn = document.getElementById("sendBtn");
   if (btn) {
     btn.style.transform = "scale(0.9)";
@@ -247,8 +268,101 @@ function toggleRecordMode() {
   }
 }
 
-// ===== НАЧАЛО ЗАПИСИ =====
-async function startRecording() {
+// ===== ОТПРАВКА СООБЩЕНИЯ =====
+async function sendChatMessage() {
+  console.log("📤 sendChatMessage вызвана");
+
+  const inp = document.getElementById("chatTextInput");
+  if (!inp) {
+    console.error("❌ Поле ввода не найдено!");
+    return;
+  }
+
+  const text = inp.value.trim();
+  console.log("📝 Текст:", text);
+
+  // Загружаем фото если есть
+  let imageUrl = null;
+  if (selectedImage) {
+    console.log("📷 Загрузка фото...");
+    imageUrl = await uploadChatImage(selectedImage);
+    if (!imageUrl) {
+      alert(" Не удалось загрузить фото");
+      return;
+    }
+    console.log("✅ Фото загружено:", imageUrl);
+  }
+
+  if (!text && !imageUrl) {
+    console.log("⚠️ Нет текста и фото");
+    inp.focus();
+    return;
+  }
+
+  // Останавливаем "печатает"
+  if (isTyping) {
+    isTyping = false;
+    if (chatSocket && currentTripId && window.currentUserId) {
+      chatSocket.emit("typing_stop", {
+        tripId: currentTripId,
+        userId: window.currentUserId,
+      });
+    }
+  }
+
+  // Отправляем через сокет
+  if (!chatSocket || !currentTripId || !window.currentUserId) {
+    console.error("❌ Сокет не подключен:", {
+      chatSocket: !!chatSocket,
+      currentTripId,
+      userId: window.currentUserId,
+    });
+    alert("Чат не подключен. Обновите страницу.");
+    return;
+  }
+
+  console.log("🚀 Отправка:", {
+    tripId: currentTripId,
+    userId: window.currentUserId,
+    text,
+    imageUrl,
+  });
+
+  try {
+    chatSocket.emit("send_message", {
+      tripId: currentTripId,
+      userId: window.currentUserId,
+      text: text || null,
+      imageUrl: imageUrl,
+    });
+
+    inp.value = "";
+    clearImagePreview();
+    inp.focus();
+    updateSendButton();
+
+    const si = document.getElementById("chatSearchInput");
+    if (si && si.value.trim()) {
+      si.value = "";
+      loadChatHistory(currentTripId);
+    }
+
+    console.log("✅ Сообщение отправлено");
+  } catch (e) {
+    console.error("❌ Ошибка:", e);
+    alert("Не удалось отправить");
+  }
+}
+
+function handleChatKeydown(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendChatMessage();
+  }
+}
+
+// ===== ЗАПИСЬ ГОЛОСОВОГО/ВИДЕО =====
+async function startVoiceRecording() {
   try {
     const isVideo = recordMode === "video";
     const constraints = isVideo
@@ -266,16 +380,13 @@ async function startRecording() {
     audioChunks = [];
     recordingSeconds = 0;
 
-    // Устанавливаем флаги СРАЗУ
     if (isVideo) {
       isVideoRecording = true;
     } else {
       isRecording = true;
     }
 
-    if (isVideo) {
-      showVideoPreview(stream);
-    }
+    if (isVideo) showVideoPreview(stream);
 
     const btn = document.getElementById("sendBtn");
     const indicator = document.getElementById("recordingIndicator");
@@ -283,12 +394,11 @@ async function startRecording() {
     if (btn) {
       btn.innerHTML = "⏹️";
       btn.style.background = "#dc3545";
+      btn.style.color = "white";
     }
-
     if (indicator) {
       indicator.style.display = "block";
       indicator.style.background = isVideo ? "#28a745" : "#dc3545";
-      indicator.textContent = isVideo ? "🎥 Запись видео..." : "🎤 Запись...";
     }
 
     recordingTimer = setInterval(() => {
@@ -303,36 +413,23 @@ async function startRecording() {
     }, 1000);
 
     mediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) {
-        audioChunks.push(e.data);
-      }
+      if (e.data.size > 0) audioChunks.push(e.data);
     };
 
     mediaRecorder.onstop = async () => {
-      console.log("🛑 Запись остановлена, chunks:", audioChunks.length);
-
-      if (recordingStream) {
+      console.log("🔴 Запись остановлена, chunks:", audioChunks.length);
+      if (recordingStream)
         recordingStream.getTracks().forEach((track) => track.stop());
-      }
       clearInterval(recordingTimer);
       hideVideoPreview();
 
-      if (btn) {
-        updateRecordButtonIcon();
-      }
+      if (btn) updateRecordButtonIcon();
       if (indicator) indicator.style.display = "none";
 
       if (audioChunks.length > 0) {
         const blob = new Blob(audioChunks, { type: mimeType });
-        console.log("📤 Отправка blob, size:", blob.size);
-
-        if (isVideo) {
-          await sendVideoMessage(blob);
-        } else {
-          await sendVoiceMessage(blob);
-        }
-      } else {
-        console.warn("⚠️ Нет данных для отправки");
+        if (isVideo) await sendVideoMessage(blob);
+        else await sendVoiceMessage(blob);
       }
 
       isRecording = false;
@@ -340,7 +437,7 @@ async function startRecording() {
     };
 
     mediaRecorder.start(100);
-    console.log("✅ Запись началась, режим:", isVideo ? "video" : "audio");
+    console.log("✅ Запись началась:", isVideo ? "video" : "audio");
   } catch (err) {
     console.error("❌ Ошибка доступа:", err);
     alert("Не удалось получить доступ к микрофону/камере");
@@ -349,30 +446,29 @@ async function startRecording() {
   }
 }
 
+function stopVoiceRecording() {
+  if (mediaRecorder && (isRecording || isVideoRecording)) {
+    mediaRecorder.stop();
+  }
+}
+
 function stopRecording() {
-  console.log(
-    " stopRecording вызван, isRecording:",
-    isRecording,
-    "isVideoRecording:",
-    isVideoRecording,
-  );
   if (mediaRecorder && mediaRecorder.state !== "inactive") {
     mediaRecorder.stop();
   }
 }
 
-// ===== ОБРАБОТЧИКИ КНОПКИ =====
+// ===== ОБРАБОТЧИКИ КНОПКИ ЗАПИСИ =====
 function handleRecordStart(e) {
   e.preventDefault();
   const btn = document.getElementById("sendBtn");
   if (!btn || btn.dataset.mode !== "record") return;
 
   isPressed = true;
-
   pressTimer = setTimeout(() => {
     if (isPressed) {
-      console.log("⏱️ Долгое нажатие - начинаю запись");
-      startRecording();
+      console.log("⏱️ Долгое нажатие - начало записи");
+      startVoiceRecording();
     }
   }, 500);
 }
@@ -388,102 +484,30 @@ function handleRecordEnd(e) {
     isPressed = false;
     toggleRecordMode();
   } else {
-    console.log("👆 Отпускание после записи");
+    console.log("👆 Отпускание - остановка записи");
     isPressed = false;
     stopRecording();
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("sendBtn");
-  if (btn) {
-    btn.addEventListener("mousedown", handleRecordStart);
-    btn.addEventListener("mouseup", handleRecordEnd);
-    btn.addEventListener("mouseleave", () => {
-      if (isPressed) {
-        clearTimeout(pressTimer);
-        isPressed = false;
-        if (isRecording || isVideoRecording) {
-          stopRecording();
-        }
-      }
-    });
-
-    btn.addEventListener(
-      "touchstart",
-      (e) => {
-        e.preventDefault();
-        handleRecordStart(e);
-      },
-      { passive: false },
-    );
-    btn.addEventListener("touchend", (e) => {
-      e.preventDefault();
-      handleRecordEnd(e);
-    });
-  }
-});
-
-// ===== ОТПРАВКА ГОЛОСОВОГО =====
-async function sendVoiceMessage(audioBlob) {
-  console.log("🎤 Отправка голосового, size:", audioBlob.size);
-  const formData = new FormData();
-  formData.append("voiceMessage", audioBlob, `voice_${Date.now()}.webm`);
-  formData.append("tripId", currentTripId);
-
-  try {
-    const res = await fetch("/api/chat/upload-voice", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await res.json();
-
-    if (data.success) {
-      console.log("✅ Голосовое отправлено:", data.audioUrl);
-      chatSocket.emit("send_message", {
-        tripId: currentTripId,
-        userId: window.currentUserId,
-        text: null,
-        audioUrl: data.audioUrl,
-      });
-    } else {
-      alert(" Не удалось отправить голосовое: " + (data.error || "Ошибка"));
+function handleRecordLeave() {
+  if (isPressed) {
+    clearTimeout(pressTimer);
+    isPressed = false;
+    if (isRecording || isVideoRecording) {
+      stopRecording();
     }
-  } catch (e) {
-    console.error("❌ Ошибка отправки голосового:", e);
-    alert("Ошибка сети при отправке голосового");
   }
 }
 
-// ===== ОТПРАВКА ВИДЕОКРУЖОЧКА =====
-async function sendVideoMessage(videoBlob) {
-  console.log(" Отправка видео, size:", videoBlob.size);
-  const formData = new FormData();
-  formData.append("videoMessage", videoBlob, `video_${Date.now()}.webm`);
-  formData.append("tripId", currentTripId);
+function handleRecordTouchStart(e) {
+  e.preventDefault();
+  handleRecordStart(e);
+}
 
-  try {
-    const res = await fetch("/api/chat/upload-video", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await res.json();
-
-    if (data.success) {
-      console.log("✅ Видео отправлено:", data.videoUrl);
-      chatSocket.emit("send_message", {
-        tripId: currentTripId,
-        userId: window.currentUserId,
-        text: null,
-        videoUrl: data.videoUrl,
-      });
-    } else {
-      alert("❌ Не удалось отправить видео: " + (data.error || "Ошибка"));
-    }
-  } catch (e) {
-    console.error("❌ Ошибка отправки видео:", e);
-    alert("Ошибка сети при отправке видео");
-  }
+function handleRecordTouchEnd(e) {
+  e.preventDefault();
+  handleRecordEnd(e);
 }
 
 // ===== ВЫБОР ФОТО =====
@@ -521,17 +545,77 @@ function selectPhotoSource(source) {
   input.click();
 }
 
+// ===== ОТПРАВКА ГОЛОСОВОГО/ВИДЕО =====
+async function sendVoiceMessage(audioBlob) {
+  console.log("🎤 Отправка голосового, size:", audioBlob.size);
+  const formData = new FormData();
+  formData.append("voiceMessage", audioBlob, `voice_${Date.now()}.webm`);
+  formData.append("tripId", currentTripId);
+
+  try {
+    const res = await fetch("/api/chat/upload-voice", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      console.log("✅ Голосовое загружено:", data.audioUrl);
+      if (chatSocket && currentTripId && window.currentUserId) {
+        chatSocket.emit("send_message", {
+          tripId: currentTripId,
+          userId: window.currentUserId,
+          text: null,
+          audioUrl: data.audioUrl,
+        });
+      }
+    } else {
+      alert("❌ Не удалось отправить голосовое");
+    }
+  } catch (e) {
+    console.error("❌ Ошибка:", e);
+    alert("Ошибка сети при отправке голосового");
+  }
+}
+
+async function sendVideoMessage(videoBlob) {
+  console.log("🎥 Отправка видео, size:", videoBlob.size);
+  const formData = new FormData();
+  formData.append("videoMessage", videoBlob, `video_${Date.now()}.webm`);
+  formData.append("tripId", currentTripId);
+
+  try {
+    const res = await fetch("/api/chat/upload-video", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      console.log("✅ Видео загружено:", data.videoUrl);
+      if (chatSocket && currentTripId && window.currentUserId) {
+        chatSocket.emit("send_message", {
+          tripId: currentTripId,
+          userId: window.currentUserId,
+          text: null,
+          videoUrl: data.videoUrl,
+        });
+      }
+    } else {
+      alert("❌ Не удалось отправить видео");
+    }
+  } catch (e) {
+    console.error("❌ Ошибка:", e);
+    alert("Ошибка сети при отправке видео");
+  }
+}
+
 // ===== ОТРИСОВКА СООБЩЕНИЯ =====
 function appendMessageToUI(msg, highlightMode = false, highlightQuery = "") {
-  console.log("🎨 appendMessageToUI вызван с:", {
-    text: msg.text?.substring(0, 30),
-    imageUrl: msg.imageUrl,
-    audioUrl: msg.audioUrl,
-    videoUrl: msg.videoUrl,
-  });
+  console.log("🎨 appendMessageToUI:", msg);
 
   if (!msg.text?.trim() && !msg.imageUrl && !msg.audioUrl && !msg.videoUrl) {
-    console.warn("⚠️ Сообщение отфильтровано: нет ни текста, ни медиа");
+    console.warn("⚠️ Пустое сообщение пропущено");
     return;
   }
 
@@ -539,13 +623,9 @@ function appendMessageToUI(msg, highlightMode = false, highlightQuery = "") {
   const msgUid = parseInt(msg.userId);
   const isMyMessage = myId !== null && msgUid === myId;
 
-  console.log(
-    `[UI] msgId: ${msg.id} | myId: ${myId} | msgUid: ${msgUid} | isMy: ${isMyMessage}`,
-  );
-
   const container = document.getElementById("chatMessages");
   if (!container) {
-    console.error("❌ Контейнер chatMessages не найден!");
+    console.error("❌ Контейнер не найден!");
     return;
   }
 
@@ -561,7 +641,7 @@ function appendMessageToUI(msg, highlightMode = false, highlightQuery = "") {
       showContextMenu(e.clientX, e.clientY, msg.id, msg.createdAt);
     });
 
-    let pressTimer,
+    let pressTimer2,
       isScrolling = false,
       startY = 0;
     msgDiv.addEventListener(
@@ -571,7 +651,7 @@ function appendMessageToUI(msg, highlightMode = false, highlightQuery = "") {
         isScrolling = false;
         msgDiv.style.transition = "background-color 0.2s";
         msgDiv.style.backgroundColor = "rgba(0,123,255,0.1)";
-        pressTimer = setTimeout(() => {
+        pressTimer2 = setTimeout(() => {
           if (!isScrolling) {
             e.preventDefault();
             if (navigator.vibrate) navigator.vibrate(50);
@@ -590,16 +670,16 @@ function appendMessageToUI(msg, highlightMode = false, highlightQuery = "") {
     msgDiv.addEventListener("touchmove", (e) => {
       if (Math.abs(e.touches[0].clientY - startY) > 10) {
         isScrolling = true;
-        clearTimeout(pressTimer);
+        clearTimeout(pressTimer2);
         msgDiv.style.backgroundColor = "";
       }
     });
     msgDiv.addEventListener("touchend", () => {
-      clearTimeout(pressTimer);
+      clearTimeout(pressTimer2);
       msgDiv.style.backgroundColor = "";
     });
     msgDiv.addEventListener("touchcancel", () => {
-      clearTimeout(pressTimer);
+      clearTimeout(pressTimer2);
       msgDiv.style.backgroundColor = "";
     });
   }
@@ -625,7 +705,6 @@ function appendMessageToUI(msg, highlightMode = false, highlightQuery = "") {
       textSpan.textContent = msg.text;
     }
     bubble.appendChild(textSpan);
-    console.log("✅ Добавлен текст");
   }
 
   if (msg.imageUrl) {
@@ -635,7 +714,6 @@ function appendMessageToUI(msg, highlightMode = false, highlightQuery = "") {
       "max-width:100%;border-radius:12px;margin-top:8px;cursor:pointer;display:block;";
     img.onclick = () => window.open(msg.imageUrl, "_blank");
     bubble.appendChild(img);
-    console.log("✅ Добавлена картинка:", msg.imageUrl);
   }
 
   if (msg.audioUrl) {
@@ -647,7 +725,6 @@ function appendMessageToUI(msg, highlightMode = false, highlightQuery = "") {
       </audio>
     `;
     bubble.appendChild(audioDiv);
-    console.log("✅ Добавлено аудио:", msg.audioUrl);
   }
 
   if (msg.videoUrl) {
@@ -659,7 +736,6 @@ function appendMessageToUI(msg, highlightMode = false, highlightQuery = "") {
       </video>
     `;
     bubble.appendChild(videoDiv);
-    console.log("✅ Добавлено видео:", msg.videoUrl);
   }
 
   const infoDiv = document.createElement("div");
@@ -694,7 +770,6 @@ function appendMessageToUI(msg, highlightMode = false, highlightQuery = "") {
   msgDiv.appendChild(avatar);
   msgDiv.appendChild(bubble);
   container.appendChild(msgDiv);
-  console.log("✅ Сообщение добавлено в DOM");
 
   if (!isMyMessage && readObserver) readObserver.observe(msgDiv);
 }
@@ -812,19 +887,22 @@ async function initChat(tripId) {
     return;
   }
 
+  console.log("🔌 Инициализация чата:", { tripId, userId });
+
   if (!chatSocket) {
     chatSocket = io();
-    chatSocket.on("connect", () => chatSocket.emit("authenticate", userId));
-    chatSocket.on("authenticated", () =>
-      chatSocket.emit("join_trip_chat", { tripId, userId }),
-    );
+    chatSocket.on("connect", () => {
+      console.log("✅ Сокет подключен");
+      chatSocket.emit("authenticate", userId);
+    });
+    chatSocket.on("authenticated", () => {
+      console.log("✅ Аутентификация пройдена");
+      chatSocket.emit("join_trip_chat", { tripId, userId });
+    });
 
     chatSocket.on("new_message", (msg) => {
-      console.log("📨 Сырое сообщение от сервера:", msg);
-
+      console.log("📨 Новое сообщение:", msg);
       const clean = normalizeMsg(msg);
-      console.log("🔧 После нормализации:", clean);
-
       const open =
         document.getElementById("chatModal")?.style.display === "block";
 
@@ -837,10 +915,8 @@ async function initChat(tripId) {
       }
 
       const si = document.getElementById("chatSearchInput");
-      if (si && si.value.trim()) {
-        searchMessages(si.value.trim());
-      } else {
-        console.log("🖼️ Рендерим сообщение в UI");
+      if (si && si.value.trim()) searchMessages(si.value.trim());
+      else {
         appendMessageToUI(clean);
         scrollToBottom();
       }
@@ -933,10 +1009,10 @@ function showContextMenu(x, y, messageId, createdAt) {
 
   menu.innerHTML = `
     <button class="edit-btn" ${!canEdit ? "disabled" : ""} style="display:block;width:100%;padding:${isMobile ? "16px" : "14px"} 18px;border:none;background:none;text-align:left;cursor:${canEdit ? "pointer" : "not-allowed"};color:${canEdit ? "#333" : "#999"};font-size:${isMobile ? "16px" : "14px"}">
-      ${canEdit ? "️ Редактировать" : "⏱️ Время вышло (5 мин)"}
+      ${canEdit ? "✏️ Редактировать" : "⏱️ Время вышло (5 мин)"}
     </button>
     <div style="height:1px;background:#eee"></div>
-    <button class="delete-btn" style="display:block;width:100%;padding:${isMobile ? "16px" : "14px"} 18px;border:none;background:none;text-align:left;cursor:pointer;color:#ff4444;font-size:${isMobile ? "16px" : "14px"}">️ Удалить сообщение</button>
+    <button class="delete-btn" style="display:block;width:100%;padding:${isMobile ? "16px" : "14px"} 18px;border:none;background:none;text-align:left;cursor:pointer;color:#ff4444;font-size:${isMobile ? "16px" : "14px"}">🗑️ Удалить сообщение</button>
   `;
 
   menu.querySelector(".edit-btn").onclick = (e) => {
@@ -1075,61 +1151,6 @@ async function deleteMessage(id) {
   } catch (e) {}
 }
 
-// ===== ОТПРАВКА ТЕКСТА/ФОТО =====
-async function sendChatMessage() {
-  const inp = document.getElementById("chatTextInput");
-  const text = inp.value.trim();
-
-  let imageUrl = null;
-  if (selectedImage) {
-    imageUrl = await uploadChatImage(selectedImage);
-    if (!imageUrl) {
-      alert("❌ Не удалось загрузить фото");
-      return;
-    }
-  }
-
-  if (!text && !imageUrl) {
-    inp.focus();
-    return;
-  }
-
-  if (isTyping) {
-    isTyping = false;
-    chatSocket.emit("typing_stop", {
-      tripId: currentTripId,
-      userId: window.currentUserId,
-    });
-  }
-
-  try {
-    chatSocket.emit("send_message", {
-      tripId: currentTripId,
-      userId: window.currentUserId,
-      text: text || null,
-      imageUrl: imageUrl,
-    });
-    inp.value = "";
-    clearImagePreview();
-    inp.focus();
-    updateSendButton();
-    const si = document.getElementById("chatSearchInput");
-    if (si && si.value.trim()) {
-      si.value = "";
-      loadChatHistory(currentTripId);
-    }
-  } catch (e) {
-    alert("Не удалось отправить");
-  }
-}
-
-function handleChatKeydown(e) {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    sendChatMessage();
-  }
-}
-
 // ===== ИЗОБРАЖЕНИЯ =====
 function handleImageSelect(e) {
   const f = e.target.files[0];
@@ -1139,8 +1160,12 @@ function handleImageSelect(e) {
   selectedImage = f;
   const rd = new FileReader();
   rd.onload = (ev) => {
-    document.getElementById("chatPreviewImg").src = ev.target.result;
-    document.getElementById("chatImagePreview").style.display = "block";
+    const preview = document.getElementById("chatPreviewImg");
+    const previewContainer = document.getElementById("chatImagePreview");
+    if (preview && previewContainer) {
+      preview.src = ev.target.result;
+      previewContainer.style.display = "block";
+    }
   };
   rd.readAsDataURL(f);
   updateSendButton();
@@ -1148,8 +1173,10 @@ function handleImageSelect(e) {
 
 function clearImagePreview() {
   selectedImage = null;
-  document.getElementById("chatImagePreview").style.display = "none";
-  document.getElementById("chatImageInput").value = "";
+  const previewContainer = document.getElementById("chatImagePreview");
+  const input = document.getElementById("chatImageInput");
+  if (previewContainer) previewContainer.style.display = "none";
+  if (input) input.value = "";
   updateSendButton();
 }
 
@@ -1244,6 +1271,7 @@ if (textInput) {
 
 // ===== ЗАПУСК =====
 function initChatScripts() {
+  console.log("🚀 initChatScripts вызвана");
   initNotificationStyles();
   initSearch();
 }
