@@ -2652,7 +2652,29 @@ body {
 
 
 
+/* Стили для выпадающих меню туров и жилья */
+.tour-expand-menu,
+.hotel-expand-menu {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
 
+.tour-card.expanded .tour-expand-menu,
+.hotel-card.expanded .hotel-expand-menu {
+    max-height: 90px;
+    opacity: 1;
+    padding: 14px 12px;
+    border-top: 1px solid #eee;
+}
+
+/* Убедитесь, что у карточек туров и жилья есть position: relative */
+.tour-card,
+.hotel-card {
+    position: relative;
+    cursor: pointer;
+}
 
 
 
