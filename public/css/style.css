@@ -1735,12 +1735,15 @@ body {
 }
 
 .twin-fields {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
+    margin-bottom: 14px;
 }
 
 .twin-fields .search-field {
     flex: 1;
+    min-width: 140px;
 }
 
 /* Кнопка поиска */
